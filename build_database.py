@@ -4,11 +4,17 @@ from pyrosetta import pose_from_file
 from scan_helices import PoseScanner
 
 pdb_prefix = '/wynton/home/database/pdb/remediated/pdb/'
+idx = 0
 
 def main():
+    init('-ignore_unrecognized_res')
     df = pd.DataFrame()
-    for root, dirs, files in os.walk(pdb_prefix):
-        for f in files:
+    for subdir in os.listdir(pdb_prefix)[idx*100:idx*100 + 100 - 1]:
+        for f in os.listdir(
+                os.path.join(
+                    pdb_prefix, subdir
+                    )
+                ):
             if f.endswith('.ent.gz'):
                 path = os.path.join(root, f)
                 pdb = f[3:7]
@@ -19,3 +25,10 @@ def main():
                         )
 
                 pd.concat([df, helices], ignore_index=True)
+
+    pd.to_pickle('dataframes/{}.pkl'.format(
+        idx
+        ))
+    pd.to_csv('dataframes/{}.csv'.format(
+        idx
+        ))
