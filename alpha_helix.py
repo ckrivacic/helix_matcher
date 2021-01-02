@@ -1,7 +1,7 @@
 import numpy as np
 
-from . import geometry
-from . import basic
+import geometry
+import basic
 
 
 def build_ideal_straight_alpha_helix(length):
