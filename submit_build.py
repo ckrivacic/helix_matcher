@@ -1,4 +1,4 @@
-import glob
+import glob, re
 from klab import process
 
 def find_nstruct(pdb_prefix):
