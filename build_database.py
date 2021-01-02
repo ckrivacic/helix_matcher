@@ -10,7 +10,7 @@ idx = 0
 def main():
     init('-ignore_unrecognized_res')
     df = pd.DataFrame()
-    for subdir in os.listdir(pdb_prefix)[idx*100:idx*100 + 100 - 1]:
+    for subdir in sorted(os.listdir(pdb_prefix))[idx*100:idx*100 + 100 - 1]:
         for f in os.listdir(
                 os.path.join(
                     pdb_prefix, subdir
@@ -20,7 +20,6 @@ def main():
                 print('Scanning {}'.format(f))
                 path = os.path.join(pdb_prefix, subdir, f)
                 pdb = f[3:7]
-                print('Name: {}'.format(pdb))
                 pose = pose_from_file(path)
                 scanner = PoseScanner(pose)
                 helices = pd.DataFrame(
