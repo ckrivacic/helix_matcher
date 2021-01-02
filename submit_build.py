@@ -2,12 +2,12 @@ import glob, re
 from klab import process
 
 def find_nstruct(pdb_prefix):
-    file_list = glob.glob(pdb_prefix + '*/*.ent.gz')
+    file_list = glob.glob(pdb_prefix + '*')
     return len(file_list)
 
 
 pdb_prefix = '/wynton/home/database/pdb/remediated/pdb/'
-nstruct = int(find_nstruct(pdb_prefix) / 100)
+nstruct = int(find_nstruct(pdb_prefix) / 20)
 max_runtime = '10:00:00'
 max_memory = '6G'
 
