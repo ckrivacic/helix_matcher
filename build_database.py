@@ -32,3 +32,6 @@ def main():
     pd.to_csv('dataframes/{}.csv'.format(
         idx
         ))
+
+if __name__=='__main__':
+    main()
