@@ -20,13 +20,16 @@ def main():
                 print('Scanning {}'.format(f))
                 path = os.path.join(pdb_prefix, subdir, f)
                 pdb = f[3:7]
-                pose = pose_from_file(path)
-                scanner = PoseScanner(pose)
-                helices = pd.DataFrame(
-                        scanner.scan_pose_helices(name=pdb)
-                        )
+                try:
+                    pose = pose_from_file(path)
+                    scanner = PoseScanner(pose)
+                    helices = pd.DataFrame(
+                            scanner.scan_pose_helices(name=pdb)
+                            )
 
-                pd.concat([df, helices], ignore_index=True)
+                    pd.concat([df, helices], ignore_index=True)
+                except:
+                    print("Error scanning {}".format(f))
 
     pd.to_pickle('dataframes/{}.pkl'.format(
         idx
