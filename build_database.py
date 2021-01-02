@@ -5,7 +5,7 @@ from pyrosetta import pose_from_file
 from scan_helices import PoseScanner
 
 pdb_prefix = '/wynton/home/database/pdb/remediated/pdb/'
-idx = 0
+idx = int(os.environ['SGE_TASK_ID']) - 1
 
 def main():
     init('-ignore_unrecognized_res')
