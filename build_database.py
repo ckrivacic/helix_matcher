@@ -6,10 +6,13 @@ from scan_helices import PoseScanner
 
 pdb_prefix = '/wynton/home/database/pdb/remediated/pdb/'
 idx = int(os.environ['SGE_TASK_ID']) - 1
+print('IDX = {}'.format(idx))
 
 def main():
     init('-ignore_unrecognized_res')
     df = pd.DataFrame()
+    print('START: {}'.format(idx * 100))
+    print('STOP: {}'.format(idx * 100 + 100 - 1))
     for subdir in sorted(os.listdir(pdb_prefix))[idx*100:idx*100 + 100 - 1]:
         for f in os.listdir(
                 os.path.join(
