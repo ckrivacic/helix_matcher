@@ -1,5 +1,5 @@
-from ss_generator import geometry
-from ss_generator.alpha_helix import helix_direction
+import geometry
+from alpha_helix import helix_direction
 from pyrosetta import rosetta
 from pyrosetta import get_fa_scorefxn
 from pyrosetta import init
