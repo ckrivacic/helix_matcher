@@ -1,6 +1,6 @@
 import numpy as np
 
-from . import geometry
+import geometry
 
 
 def transform_residue(residue, M, t):
