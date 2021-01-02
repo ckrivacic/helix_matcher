@@ -7,7 +7,7 @@ from scan_helices import PoseScanner
 pdb_prefix = '/wynton/home/database/pdb/remediated/pdb/'
 idx = int(os.environ['SGE_TASK_ID']) - 1
 print('IDX = {}'.format(idx))
-num = 10
+num = 5
 
 def main():
     init('-ignore_unrecognized_res')
