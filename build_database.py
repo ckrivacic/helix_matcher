@@ -31,10 +31,10 @@ def main():
                 except:
                     print("Error scanning {}".format(f))
 
-    pd.to_pickle(df, 'dataframes/{}.pkl'.format(
+    df.to_pickle('dataframes/{}.pkl'.format(
         idx
         ))
-    pd.to_csv(df, 'dataframes/{}.csv'.format(
+    df.to_csv('dataframes/{}.csv'.format(
         idx
         ))
 
