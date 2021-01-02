@@ -31,7 +31,7 @@ def main():
                             scanner.scan_pose_helices(name=pdb)
                             )
 
-                    pd.concat([df, helices], ignore_index=True)
+                    df = pd.concat([df, helices], ignore_index=True)
                 except:
                     print("Error scanning {}".format(f))
 
