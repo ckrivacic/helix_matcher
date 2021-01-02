@@ -1,4 +1,5 @@
 import glob
+from klab import process
 
 def find_nstruct(pdb_prefix):
     file_list = glob.glob(pdb_prefix + '*/*.ent.gz')
