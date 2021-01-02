@@ -30,6 +30,7 @@ if not status_match:
     print(status)
     sys.exit()
 
+job_id = status_match.group(1)
 qrls_command = 'qrls', job_id
 process.check_output(qrls_command)
 print(status, end=' ')
