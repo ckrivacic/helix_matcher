@@ -18,7 +18,7 @@ def main():
                 ):
             if f.endswith('.ent.gz'):
                 print('Scanning {}'.format(f))
-                path = os.path.join(root, f)
+                path = os.path.join(pdb_prefix, subdir, f)
                 pdb = f[3:7]
                 print('Name: {}'.format(pdb))
                 pose = pose_from_file(path)
