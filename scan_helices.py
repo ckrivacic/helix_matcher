@@ -156,47 +156,51 @@ class PoseScanner(object):
         """
         if not name:
             name = self.pose.pdb_info().name()
+        chains = self.pose.split_by_chain()
         dssp = rosetta.core.scoring.dssp.Dssp(self.pose)
         positions = contiguous_secstruct(dssp.get_dssp_secstruct())
         helices_found = []
         # Calculate which residues in pose are at surface only once
-        surface = np.array(
-                pythonize_vector(self.selector.apply(self.pose))
-                )
-        for helix in positions['H']:
-            print(helix)
-            if helix[1] - helix[0] > 2:
-                helix_info = {}
-                helix_info['start'] = helix[0]
-                helix_info['stop'] = helix[1]
-                resis = []
-                positions = np.arange(helix[0], helix[1] + 1)
-                # med = int(median(positions)) - 1
-                # start = min(helix[1] - 3, med)
-                for i in range(helix[0], helix[1] + 1):
-                    res = {}
-                    for atom in ['n', 'ca', 'c']:
-                        res[atom] = numeric.xyzV_to_np_array(self.pose.residue(i).xyz(atom.upper()))
-                    resis.append(res)
+        ch = 0
+        for pose in chains:
+            surface = np.array(
+                    pythonize_vector(self.selector.apply(pose))
+                    )
+            for helix in positions['H']:
+                print(helix)
+                if helix[1] - helix[0] > 2:
+                    helix_info = {}
+                    helix_info['start'] = helix[0]
+                    helix_info['stop'] = helix[1]
+                    resis = []
+                    positions = np.arange(helix[0], helix[1] + 1)
+                    # med = int(median(positions)) - 1
+                    # start = min(helix[1] - 3, med)
+                    for i in range(helix[0], helix[1] + 1):
+                        res = {}
+                        for atom in ['n', 'ca', 'c']:
+                            res[atom] = numeric.xyzV_to_np_array(pose.residue(i).xyz(atom.upper()))
+                        resis.append(res)
 
-                avg_direction = find_avg_helix_direction(resis)
-                # This gives us direction only; need to also get center of
-                # mass and maybe length of helix to fully characterize position
-                # helix_info['direction'] = helix_direction(resis[0], resis[1], resis[2])
-                helix_info['direction'] = avg_direction
-                helix_info['centroid'] = find_resis_centroid(resis)
-                helix_info['nres'] = helix[1] - helix[0]
-                helix_info['length'] = helix_length(self.pose, helix)
-                helix_info['name'] = name
-                helix_info['vector'] = final_vector(helix_info['direction'], 
-                        helix_info['length'], helix_info['centroid'])
-                helices_found.append(helix_info)
-                helix_info['surface'] = surface[helix[0]-1:helix[1]-1]
-                helix_info['percent_exposed'] =\
-                        np.count_nonzero(helix_info['surface']) /\
-                        len(helix_info['surface'])
-                if test:
-                    plot_resis(resis, helix_info['vector'])
+                    avg_direction = find_avg_helix_direction(resis)
+                    # This gives us direction only; need to also get center of
+                    # mass and maybe length of helix to fully characterize position
+                    # helix_info['direction'] = helix_direction(resis[0], resis[1], resis[2])
+                    helix_info['direction'] = avg_direction
+                    helix_info['centroid'] = find_resis_centroid(resis)
+                    helix_info['nres'] = helix[1] - helix[0]
+                    helix_info['length'] = helix_length(pose, helix)
+                    helix_info['name'] = name + ch
+                    helix_info['vector'] = final_vector(helix_info['direction'], 
+                            helix_info['length'], helix_info['centroid'])
+                    helices_found.append(helix_info)
+                    helix_info['surface'] = surface[helix[0]-1:helix[1]-1]
+                    helix_info['percent_exposed'] =\
+                            np.count_nonzero(helix_info['surface']) /\
+                            len(helix_info['surface'])
+                    if test:
+                        plot_resis(resis, helix_info['vector'])
+                    ch += 1
 
         return helices_found
 

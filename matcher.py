@@ -4,6 +4,7 @@ from roseasy.utils import numeric
 from itertools import product
 import os, psutil
 import pickle
+from pyrosetta import init, pose_from_file
 '''
 Here's the plan.
 
@@ -43,9 +44,9 @@ def bin_array(array, bins):
 
 class HelixLookup(object):
 
-    def __init__(self, path, exposed_cutoff=0.5, binned_path=None):
-        self.db_path = path
-        self.df = pd.read_pickle(path)
+    def __init__(self, df, exposed_cutoff=0.5, binned_dict=None,
+            binned_path=None, query_df=None):
+        self.df = df
         self.df['idx'] = self.df.index
         self.df = self.df[self.df['percent_exposed'] > exposed_cutoff]
         self.degrees = 20
@@ -54,6 +55,12 @@ class HelixLookup(object):
         if binned_path:
             with open(binned_path, 'rb') as f:
                 self.binned = pickle.load(f)
+        if binned_dict:
+            self.binned = binned_dict
+        if query_df is not None:
+            self.query_df = query_df
+            self.query_df['idx'] = self.query_df.index
+            self.query_bins = self.bin_db(self.query_df)
 
     def setup_bins(self):
         nrbins = int(360//self.degrees) + 1
@@ -63,7 +70,7 @@ class HelixLookup(object):
         ntbins = int((tstop - tstart) // self.angstroms) + 1
         self.tbins = np.linspace(tstart, tstop, ntbins)
 
-    def bin_db(self):
+    def bin_db(self, df):
         '''
         Bins only need to be the lengths of the two ends of the helices
         from one another...
@@ -71,12 +78,15 @@ class HelixLookup(object):
 
         from scipy.spatial.transform import Rotation as R
         bin_size = 1
-        self.binned = {}
+        binned = {}
         i = 0
         j = 0
-        for name, group in self.df.groupby(['name']):
+        for name, group in df.groupby(['name']):
             i += 1
             if i%1000 == 0:
+                # For large databases, dump dictionaries when memory
+                # usage goes over 6 GB. Only use for forming initial lookup
+                # database.
                 mem_used = psutil.Process(os.getpid()).memory_info().rss
                 print('{} PDBs processed so far.'.format(i))
                 print('Currently using {} G of memory'.format(
@@ -87,8 +97,9 @@ class HelixLookup(object):
                     out = "binned/{}.pkl".format(j)
                     j += 1
                     with open(out, 'wb') as f:
-                        pickle.dump(self.binned, f)
-                    self.binned = {}
+                        pickle.dump(binned, f)
+                    del binned
+                    binned = {}
 
             for combination in product(group.T.to_dict().values(),
                     repeat=2):
@@ -103,29 +114,53 @@ class HelixLookup(object):
 
                 rbin = bin_array(rot, self.rbins)
                 tbin = bin_array(transform.translation, self.tbins)
-                if (tbin, rbin) not in self.binned:
-                    self.binned[(tbin, rbin)] = {}
-                if name not in self.binned[(tbin, rbin)]:
-                    self.binned[(tbin, rbin)][name] = []
-                self.binned[(tbin,
+                if (tbin, rbin) not in binned:
+                    binned[(tbin, rbin)] = {}
+                if name not in binned[(tbin, rbin)]:
+                    binned[(tbin, rbin)][name] = []
+                binned[(tbin,
                     rbin)][name].append((idx1, idx2))
 
                 rbin = bin_array(rot, self.rbins + (self.degrees/2))
                 tbin = bin_array(transform.translation, self.tbins +
                         (self.angstroms/2))
 
-                if (tbin, rbin) not in self.binned:
-                    self.binned[(tbin, rbin)] = {}
-                if name not in self.binned[(tbin, rbin)]:
-                    self.binned[(tbin, rbin)][name] = []
-                self.binned[(tbin,
+                if (tbin, rbin) not in binned:
+                    binned[(tbin, rbin)] = {}
+                if name not in binned[(tbin, rbin)]:
+                    binned[(tbin, rbin)][name] = []
+                binned[(tbin,
                     rbin)][name].append((idx1, idx2))
 
+        return binned
+
+
+    def match(self):
+        for key in self.query_bins:
+            print('-------------------------------------------------')
+            print('DICT FOR {}'.format(key))
+            for name in self.query_bins[key]:
+                try:
+                    print(self.binned[key])
+                except:
+                    print(self.query_bins[key])
 
 
 def test():
-    lookup = HelixLookup('dataframes/final.pkl',
-            binned_path='binned/final.pkl')
+    import scan_helices
+
+    test_path = 'test_files/6r9d.cif'
+    init()
+    pose = pose_from_file(test_path)
+    scanner = scan_helices.PoseScanner(pose)
+    helices = scanner.scan_pose_helices()
+    helices = pd.DataFrame(helices)
+    helices = helices[helices['percent_exposed'] > 0.5]
+    print(helices)
+
+    lookup = HelixLookup(pd.read_pickle('dataframes/final.pkl'),
+            binned_path='binned/final.pkl', query_df=helices)
+    lookup.match()
     # lookup.bin_db()
     # out = "binned/last.pkl"
     # with open(out, 'wb') as f:
