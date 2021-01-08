@@ -156,19 +156,21 @@ class PoseScanner(object):
         """
         if not name:
             name = self.pose.pdb_info().name()
+            print('NAM E')
+            print(name)
         chains = self.pose.split_by_chain()
-        dssp = rosetta.core.scoring.dssp.Dssp(self.pose)
-        positions = contiguous_secstruct(dssp.get_dssp_secstruct())
-        helices_found = []
         # Calculate which residues in pose are at surface only once
-        ch = 0
+        ch = 1
+        helices_found = []
         for pose in chains:
+            dssp = rosetta.core.scoring.dssp.Dssp(pose)
+            positions = contiguous_secstruct(dssp.get_dssp_secstruct())
             surface = np.array(
                     pythonize_vector(self.selector.apply(pose))
                     )
             for helix in positions['H']:
                 print(helix)
-                if helix[1] - helix[0] > 2:
+                if helix[1] - helix[0] > 1:
                     helix_info = {}
                     helix_info['start'] = helix[0]
                     helix_info['stop'] = helix[1]
@@ -190,24 +192,24 @@ class PoseScanner(object):
                     helix_info['centroid'] = find_resis_centroid(resis)
                     helix_info['nres'] = helix[1] - helix[0]
                     helix_info['length'] = helix_length(pose, helix)
-                    helix_info['name'] = name + ch
+                    helix_info['name'] = name + '_' + str(ch)
                     helix_info['vector'] = final_vector(helix_info['direction'], 
                             helix_info['length'], helix_info['centroid'])
-                    helices_found.append(helix_info)
                     helix_info['surface'] = surface[helix[0]-1:helix[1]-1]
                     helix_info['percent_exposed'] =\
                             np.count_nonzero(helix_info['surface']) /\
                             len(helix_info['surface'])
+                    helices_found.append(helix_info)
                     if test:
                         plot_resis(resis, helix_info['vector'])
-                    ch += 1
+            ch += 1
 
         return helices_found
 
 
 def main():
     init()
-    pose = pose_from_file('ksi_test.pdb')
+    pose = pose_from_file('test_files/ksi_test.pdb')
     # pose = pose_from_file('test_cas9.pdb.gz')
     import time
     start = time.time()
@@ -217,7 +219,8 @@ def main():
         time.time() - start
         ))
     helices = pd.DataFrame(helices)
-    print(helices['percent_exposed'])
+    print(helices)
+    print(helices['name'])
     helices.to_csv('out.csv')
 
 if __name__=='__main__':
