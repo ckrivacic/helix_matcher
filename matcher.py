@@ -4,6 +4,8 @@ from roseasy.utils import numeric
 from itertools import product
 import os, psutil, sys
 import pickle
+import subprocess
+from pymongo import MongoClient
 from pyrosetta import init, pose_from_file
 '''
 Here's the plan.
@@ -44,27 +46,46 @@ def bin_array(array, bins):
 
 class HelixLookup(object):
 
-    def __init__(self, df, exposed_cutoff=0.5, length_cutoff=10.8, binned_dict=None,
-            binned_path=None, query_df=None):
+    def __init__(self, df, exposed_cutoff=0.5, length_cutoff=10.8,
+            query_df=None, query_name=None, angstroms=2, degrees=20):
+        # Setup pymongo
+        # self.client = MongoClient()
+        self.client = MongoClient()
+        try:
+            print(self.client.server_info())
+        except:
+            print('Problem with MongoDB server connection; attempting to open...')
+            subprocess.Popen(['mongod', '--dbpath',
+                '/Users/codykrivacic/data/db'])
+            print(self.client.server_info())
+
+
         self.df = df
         self.df['idx'] = self.df.index
-        if exposed_cutoff is not None:
-            self.df = self.df[self.df['percent_exposed'] > exposed_cutoff]
-        if length_cutoff is not None:
-            self.df = self.df[self.df['length'] > length_cutoff]
-        self.degrees = 20
-        self.angstroms = 2
+        # TEMPORARY try/except just to speed things up (not feed a
+        # dataframe)
+        try:
+            if exposed_cutoff is not None:
+                self.df = self.df[self.df['percent_exposed'] > exposed_cutoff]
+            if length_cutoff is not None:
+                self.df = self.df[self.df['length'] > length_cutoff]
+        except:
+            pass
+        self.degrees = degrees
+        self.angstroms = angstroms
         self.setup_bins()
-        if binned_path:
-            with open(binned_path, 'rb') as f:
-                self.binned = pickle.load(f)
-        if binned_dict:
-            self.binned = binned_dict
+        binned_name = 'bins_{}A_{}D'.format(self.angstroms, self.degrees)
+
+        # Questioning whether to define this here or not.
+        self.binned = self.client['helix_bins'][binned_name]
+
         if query_df is not None:
             self.query_df = query_df
+            if query_name is None:
+                query_name = self.query_df.iloc[0]['name']
             self.query_df['idx'] = self.query_df.index
-            self.query_bins = self.bin_db(self.query_df)
-            print(self.query_bins)
+            self.query_bins = self.bin_db(self.query_df, query_name,
+                    check_dups=True)
 
     def setup_bins(self):
         nrbins = int(360//self.degrees) + 1
@@ -77,28 +98,21 @@ class HelixLookup(object):
     def update_bin_db(self):
         self.bin_db(self.df, 'helix_bins', check_name=True)
 
-    def bin_db(self, df, dbname, check_name=True):
+    def bin_db(self, df, dbname, check_name=True, check_dups=False):
         '''
         Save parameter tells pymongo where to save (must have MongoDB
         installed and running).
         '''
 
         from scipy.spatial.transform import Rotation as R
-        import pymongo
         import subprocess
-        from pymongo import MongoClient
         import time
 
-        client = MongoClient()
-        try:
-            client.server_info()
-        except:
-            print('Problem with MongoDB server connection; attempting to open...')
-            subprocess.Popen(['mongod', '--dbpath',
-                '/Users/codykrivacic/data/db'])
-        db = client[dbname]
-        bins = db['bins']
-        total_proteins = len(set(self.df['name']))
+        db = self.client[dbname]
+        bins = db['bins_{}A_{}D'.format(
+            self.angstroms, self.degrees
+            )]
+        total_proteins = len(set(df['name']))
         interval = 500
 
         # import shelve
@@ -108,11 +122,39 @@ class HelixLookup(object):
         # j = 0
         unsaved_docs = []
         start_time = time.time()
-        for name, group in df.groupby(['name']):
-            if check_name and len(list(bins.find({'name':name}))) > 0:
-                i += 1
-                continue
 
+        def update(bins, start_time, unsaved_docs, interval, i):
+            mem_used = psutil.Process(os.getpid()).memory_info().rss
+            print('{} of {} PDBs processed so far.'.format(
+                i, total_proteins))
+            print('Currently using {} G of memory'.format(
+                mem_used * 10**-9
+                ))
+            print('Saving to db...')
+            if len(unsaved_docs) > 0:
+                bins.insert_many(unsaved_docs, ordered=False)
+                bins.create_index([('bin', 'hashed')])
+                bins.create_index([('name', 'hashed')])
+            else:
+                print('Nothing to update for this batch.')
+            elapsed = time.time() - start_time
+            rate = interval / elapsed
+            remaining = (total_proteins - i) / rate / 3600
+            print('Done. 500 pdbs took {} seconds. Est. {} h remaining'.format(
+                elapsed, remaining
+                ))
+
+        for name, group in df.groupby(['name']):
+            if check_name:
+                if len(list(bins.find({'name':name}))) > 0:
+                    if i%interval == 0:
+                        i += 1
+                        update(bins, start_time, unsaved_docs, interval, i)
+                        start_time = time.time()
+                        unsaved_docs = []
+                    continue
+
+            i += 1
             for combination in product(group.T.to_dict().values(),
                     repeat=2):
                 if combination[0] != combination[1]:
@@ -147,7 +189,12 @@ class HelixLookup(object):
                                 'idx1':idx1,
                                 'idx2':idx2
                         }
-                        unsaved_docs.append(doc)
+                        if check_dups:
+                            if len(list(bins.find(doc))) == 0:
+                                unsaved_docs.append(doc)
+                        else:
+                            unsaved_docs.append(doc)
+
                         # bins.insert_one(doc)
                         # if bin_12 not in binned:
                             # binned[bin_12] = {}
@@ -155,26 +202,12 @@ class HelixLookup(object):
                             # binned[bin_12][name] = []
                         # binned[bin_12][name].append((idx1, idx2))
             if i%interval == 0:
+                update(bins, start_time, unsaved_docs, interval, i)
+                start_time = time.time()
+                unsaved_docs = []
                 # For large databases, dump dictionaries when memory
                 # usage goes over 6 GB. Only use for forming initial lookup
                 # database.
-                mem_used = psutil.Process(os.getpid()).memory_info().rss
-                print('{} of {} PDBs processed so far.'.format(
-                    i, total_proteins))
-                print('Currently using {} G of memory'.format(
-                    mem_used * 10**-9
-                    ))
-                print('Saving to db...')
-                bins.insert_many(unsaved_docs, ordered=False)
-                bins.create_index([('bin', 'hashed')])
-                elapsed = time.time() - start_time
-                rate = interval / elapsed
-                remaining = (total_proteins - i) / rate / 3600
-                print('Done. 500 pdbs took {} seconds. Est. {} h remaining'.format(
-                    elapsed, remaining
-                    ))
-                start_time = time.time()
-                unsaved_docs = []
                 # print('Syncing db...')
                 # binned.sync()
                 # print('Done.')
@@ -187,9 +220,11 @@ class HelixLookup(object):
                     # del binned
                     # binned = {}
 
-        print('Saving to db...')
-        bins.insert_many(unsaved_docs, ordered=False)
+        update(bins, start_time, unsaved_docs, interval, i)
         bins.create_index([('bin', 'hashed')])
+        bins.create_index([('name', 'hashed')])
+
+        return bins
 
 
     def score_match(self, list_of_index_pairs):
@@ -206,18 +241,25 @@ class HelixLookup(object):
 
 
     def match(self):
-        for key in self.query_bins:
+        names = []
+        for _bin in self.query_bins.find():
+            __bin = _bin['bin']
             print('-------------------------------------------------')
-            print('DICT FOR {}'.format(key))
-            for name in self.query_bins[key]:
-                try:
-                    print(self.binned[key])
-                    for name in self.binned[key]:
-                        print(name)
-                        print(self.binned[key][name])
-                except:
-                    print('BIN NOT IN DICT: {}'.format(key))
-                    print(self.query_bins[key])
+            print('DICT FOR {}'.format(__bin))
+            for result in self.binned.find({'bin':__bin}):
+                names.append(result['name'])
+
+        results = {}
+        for name in names:
+            results[name] = []
+            for _bin in self.binned.find({'name': name}):
+                for doc in self.query_bins.find({'bin':_bin['bin']}):
+                    results[name].append(self.query_bins['bin'])
+
+        for key in results:
+            print('PDB {} had {} matching results'.format(
+                key, len(results[key])
+                ))
 
 
 def test():
@@ -231,11 +273,13 @@ def test():
     helices = scanner.scan_pose_helices()
     helices = pd.DataFrame(helices)
     print(helices)
-    helices = helices[helices['percent_exposed'] > 0.25]
+    helices = helices[helices['percent_exposed'] > 0.3]
     print(helices)
 
-    lookup = HelixLookup(pd.read_pickle('dataframes/final.pkl'),
-            binned_path='binned_0p3/final.pkl', query_df=helices)
+    # lookup = HelixLookup(pd.read_pickle('dataframes/final.pkl'),
+            # query_df=helices, query_name='6r9d')
+    lookup = HelixLookup(pd.DataFrame(),
+            query_df=helices, query_name='6r9d', angstroms=5, degrees=30)
     lookup.match()
 
 
@@ -243,7 +287,8 @@ def make_hash_table():
     print('Loading database and setting up lookup object...')
     # length cutoff of 2 turns or 10.8 angstroms
     lookup = HelixLookup(pd.read_pickle('dataframes/final.pkl'),
-            exposed_cutoff=0.3, length_cutoff=10.8)
+            exposed_cutoff=0.3, length_cutoff=10.8, angstroms=5,
+            degrees=30)
     print('Done.')
     # binned = lookup.bin_db(lookup.df)
     lookup.update_bin_db()
@@ -253,5 +298,5 @@ def make_hash_table():
 
 
 if __name__=='__main__':
-    # test()
-    make_hash_table()
+    test()
+    # make_hash_table()
