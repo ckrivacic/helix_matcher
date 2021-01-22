@@ -71,11 +71,24 @@ def match_2_helices():
 
 
 def final_vector(direction, length, centroid):
+    rotation_normalizer = np.cross(
+            np.array([0,0,1]),
+            direction
+            )
+    if np.array_equal(rotation_normalizer, [0,0,0]):
+        rotation_normalizer = np.array([1,0,0])
+
+    assert np.dot(rotation_normalizer, np.array([0,0,1])) == 0
+    assert np.dot(rotation_normalizer, direction) == 0
+            
+    rotation_norm_1 = rotation_normalizer + centroid
+    rotation_norm_2 = centroid - rotation_normalizer
+
     vector = direction * length
     line_center = vector / 2
     top = vector + centroid - line_center
     bot = centroid - line_center
-    return np.array([bot, top])
+    return np.array([bot, centroid, rotation_norm_1, rotation_norm_2, top])
 
 
 def plot_resis(resis, vector):
@@ -99,10 +112,13 @@ def plot_resis(resis, vector):
 
     centroid = find_resis_centroid(resis)
     vector_moved = vector + centroid
-    x = [vector[0][0], vector[1][0]]
-    y = [vector[0][1], vector[1][1]]
-    z = [vector[0][2], vector[1][2]]
-    ax.plot(x, y, z, color='pink')
+    x = [point[0] for point in vector]
+    y = [point[1] for point in vector]
+    z = [point[2] for point in vector]
+    # x = [vector[0][0], vector[1][0]]
+    # y = [vector[0][1], vector[1][1]]
+    # z = [vector[0][2], vector[1][2]]
+    ax.plot(x, y, z, color='darkgray', linewidth=4)
     # x = [0, vector[0]]
     # y = [0, vector[1]]
     # z = [0, vector[2]]
@@ -214,7 +230,7 @@ def main():
     import time
     start = time.time()
     scanner = PoseScanner(pose)
-    helices = scanner.scan_pose_helices()
+    helices = scanner.scan_pose_helices(test=True)
     print('CALC TIME = {}'.format(
         time.time() - start
         ))

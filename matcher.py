@@ -47,7 +47,8 @@ def bin_array(array, bins):
 class HelixLookup(object):
 
     def __init__(self, df, exposed_cutoff=0.5, length_cutoff=10.8,
-            query_df=None, query_name=None, angstroms=2, degrees=20):
+            query_df=None, query_name=None, angstroms=2, degrees=20,
+            reset_querydb=False):
         # Setup pymongo
         # self.client = MongoClient()
         self.client = MongoClient()
@@ -84,6 +85,10 @@ class HelixLookup(object):
             if query_name is None:
                 query_name = self.query_df.iloc[0]['name']
             self.query_df['idx'] = self.query_df.index
+            if reset_querydb:
+                print('Deleting old query db')
+                client = MongoClient()
+                client[query_name][binned_name].drop()
             self.query_bins = self.bin_db(self.query_df, query_name,
                     check_dups=True)
 
@@ -245,19 +250,26 @@ class HelixLookup(object):
         for _bin in self.query_bins.find():
             __bin = _bin['bin']
             print('-------------------------------------------------')
-            print('DICT FOR {}'.format(__bin))
+            print('RESULTS FOR {}'.format(__bin))
             for result in self.binned.find({'bin':__bin}):
-                names.append(result['name'])
+                print(result)
+                names.append((result['name'], result['idx1']))
+                names.append((result['name'], result['idx2']))
+
+        print('Forward search done.')
+        names = set(names)
+        print(names)
 
         results = {}
         for name in names:
             results[name] = []
-            for _bin in self.binned.find({'name': name}):
-                for doc in self.query_bins.find({'bin':_bin['bin']}):
-                    results[name].append(self.query_bins['bin'])
+            for _bin in self.binned.find({'name': name[0]}):
+                if _bin['idx1'] == name[1]:
+                    for doc in self.query_bins.find({'bin':_bin['bin']}):
+                        results[name].append(self.query_bins['bin'])
 
         for key in results:
-            print('PDB {} had {} matching results'.format(
+            print('PDB {} had {} matching transformations'.format(
                 key, len(results[key])
                 ))
 
@@ -267,7 +279,7 @@ def test():
 
     test_path = 'test_files/6r9d.cif'
     init()
-    pose = pose_from_file(test_path).split_by_chain(1)
+    pose = pose_from_file(test_path).split_by_chain(2)
     print(pose.size())
     scanner = scan_helices.PoseScanner(pose)
     helices = scanner.scan_pose_helices()
@@ -279,7 +291,8 @@ def test():
     # lookup = HelixLookup(pd.read_pickle('dataframes/final.pkl'),
             # query_df=helices, query_name='6r9d')
     lookup = HelixLookup(pd.DataFrame(),
-            query_df=helices, query_name='6r9d', angstroms=5, degrees=30)
+            query_df=helices, query_name='6r9d', angstroms=5,
+            degrees=30, reset_querydb=True)
     lookup.match()
 
 
