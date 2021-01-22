@@ -88,7 +88,7 @@ def final_vector(direction, length, centroid):
     line_center = vector / 2
     top = vector + centroid - line_center
     bot = centroid - line_center
-    return np.array([bot, centroid, rotation_norm_1, rotation_norm_2, top])
+    return np.array([bot, rotation_norm_1, rotation_norm_2, top])
 
 
 def plot_resis(resis, vector):
