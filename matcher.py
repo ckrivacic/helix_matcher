@@ -8,6 +8,7 @@ import subprocess
 from scan_helices import final_vector
 from pymongo import MongoClient
 from pyrosetta import init, pose_from_file
+import networkx as nx
 '''
 Here's the plan.
 
@@ -85,6 +86,60 @@ def relative_position(row1, row2, vectortype='normalized_vector'):
     # plot_vectors([norm_v1, norm_v2], color='black')
 
     return centroid_dist, abc, bcd, dihedral
+
+
+class Match(object):
+    '''
+    Class to construct a potential match.
+    '''
+    def __init__(self, name, query_db, main_db):
+        self.name = name
+        self.query = query_db
+        self.db = main_db.find({'name':name})
+        self.graph = nx.Graph()
+        # Track helix pairs so we don't add them to the graph more than
+        # once
+        self.seen_nodes = set()
+
+    def max_subgraph(self):
+        '''
+        Finds dense subgraphs, which represent compatible sets of helix
+        pairs between the query helices and the database PDB. The
+        longest such subgraph represents the best overlay of the PDB
+        with the set of query helices.
+        '''
+        for f in nx.find_cliques(self.graph):
+            print(f)
+
+    def plot_graph(self):
+        import matplotlib.pyplot as plt
+        plt.subplot(111)
+        nx.draw(self.graph, with_labels=True, font_weight='bold')
+        plt.show()
+
+    def find_edges(self):
+        '''
+        Populate the graph with nodes and edges.
+        Each node consists of a pair of indices, one from the main
+        database and one from the query database. This pairing
+        represents the case where the helix in the first index is
+        overlaid on the helix of the second index. Edges represent
+        compatibility between adjacent nodes.
+        '''
+        for doc in self.db:
+            compatible_bins = self.query.find({'bin': doc['bin']})
+            for result in compatible_bins:
+                idx_pair1 = (doc['idx1'], result['idx1'])
+                idx_pair2 = (doc['idx2'], result['idx2'])
+                # Track which nodes have been sampled
+                if idx_pair1 not in self.seen_nodes:
+                    self.seen_nodes.add(idx_pair1)
+                    self.graph.add_node(idx_pair1)
+                if idx_pair2 not in self.seen_nodes:
+                    self.seen_nodes.add(idx_pair2)
+                    self.graph.add_node(idx_pair2)
+                self.graph.add_edge(idx_pair1, idx_pair2)
+
 
 
 class HelixLookup(object):
@@ -320,8 +375,8 @@ class HelixLookup(object):
             print('RESULTS FOR {}'.format(__bin))
             for result in self.binned.find({'bin':__bin}):
                 print(result)
-                names.append((result['name'], result['idx1']))
-                names.append((result['name'], result['idx2']))
+                names.append(result['name'])
+                names.append(result['name'])
 
         print('Forward search done.')
         names = set(names)
@@ -330,27 +385,32 @@ class HelixLookup(object):
         results = {}
         for name in names:
             print('-------------------------------------------------')
-            results[name] = []
-            print('searching {}'.format(name))
-            for _bin in self.binned.find({'name': name[0]}):
-                if _bin['idx1'] == name[1]:
-                    print('-------')
-                    print(_bin)
-                    for doc in self.query_bins.find({'bin':_bin['bin']}):
-                        print('MATCH:')
-                        results[name].append((doc['idx1'], doc['idx2']))
-                        print(doc)
+            print('Name: {}'.format(name))
+            match = Match(name, self.query_bins, self.binned)
+            match.find_edges()
+            match.max_subgraph()
+            match.plot_graph()
+            # results[name] = []
+            # print('searching {}'.format(name))
+            # for _bin in self.binned.find({'name': name[0]}):
+                # if _bin['idx1'] == name[1]:
+                    # print('-------')
+                    # print(_bin)
+                    # for doc in self.query_bins.find({'bin':_bin['bin']}):
+                        # print('MATCH:')
+                        # results[name].append((doc['idx1'], doc['idx2']))
+                        # print(doc)
 
-        for key in results:
-            print('------------------RESULTS FOR {}----------------'.format(
-                            key
-                        ))
-            for pair in set(results[key]):
-                print(pair)
-        for key in results:
-            print('PDB {} had {} matching transformations'.format(
-                key, len(set(results[key]))
-                ))
+        # for key in results:
+            # print('------------------RESULTS FOR {}----------------'.format(
+                            # key
+                        # ))
+            # for pair in set(results[key]):
+                # print(pair)
+        # for key in results:
+            # print('PDB {} had {} matching transformations'.format(
+                # key, len(set(results[key]))
+                # ))
 
 
 def test():
