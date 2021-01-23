@@ -48,7 +48,7 @@ def main():
     stop = idx * num + num - 1
     print('START: {}'.format(start))
     print('STOP: {}'.format(stop))
-    with open gzip.open('test_files/nrpdb.gz', 'rb') as f:
+    with gzip.open('test_files/nrpdb.gz', 'rb') as f:
         lines = f.readlines()[start:stop]
     errors = []
     for line in lines:
