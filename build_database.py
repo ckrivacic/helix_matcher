@@ -61,6 +61,7 @@ def main():
         if not line.startswith('#'):
             try:
                 print('Opening from line {}'.format(line))
+                sys.stdout.flush()
                 pose = get_pose(str(line))
                 if pose:
                     scanner = PoseScanner(pose)
