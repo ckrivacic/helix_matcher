@@ -100,7 +100,7 @@ def main():
         idx
         ))
 
-    with open('dataframes/errors/{}.e', 'w') as f:
+    with open('dataframes/errors/{}.e'.format(idx), 'w') as f:
         for err in errors:
             f.write(err + '\n')
 
