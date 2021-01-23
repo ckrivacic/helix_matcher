@@ -24,22 +24,27 @@ def get_pose(line):
     pdb = fields[0].lower()
     chain = fields[1]
     rep = fields[5]
-    path = os.path.join(pdb_prefix, pdb[1:3], 'pdb{}.ent.gz'.format(
-        pdb
-        ))
-    pose = pose_from_file(path)
-    pdbinfo = pose.pdb_info()
-    i = 1
-    rosetta_number = pdbinfo.pdb2pose(
-        chain, i)
-    while rosetta_number == 0:
-        i += 1
+    if rep:
+        path = os.path.join(pdb_prefix, pdb[1:3], 'pdb{}.ent.gz'.format(
+            pdb
+            ))
+        pose = pose_from_file(path)
+        pdbinfo = pose.pdb_info()
+        i = 1
         rosetta_number = pdbinfo.pdb2pose(
-                chain, i
-                )
-    chain = pose.chain(rosetta_number)
+            chain, i)
+        while rosetta_number == 0:
+            i += 1
+            rosetta_number = pdbinfo.pdb2pose(
+                    chain, i
+                    )
+            if i > pose.size():
+                break
+        chain = pose.chain(rosetta_number)
 
-    return pose.split_by_chain(chain)
+        return pose.split_by_chain(chain)
+    else:
+        return None
 
 def main():
     init('-ignore_unrecognized_res')
@@ -57,12 +62,13 @@ def main():
             try:
                 print('Opening from line {}'.format(line))
                 pose = get_pose(str(line))
-                scanner = PoseScanner(pose)
-                helices = pd.DataFrame(
-                        scanner.scan_pose_helices(name=pdb)
-                        )
+                if pose:
+                    scanner = PoseScanner(pose)
+                    helices = pd.DataFrame(
+                            scanner.scan_pose_helices(name=pdb)
+                            )
 
-                df = pd.concat([df, helices], ignore_index=True)
+                    df = pd.concat([df, helices], ignore_index=True)
             except:
                 print("Error scanning line: \n{}".format(line))
                 errors.append(line)
