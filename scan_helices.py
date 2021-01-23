@@ -71,24 +71,25 @@ def match_2_helices():
 
 
 def final_vector(direction, length, centroid):
-    rotation_normalizer = np.cross(
-            np.array([0,0,1]),
-            direction
-            )
-    if np.array_equal(rotation_normalizer, [0,0,0]):
-        rotation_normalizer = np.array([1,0,0])
+    # rotation_normalizer = np.cross(
+            # np.array([0,0,1]),
+            # direction
+            # )
+    # if np.array_equal(rotation_normalizer, [0,0,0]):
+        # rotation_normalizer = np.array([1,0,0])
 
-    assert np.dot(rotation_normalizer, np.array([0,0,1])) == 0
-    assert np.dot(rotation_normalizer, direction) == 0
+    # assert np.dot(rotation_normalizer, np.array([0,0,1])) == 0
+    # assert np.dot(rotation_normalizer, direction) == 0
             
-    rotation_norm_1 = rotation_normalizer + centroid
-    rotation_norm_2 = centroid - rotation_normalizer
+    # rotation_norm_1 = rotation_normalizer + centroid
+    # rotation_norm_2 = centroid - rotation_normalizer
 
     vector = direction * length
     line_center = vector / 2
     top = vector + centroid - line_center
     bot = centroid - line_center
-    return np.array([bot, rotation_norm_1, rotation_norm_2, top])
+    # return np.array([bot, rotation_norm_1, rotation_norm_2, top])
+    return np.array([bot, top])
 
 
 def plot_resis(resis, vector):
@@ -110,8 +111,8 @@ def plot_resis(resis, vector):
             ax.scatter(resi[atom][0], resi[atom][1], resi[atom][2],
                     color=colordict[atom])
 
-    centroid = find_resis_centroid(resis)
-    vector_moved = vector + centroid
+    # centroid = find_resis_centroid(resis)
+    # vector_moved = vector + centroid
     x = [point[0] for point in vector]
     y = [point[1] for point in vector]
     z = [point[2] for point in vector]
@@ -225,18 +226,19 @@ class PoseScanner(object):
 
 def main():
     init()
-    pose = pose_from_file('test_files/ksi_test.pdb')
+    pose = pose_from_file('test_files/6r9d.cif')
     # pose = pose_from_file('test_cas9.pdb.gz')
     import time
     start = time.time()
     scanner = PoseScanner(pose)
-    helices = scanner.scan_pose_helices(test=True)
+    helices = scanner.scan_pose_helices(test=False)
     print('CALC TIME = {}'.format(
         time.time() - start
         ))
     helices = pd.DataFrame(helices)
     print(helices)
     print(helices['name'])
+    helices.to_pickle('out.pkl')
     helices.to_csv('out.csv')
 
 if __name__=='__main__':

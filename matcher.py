@@ -1,10 +1,11 @@
 import pandas as pd
 import numpy as np
-from roseasy.utils import numeric
+import numeric
 from itertools import product
 import os, psutil, sys
 import pickle
 import subprocess
+from scan_helices import final_vector
 from pymongo import MongoClient
 from pyrosetta import init, pose_from_file
 '''
@@ -35,6 +36,19 @@ superposition matrices as the keys.
 '''
 
 
+def plot_vectors(vectors, color='darkgray'):
+    from mpl_toolkits.mplot3d import Axes3D
+    import matplotlib.pyplot as plt
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    for vector in vectors:
+        x = [point[0] for point in vector]
+        y = [point[1] for point in vector]
+        z = [point[2] for point in vector]
+        ax.plot(x, y, z, color=color, linewidth=4)
+    plt.show()
+
+
 def bin_array(array, bins):
     '''Digitize a numpy array'''
     inds = np.digitize(array, bins)
@@ -44,13 +58,46 @@ def bin_array(array, bins):
     return binned
 
 
+def relative_position(row1, row2, vectortype='normalized_vector'):
+    '''
+    Gives the internal relative orientation of two lines, given their
+    row from the pandas dataframe created in scan_helices.
+    The relative orientation of two lines should be able to be described
+    with just 4 parameters, since they are 2D objects in 3D space. If we
+    have lines consisting of points [a,b] and [c,d], those parameters are:
+    - The distance between their centroids
+    - Angle abc
+    - Angle bcd
+    - Dihedral abcd
+    '''
+
+    def vector_length(vector):
+        return numeric.euclidean_distance(vector[1], vector[0])
+
+    norm_v1 = row1[vectortype]
+    norm_v2 = row2[vectortype]
+    centroid_dist = numeric.euclidean_distance(row1['centroid'],
+            row2['centroid'])
+    abc = numeric.angle(norm_v1[0], norm_v1[1], norm_v2[0])
+    bcd = numeric.angle(norm_v1[1], norm_v2[0], norm_v2[1])
+    dihedral = numeric.dihedral(norm_v1[0], norm_v1[1], norm_v2[0],
+            norm_v2[1])
+    # plot_vectors([norm_v1, norm_v2], color='black')
+
+    return centroid_dist, abc, bcd, dihedral
+
+
 class HelixLookup(object):
+    '''
+    Class to handle binning and matching of helix databases. This maybe
+    should be two classes, one for binning and one for matching, but
+    this is it for now.
+    '''
 
     def __init__(self, df, exposed_cutoff=0.5, length_cutoff=10.8,
             query_df=None, query_name=None, angstroms=2, degrees=20,
-            reset_querydb=False):
+            reset_querydb=False, dbname='helix_bins'):
         # Setup pymongo
-        # self.client = MongoClient()
         self.client = MongoClient()
         try:
             print(self.client.server_info())
@@ -61,8 +108,13 @@ class HelixLookup(object):
             print(self.client.server_info())
 
 
+        # Dataframe consisting of vectors (is this needed when not
+        # creating database?)
         self.df = df
         self.df['idx'] = self.df.index
+        if 'normalized_vector' not in self.df.columns:
+            self.df['normalized_vector'] = self.df.apply(lambda x:
+                    final_vector(x['direction'], 1, x['centroid']), axis=1)
         # TEMPORARY try/except just to speed things up (not feed a
         # dataframe)
         try:
@@ -78,13 +130,19 @@ class HelixLookup(object):
         binned_name = 'bins_{}A_{}D'.format(self.angstroms, self.degrees)
 
         # Questioning whether to define this here or not.
-        self.binned = self.client['helix_bins'][binned_name]
+        self.dbname = dbname
+        self.binned = self.client[self.dbname][binned_name]
 
         if query_df is not None:
             self.query_df = query_df
             if query_name is None:
                 query_name = self.query_df.iloc[0]['name']
             self.query_df['idx'] = self.query_df.index
+            if 'normalized_vector' not in self.query_df.columns:
+                self.query_df['normalized_vector'] =\
+                        self.query_df.apply(lambda x:
+                            final_vector(x['direction'], 1, x['centroid']),
+                            axis=1)
             if reset_querydb:
                 print('Deleting old query db')
                 client = MongoClient()
@@ -101,7 +159,7 @@ class HelixLookup(object):
         self.tbins = np.linspace(tstart, tstop, ntbins)
 
     def update_bin_db(self):
-        self.bin_db(self.df, 'helix_bins', check_name=True)
+        self.bin_db(self.df, self.dbname, check_name=True)
 
     def bin_db(self, df, dbname, check_name=True, check_dups=False):
         '''
@@ -163,30 +221,38 @@ class HelixLookup(object):
             for combination in product(group.T.to_dict().values(),
                     repeat=2):
                 if combination[0] != combination[1]:
+                    # vector1 = combination[0]['vector']
+                    # vector2 = combination[1]['vector']
+
+                    # plot_vectors([vector1, vector2], color='purple')
+
                     idx1 = combination[0]['idx']
                     idx2 = combination[1]['idx']
-                    transform = numeric.Transformation(combination[0]['vector'],
-                            combination[1]['vector'])
-                    rot = R.from_matrix(transform.rotation)
-                    rot = rot.as_euler('xyz', degrees=True)
-                    # combination[0]['rotation'] = rot
-                    # combination[0]['translation'] = transform.translation
+                    # transform = numeric.Transformation(vector1,
+                            # vector2)
+                    # rot = R.from_matrix(transform.rotation)
+                    print('------------------------------------')
+                    print(combination[0])
+                    print(combination[1])
+                    # rot = rot.as_euler('ZYZ', degrees=True)
+                    dist, angle1, angle2, dihedral =\
+                            relative_position(combination[0], combination[1])
+                    dist = np.array([dist])
+                    angles = np.array([angle1, angle2, dihedral])
 
-                    rbin = bin_array(rot, self.rbins)
-                    tbin = bin_array(transform.translation, self.tbins)
-                    rbin2 = bin_array(rot, self.rbins + (self.degrees/2))
-                    tbin2 = bin_array(transform.translation, self.tbins +
+                    rbin = bin_array(angles, self.rbins)
+                    tbin = bin_array(dist, self.tbins)
+                    rbin2 = bin_array(angles, self.rbins + (self.degrees/2))
+                    tbin2 = bin_array(dist, self.tbins +
                             (self.angstroms/2))
 
                     x = [tbin[0], tbin2[0]]
-                    y = [tbin[1], tbin2[1]]
-                    z = [tbin[2], tbin2[2]]
-                    phi = [rbin[0], rbin2[0]]
-                    psi = [rbin[1], rbin2[1]]
-                    om = [rbin[2], rbin2[2]]
+                    abc = [rbin[0], rbin2[0]]
+                    bcd = [rbin[1], rbin2[1]]
+                    dih = [rbin[2], rbin2[2]]
 
-                    for bin_12 in product(x, y, z, phi, psi,
-                        om):
+                    for bin_12 in product(x, abc, bcd,
+                        dih):
                         bin_12 = ' '.join(map(str, bin_12))
                         doc = {
                                 'bin':bin_12, 
@@ -194,6 +260,7 @@ class HelixLookup(object):
                                 'idx1':idx1,
                                 'idx2':idx2
                         }
+                        print(bin_12)
                         if check_dups:
                             if len(list(bins.find(doc))) == 0:
                                 unsaved_docs.append(doc)
@@ -262,15 +329,27 @@ class HelixLookup(object):
 
         results = {}
         for name in names:
+            print('-------------------------------------------------')
             results[name] = []
+            print('searching {}'.format(name))
             for _bin in self.binned.find({'name': name[0]}):
                 if _bin['idx1'] == name[1]:
+                    print('-------')
+                    print(_bin)
                     for doc in self.query_bins.find({'bin':_bin['bin']}):
-                        results[name].append(self.query_bins['bin'])
+                        print('MATCH:')
+                        results[name].append((doc['idx1'], doc['idx2']))
+                        print(doc)
 
         for key in results:
+            print('------------------RESULTS FOR {}----------------'.format(
+                            key
+                        ))
+            for pair in set(results[key]):
+                print(pair)
+        for key in results:
             print('PDB {} had {} matching transformations'.format(
-                key, len(results[key])
+                key, len(set(results[key]))
                 ))
 
 
@@ -287,12 +366,14 @@ def test():
     print(helices)
     helices = helices[helices['percent_exposed'] > 0.3]
     print(helices)
+    print(helices.shape)
+    print(helices['name'])
 
     # lookup = HelixLookup(pd.read_pickle('dataframes/final.pkl'),
             # query_df=helices, query_name='6r9d')
     lookup = HelixLookup(pd.DataFrame(),
             query_df=helices, query_name='6r9d', angstroms=5,
-            degrees=30, reset_querydb=True)
+            degrees=30, reset_querydb=True, dbname='test_bins')
     lookup.match()
 
 
@@ -309,7 +390,16 @@ def make_hash_table():
     # with open(out, 'wb') as f:
         # pickle.dump(binned, f)
 
+def make_test_hash_table():
+    client = MongoClient()
+    client['test_bins']['bins_5A_30D'].drop()
+    lookup=HelixLookup(pd.read_pickle('out.pkl'), exposed_cutoff=0.3,
+            length_cutoff=10.8, angstroms=5, degrees=30,
+            dbname='test_bins')
+    lookup.update_bin_db()
+
 
 if __name__=='__main__':
     test()
     # make_hash_table()
+    # make_test_hash_table()
