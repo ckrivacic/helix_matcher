@@ -100,7 +100,9 @@ def main():
         idx
         ))
 
-    with open('dataframes/errors/{}.e'.format(idx), 'w') as f:
+    errorlog = os.path.join('dataframes', 'errors',
+            'helix_scan.e{}'.format(idx))
+    with open(errorlog, 'w') as f:
         for err in errors:
             f.write(err + '\n')
 
