@@ -369,25 +369,29 @@ class HelixLookup(object):
         names = []
         for _bin in self.query_bins.find():
             __bin = _bin['bin']
-            print('-------------------------------------------------')
-            print('RESULTS FOR {}'.format(__bin))
+            # print('-------------------------------------------------')
+            # print('RESULTS FOR {}'.format(__bin))
             for result in self.binned.find({'bin':__bin}):
-                print(result)
-                names.append(result['name'])
+                # print(result)
+                # names.append(result['name'])
                 names.append(result['name'])
 
         print('Forward search done.')
         names = set(names)
         print(names)
+        print(len(names))
 
         results = {}
+        # TEMP
+
+        sys.exit()
         for name in names:
             print('-------------------------------------------------')
             print('Name: {}'.format(name))
             match = Match(name, self.query_bins, self.binned)
             match.find_edges()
             match.max_subgraph()
-            match.plot_graph()
+            # match.plot_graph()
             # results[name] = []
             # print('searching {}'.format(name))
             # for _bin in self.binned.find({'name': name[0]}):
@@ -431,7 +435,8 @@ def test():
             # query_df=helices, query_name='6r9d')
     lookup = HelixLookup(pd.DataFrame(),
             query_df=helices, query_name='6r9d', angstroms=5,
-            degrees=30, reset_querydb=True, dbname='test_bins')
+            degrees=30, reset_querydb=True)
+            # degrees=30, reset_querydb=True, dbname='test_bins')
     lookup.match()
 
 
