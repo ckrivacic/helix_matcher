@@ -74,6 +74,7 @@ def main():
                 print("Error scanning line: \n{}".format(line))
                 print('Error was:')
                 print(e)
+                sys.stdout.flush()
                 errors.append(line)
     # for subdir in sorted(os.listdir(pdb_prefix))[idx*num:idx*num + num - 1]:
         # for f in os.listdir(
