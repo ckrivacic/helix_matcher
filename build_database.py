@@ -42,7 +42,7 @@ def get_pose(line):
                 break
         chain = pose.chain(rosetta_number)
 
-        return pose.split_by_chain(chain)
+        return pose.split_by_chain(chain), pdb
     else:
         return None
 
@@ -62,7 +62,7 @@ def main():
             try:
                 print('Opening from line {}'.format(line))
                 sys.stdout.flush()
-                pose = get_pose(str(line))
+                pose, pdb = get_pose(str(line))
                 if pose:
                     scanner = PoseScanner(pose)
                     helices = pd.DataFrame(
