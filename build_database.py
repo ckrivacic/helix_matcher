@@ -21,7 +21,7 @@ def test_iterate():
 
 def get_pose(line):
     fields = list(filter(None, line.split(' ')))
-    pdb = fields[0]
+    pdb = fields[0].lower()
     chain = fields[1]
     rep = fields[5]
     path = os.path.join(pdb_prefix, pdb[1:3], 'pdb{}.end.gz'.format(
