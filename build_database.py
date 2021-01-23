@@ -24,7 +24,7 @@ def get_pose(line):
     pdb = fields[0].lower()
     chain = fields[1]
     rep = fields[5]
-    path = os.path.join(pdb_prefix, pdb[1:3], 'pdb{}.end.gz'.format(
+    path = os.path.join(pdb_prefix, pdb[1:3], 'pdb{}.ent.gz'.format(
         pdb
         ))
     pose = pose_from_file(path)
