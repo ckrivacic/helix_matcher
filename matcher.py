@@ -236,7 +236,6 @@ class HelixLookup(object):
 
         # binned = shelve.open('binned_0p3/hashtable', 'c', writeback=True)
         i = 0
-        # j = 0
         unsaved_docs = []
         start_time = time.time()
 
