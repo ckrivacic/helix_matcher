@@ -51,11 +51,12 @@ def plot_vectors(vectors, color='darkgray'):
 
 
 def bin_array(array, bins):
-    '''Digitize a numpy array'''
+    '''
+    Digitize a numpy array.
+    TO DO: Circularize the binning of angles somehow.
+    '''
     inds = np.digitize(array, bins)
-    # print(inds)
     binned = tuple([bins[inds[n]-1] for n in range(array.size)])
-    # print(binned)
     return binned
 
 
@@ -71,9 +72,6 @@ def relative_position(row1, row2, vectortype='normalized_vector'):
     - Angle bcd
     - Dihedral abcd
     '''
-
-    def vector_length(vector):
-        return numeric.euclidean_distance(vector[1], vector[0])
 
     norm_v1 = row1[vectortype]
     norm_v2 = row2[vectortype]
@@ -151,7 +149,7 @@ class HelixLookup(object):
 
     def __init__(self, df, exposed_cutoff=0.5, length_cutoff=10.8,
             query_df=None, query_name=None, angstroms=2, degrees=20,
-            reset_querydb=False, dbname='helix_bins'):
+            reset_querydb=False, dbname='helix_bins', verbose=False):
         # Setup pymongo
         self.client = MongoClient()
         try:
@@ -162,7 +160,7 @@ class HelixLookup(object):
                 '/Users/codykrivacic/data/db'])
             print(self.client.server_info())
 
-
+        self.verbose = verbose
         # Dataframe consisting of vectors (is this needed when not
         # creating database?)
         self.df = df
@@ -188,6 +186,7 @@ class HelixLookup(object):
         self.dbname = dbname
         self.binned = self.client[self.dbname][binned_name]
 
+        # Setting up the query df, if provided.
         if query_df is not None:
             self.query_df = query_df
             if query_name is None:
@@ -286,9 +285,10 @@ class HelixLookup(object):
                     # transform = numeric.Transformation(vector1,
                             # vector2)
                     # rot = R.from_matrix(transform.rotation)
-                    print('------------------------------------')
-                    print(combination[0])
-                    print(combination[1])
+                    if self.verbose:
+                        print('------------------------------------')
+                        print(combination[0])
+                        print(combination[1])
                     # rot = rot.as_euler('ZYZ', degrees=True)
                     dist, angle1, angle2, dihedral =\
                             relative_position(combination[0], combination[1])
@@ -315,7 +315,6 @@ class HelixLookup(object):
                                 'idx1':idx1,
                                 'idx2':idx2
                         }
-                        print(bin_12)
                         if check_dups:
                             if len(list(bins.find(doc))) == 0:
                                 unsaved_docs.append(doc)
