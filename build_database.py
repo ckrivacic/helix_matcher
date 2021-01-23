@@ -70,8 +70,10 @@ def main():
                             )
 
                     df = pd.concat([df, helices], ignore_index=True)
-            except:
+            except Exception as e:
                 print("Error scanning line: \n{}".format(line))
+                print('Error was:')
+                print(e)
                 errors.append(line)
     # for subdir in sorted(os.listdir(pdb_prefix))[idx*num:idx*num + num - 1]:
         # for f in os.listdir(
