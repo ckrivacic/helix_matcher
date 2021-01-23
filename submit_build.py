@@ -2,12 +2,14 @@ import glob, re
 from klab import process
 
 def find_nstruct(pdb_prefix):
-    file_list = glob.glob(pdb_prefix + '*')
-    return len(file_list)
+    f = gzip.open('test_files/nrpdb.gz', 'rb')
+    lines = list(f.readlines())
+    # file_list = glob.glob(pdb_prefix + '*')
+    return len(lines)
 
 
 pdb_prefix = '/wynton/home/database/pdb/remediated/pdb/'
-nstruct = int(find_nstruct(pdb_prefix) / 5)
+nstruct = int(find_nstruct(pdb_prefix) / 1000)
 max_runtime = '10:00:00'
 max_memory = '6G'
 
