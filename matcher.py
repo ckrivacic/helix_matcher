@@ -9,6 +9,7 @@ from scan_helices import final_vector
 from pymongo import MongoClient
 from pyrosetta import init, pose_from_file
 import networkx as nx
+import collections
 '''
 Here's the plan.
 
@@ -108,6 +109,7 @@ class Match(object):
         '''
         for f in nx.find_cliques(self.graph):
             print(f)
+            print(len(f))
 
     def plot_graph(self):
         import matplotlib.pyplot as plt
@@ -273,7 +275,7 @@ class HelixLookup(object):
             i += 1
             for combination in product(group.T.to_dict().values(),
                     repeat=2):
-                if combination[0] != combination[1]:
+                if combination[0]['idx'] != combination[1]['idx']:
                     # vector1 = combination[0]['vector']
                     # vector2 = combination[1]['vector']
 
@@ -377,14 +379,23 @@ class HelixLookup(object):
                 names.append(result['name'])
 
         print('Forward search done.')
-        names = set(names)
+
+        min_matches = 1000
+        names = [item for item, count in
+                collections.Counter(names).items() if
+                count >= min_matches]
+        names.append('6r9d_1')
+        names.insert(0,'6r9d_2')
+        names.append('6r9d_3')
+        names.append('6r9d_4')
+        names.insert(0,'6r9d_5')
         print(names)
         print(len(names))
 
         results = {}
         # TEMP
 
-        sys.exit()
+        # sys.exit()
         for name in names:
             print('-------------------------------------------------')
             print('Name: {}'.format(name))
@@ -435,7 +446,7 @@ def test():
             # query_df=helices, query_name='6r9d')
     lookup = HelixLookup(pd.DataFrame(),
             query_df=helices, query_name='6r9d', angstroms=5,
-            degrees=30, reset_querydb=True)
+            degrees=30, reset_querydb=True, dbname='nr')
             # degrees=30, reset_querydb=True, dbname='test_bins')
     lookup.match()
 
@@ -443,9 +454,9 @@ def test():
 def make_hash_table():
     print('Loading database and setting up lookup object...')
     # length cutoff of 2 turns or 10.8 angstroms
-    lookup = HelixLookup(pd.read_pickle('dataframes/final.pkl'),
+    lookup = HelixLookup(pd.read_pickle('nr_dataframes/final.pkl'),
             exposed_cutoff=0.3, length_cutoff=10.8, angstroms=5,
-            degrees=30)
+            degrees=30, dbname='nr')
     print('Done.')
     # binned = lookup.bin_db(lookup.df)
     lookup.update_bin_db()
