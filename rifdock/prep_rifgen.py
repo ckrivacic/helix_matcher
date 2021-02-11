@@ -1,6 +1,7 @@
 from patches import Patches
 from pyrosetta import pose_from_file
 from pyrosetta import init
+import numpy as np
 import sys, os
 
 
@@ -67,6 +68,35 @@ def write_to_file(reslist, folder):
     for res in reslist:
         f.write(str(res) + '\n')
 
+
+def test_3n2n():
+    init()
+    posefile = os.path.abspath('../test_files/3n2n.pdb')
+    pose = pose_from_file(posefile).split_by_chain(1)
+    patches = Patches(pose)
+    ranges = [(50,97), (118, 138), (150, 173), (201, 220)]
+    reslist = []
+    for r in ranges:
+        reslist.extend(np.arange(r[0]-35, r[1]-35))
+    patches.set_reslist(reslist)
+    print(patches.reslist)
+    patches.determine_surface_residues()
+    patches.map_residues()
+
+    parent_folder = os.path.abspath(os.path.join('..', 'test_files',
+        'test_rifgen'))
+    i = 1
+    for res in patches.reslist:
+        patch_folder = os.path.join(parent_folder, 'patch_{}'.format(i))
+        i += 1
+        if not os.path.exists(patch_folder):
+            os.makedirs(patch_folder, exist_ok=True)
+        print(patches.nearest_n_residues(res, 100, cutoff=21))
+        write_to_file(patches.nearest_n_residues(res, 100, cutoff=16),
+                patch_folder)
+        write_flags(patch_folder, posefile)
+
+
 def main():
     init()
     posefile = os.path.abspath(sys.argv[1])
@@ -92,4 +122,5 @@ def main():
 
 
 if __name__=='__main__':
-    main()
+    # main()
+    test_3n2n()

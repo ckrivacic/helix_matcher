@@ -3,9 +3,8 @@ import sys, os
 import pandas as pd
 import numpy as np
 from pyrosetta import *
-print(os.environ["HOME"] + '/software/helix_matcher/')
 sys.path.insert(1,
-        os.environ['HOME'] + '/software/helix_matcher/')
+        os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)),'..')))
 from numeric import *
 from utils import *
 
