@@ -8,7 +8,8 @@ import subprocess
 from scan_helices import final_vector
 from pymongo import MongoClient
 from pyrosetta import init, pose_from_file
-import networkx as nx
+# import networkx as nx
+import graph_tool.all as gt
 import collections
 '''
 Here's the plan.
@@ -95,10 +96,9 @@ class Match(object):
         self.name = name
         self.query = query_db
         self.db = main_db.find({'name':name})
-        self.graph = nx.Graph()
+        self.graph = gt.Graph(directed=False)
         # Track helix pairs so we don't add them to the graph more than
         # once
-        self.seen_nodes = set()
 
     def max_subgraph(self):
         '''
@@ -107,15 +107,24 @@ class Match(object):
         longest such subgraph represents the best overlay of the PDB
         with the set of query helices.
         '''
-        for f in nx.find_cliques(self.graph):
-            print(f)
-            print(len(f))
+        max_subgraph_len = 0
+        for f in gt.max_cliques(self.graph):
+            if len(f) > max_subgraph_len:
+                max_subgraph_len = len(f)
+
+        print('Max number of matches:')
+        print(max_subgraph_len)
+        return max_subgraph_len
+
 
     def plot_graph(self):
-        import matplotlib.pyplot as plt
-        plt.subplot(111)
-        nx.draw(self.graph, with_labels=True, font_weight='bold')
-        plt.show()
+        # import matplotlib.pyplot as plt
+        # import graph_tool.draw as draw
+        # plt.subplot(111)
+        gt.remove_parallel_edges(self.graph)
+        pos = gt.fruchterman_reingold_layout(self.graph, n_iter=1000)
+        gt.graph_draw(self.graph, pos=pos)
+        # plt.show()
 
     def find_edges(self):
         '''
@@ -126,19 +135,40 @@ class Match(object):
         overlaid on the helix of the second index. Edges represent
         compatibility between adjacent nodes.
         '''
+        print('Finding edges')
+        edges = []
+        self.nodes = {}
+        i = 0
         for doc in self.db:
             compatible_bins = self.query.find({'bin': doc['bin']})
             for result in compatible_bins:
+                # idx_pair1 = str(doc['idx1']) + str(result['idx1'])
+                # idx_pair2 = str(doc['idx2']) + str(result['idx2'])
                 idx_pair1 = (doc['idx1'], result['idx1'])
                 idx_pair2 = (doc['idx2'], result['idx2'])
                 # Track which nodes have been sampled
-                if idx_pair1 not in self.seen_nodes:
-                    self.seen_nodes.add(idx_pair1)
-                    self.graph.add_node(idx_pair1)
-                if idx_pair2 not in self.seen_nodes:
-                    self.seen_nodes.add(idx_pair2)
-                    self.graph.add_node(idx_pair2)
-                self.graph.add_edge(idx_pair1, idx_pair2)
+                if idx_pair1 not in self.nodes:
+                    self.nodes[idx_pair1] = i
+                    i += 1
+                    # self.nodes.append(idx_pair1)
+                    # self.graph.add_node(idx_pair1)
+                if idx_pair2 not in self.nodes:
+                    self.nodes[idx_pair2] = i
+                    i += 1
+                    # self.nodes.append(idx_pair2)
+                    # self.graph.add_node(idx_pair2)
+                # print('Edge found:')
+                # print(idx_pair1)
+                # print(idx_pair2)
+                edges.append((self.nodes[idx_pair1],
+                    self.nodes[idx_pair2]))
+                # i += 2
+        # nodes = set(self.nodes)
+        # self.graph.add_edge(idx_pair1, idx_pair2)
+        # print(nodes)
+        print('All edges:')
+        print(edges)
+        self.graph.add_edge_list(edges)
 
 
 
@@ -380,30 +410,32 @@ class HelixLookup(object):
 
         print('Forward search done.')
 
-        min_matches = 1000
+        min_matches = 4
         names = [item for item, count in
                 collections.Counter(names).items() if
                 count >= min_matches]
-        names.append('6r9d_1')
-        names.insert(0,'6r9d_2')
-        names.append('6r9d_3')
-        names.append('6r9d_4')
-        names.insert(0,'6r9d_5')
+        # names.append('6r9d_1')
+        # names.insert(0,'6r9d_2')
+        # names.append('6r9d_3')
+        # names.append('6r9d_4')
         print(names)
         print(len(names))
 
-        results = {}
+        results = []
         # TEMP
 
         # sys.exit()
         for name in names:
+            result = {}
+            result['name'] = name
             print('-------------------------------------------------')
             print('Name: {}'.format(name))
             match = Match(name, self.query_bins, self.binned)
             match.find_edges()
-            match.max_subgraph()
-            # match.plot_graph()
-            # results[name] = []
+            result['matches'] = match.max_subgraph()
+            result['graph'] = match.graph
+            results.append(result)
+            match.plot_graph()
             # print('searching {}'.format(name))
             # for _bin in self.binned.find({'name': name[0]}):
                 # if _bin['idx1'] == name[1]:
@@ -414,6 +446,8 @@ class HelixLookup(object):
                         # results[name].append((doc['idx1'], doc['idx2']))
                         # print(doc)
 
+        df = pd.DataFrame(results)
+        df.to_pickle('match_results.pkl')
         # for key in results:
             # print('------------------RESULTS FOR {}----------------'.format(
                             # key
@@ -446,8 +480,8 @@ def test():
             # query_df=helices, query_name='6r9d')
     lookup = HelixLookup(pd.DataFrame(),
             query_df=helices, query_name='6r9d', angstroms=5,
-            degrees=30, reset_querydb=True, dbname='nr')
-            # degrees=30, reset_querydb=True, dbname='test_bins')
+            # degrees=15, reset_querydb=True, dbname='nr')
+            degrees=30, reset_querydb=True, dbname='test_bins')
     lookup.match()
 
 
@@ -455,8 +489,8 @@ def make_hash_table():
     print('Loading database and setting up lookup object...')
     # length cutoff of 2 turns or 10.8 angstroms
     lookup = HelixLookup(pd.read_pickle('nr_dataframes/final.pkl'),
-            exposed_cutoff=0.3, length_cutoff=10.8, angstroms=5,
-            degrees=30, dbname='nr')
+            exposed_cutoff=0.3, length_cutoff=10.8, angstroms=2.5,
+            degrees=15, dbname='nr')
     print('Done.')
     # binned = lookup.bin_db(lookup.df)
     lookup.update_bin_db()
@@ -466,9 +500,11 @@ def make_hash_table():
 
 def make_test_hash_table():
     client = MongoClient()
-    client['test_bins']['bins_5A_30D'].drop()
+    deg=15
+    angstroms=2.5
+    client['test_bins']['bins_{}A_{}D'.format(angstroms, deg)].drop()
     lookup=HelixLookup(pd.read_pickle('out.pkl'), exposed_cutoff=0.3,
-            length_cutoff=10.8, angstroms=5, degrees=30,
+            length_cutoff=10.8, angstroms=angstroms, degrees=deg,
             dbname='test_bins')
     lookup.update_bin_db()
 
