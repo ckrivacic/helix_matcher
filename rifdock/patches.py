@@ -1,10 +1,11 @@
 from pyrosetta.rosetta.core.select import residue_selector
-import sys
+import sys, os
 import pandas as pd
 import numpy as np
 from pyrosetta import *
+print(os.environ["HOME"] + '/software/helix_matcher/')
 sys.path.insert(1,
-        '/Users/codykrivacic/intelligent_design/helix_matcher/')
+        os.environ['HOME'] + '/software/helix_matcher/')
 from numeric import *
 from utils import *
 
