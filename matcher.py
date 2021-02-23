@@ -258,14 +258,17 @@ class HelixBin(object):
             # GB. This way each sub-dataframe can be read into memory.
             if df_mem * 10**-9 > 4 or final:
                 bins.set_index(['bin', 'name'], inplace=True)
-                out = 'database/bins_{}A_{}D/'.format(self.angstroms, self.degrees)
+                outfolder = 'database/bins_{}A_{}D/'.format(self.angstroms, self.degrees)
+                outfile = 'bins_{}A_{}D_{:04d}.pkl'.format(self.angstroms,
+                        self.degrees, self.saveno)
+                out = os.path.join(outfolder, outfile)
                 print('Saving current dataframe to {}'.format(out))
-                if not os.path.exists(out):
-                    os.makedirs(out, exist_ok=True)
-                    bins.to_pickle('{}/bins_{}A_{}D_{:04d}'.format(
-                    out, self.angstroms, self.degrees, self.saveno
-                    ))
+                if not os.path.exists(outfolder):
+                    os.makedirs(outfolder, exist_ok=True)
+                bins.to_pickle(out)
                 self.saveno += 1
+                if self.verbose:
+                    print('Saved.')
 
                 # If saved to disk, return an empty dataframe.
                 return pd.DataFrame()
