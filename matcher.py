@@ -228,7 +228,7 @@ class HelixBin(object):
                 i, total_proteins))
             mem_used = psutil.Process(os.getpid()).memory_info().rss
             if self.verbose:
-                print('Currently using {} G of memory'.format(
+                print('Currently using {} GB of memory'.format(
                     mem_used * 10**-9
                     ))
             df_mem = bins.memory_usage(index=True, deep=True).sum()
@@ -259,9 +259,10 @@ class HelixBin(object):
             if df_mem * 10**-9 > 4 or final:
                 bins.set_index(['bin', 'name'], inplace=True)
                 out = 'database/bins_{}A_{}D/'.format(self.angstroms, self.degrees)
+                print('Saving current dataframe to {}'.format(out))
                 if not os.path.exists(out):
                     os.makedirs(out, exist_ok=True)
-                bins.to_pickle('{}/bins_{}A_{}D_{4d}'.format(
+                    bins.to_pickle('{}/bins_{}A_{}D_{:04d}'.format(
                     out, self.angstroms, self.degrees, self.saveno
                     ))
                 self.saveno += 1
