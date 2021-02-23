@@ -116,8 +116,15 @@ class StructureCluster(object):
         dist_vector = sp_dist.squareform(dist_matrix)
         mean_dist = np.mean(dist_vector)
         hierarchy = sp_clust.complete(dist_vector)
+        print(self.threshold)
+        print(mean_dist)
+        print(self.threshold or mean_dist)
+        sys.exit()
         clusters = sp_clust.fcluster(
                 hierarchy, self.threshold or mean_dist, criterion='distance')
+        # clusters = sp_clust.fcluster(
+                # hierarchy, 20,
+                # criterion='maxclust')
 
         for cluster, design in zip(clusters, self.designs):
             design.structure_cluster = cluster
@@ -179,13 +186,20 @@ class StructureCluster(object):
 
 
 if __name__=='__main__':
-    clust = StructureCluster(sys.argv[1])
+    clust = StructureCluster(sys.argv[1], threshold=10)
     clust.cluster_coords(verbose=True)
     clusters = clust.clusters
 
     outpath = os.path.join(sys.argv[1], 'cluster_representatives')
     if not os.path.exists(outpath):
         os.mkdir(outpath)
+
+    overwrite = True
+    if overwrite:
+        for f in glob.glob(sys.argv[1] +
+                '/cluster_representatives/*.pdb.gz'):
+            os.remove(f)
+
 
     for clst in clusters:
         print('CLUSTER {}'.format(clst))

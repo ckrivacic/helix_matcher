@@ -425,7 +425,9 @@ class HelixLookup(object):
         # TEMP
 
         # sys.exit()
+        i = 0
         for name in names:
+            i += 1
             result = {}
             result['name'] = name
             print('-------------------------------------------------')
@@ -435,7 +437,10 @@ class HelixLookup(object):
             result['matches'] = match.max_subgraph()
             result['graph'] = match.graph
             results.append(result)
-            match.plot_graph()
+            if i % 100 == 0:
+                df = pd.DataFrame(results[i-99:i+1])
+                df.to_pickle('match_results_{}.pkl'.format(i))
+            # match.plot_graph()
             # print('searching {}'.format(name))
             # for _bin in self.binned.find({'name': name[0]}):
                 # if _bin['idx1'] == name[1]:
@@ -484,6 +489,32 @@ def test():
             degrees=30, reset_querydb=True, dbname='test_bins')
     lookup.match()
 
+def test_rifdock():
+    import scan_helices
+
+    test_path = 'test_files/test_rifgen/cluster_representatives/matchme.pdb'
+    init()
+    pose = pose_from_file(test_path)
+    print(pose.size())
+    scanner = scan_helices.PoseScanner(pose)
+    helices = scanner.scan_pose_helices(split_chains=False,
+            name='rifdock_test')
+    helices = pd.DataFrame(helices)
+    helices.to_pickle('rifdock_helices.pkl')
+    sys.exit()
+    print(helices)
+    # helices = helices[helices['percent_exposed'] > 0.3]
+    print(helices)
+    print(helices.shape)
+    print(helices['name'])
+
+    # lookup = HelixLookup(pd.read_pickle('dataframes/final.pkl'),
+            # query_df=helices, query_name='6r9d')
+    lookup = HelixLookup(pd.DataFrame(),
+            query_df=helices, query_name='6r9d', angstroms=2.5,
+            degrees=15, reset_querydb=True, dbname='nr')
+            # degrees=30, reset_querydb=True, dbname='test_bins')
+    lookup.match()
 
 def make_hash_table():
     print('Loading database and setting up lookup object...')
@@ -510,6 +541,7 @@ def make_test_hash_table():
 
 
 if __name__=='__main__':
-    test()
+    # test()
+    test_rifdock()
     # make_hash_table()
     # make_test_hash_table()

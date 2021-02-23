@@ -164,7 +164,7 @@ class PoseScanner(object):
         self.pose = pose
 
 
-    def scan_pose_helices(self, name=None, test=False):
+    def scan_pose_helices(self, name=None, test=False, split_chains=True):
         """
         Scan a pose for helices, then find their centroid, direction,
         length, name, and solvent accessibility.
@@ -209,7 +209,10 @@ class PoseScanner(object):
                     helix_info['centroid'] = find_resis_centroid(resis)
                     helix_info['nres'] = helix[1] - helix[0]
                     helix_info['length'] = helix_length(pose, helix)
-                    helix_info['name'] = name + '_' + str(ch)
+                    if split_chains:
+                        helix_info['name'] = name + '_' + str(ch)
+                    else:
+                        helix_info['name'] = name
                     helix_info['vector'] = final_vector(helix_info['direction'], 
                             helix_info['length'], helix_info['centroid'])
                     helix_info['surface'] = surface[helix[0]-1:helix[1]-1]

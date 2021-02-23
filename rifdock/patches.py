@@ -50,7 +50,7 @@ class Patches(object):
 
 
         surface_selector = residue_selector.LayerSelector()
-        surface_selector.set_layers(False, False, True)
+        surface_selector.set_layers(False, True, True)
         #try:
         print(surface_selector.apply(chain_pose))
         print(res_selector_to_size_list(surface_selector.apply(chain_pose)))
@@ -73,15 +73,27 @@ class Patches(object):
         resmap = {}
         for res1 in self.reslist:
             if res1 not in resmap:
+                # pdbres1 = self.pose.pdb_info().pose2pdb(res1)
+                # resmap[pdbres1] = {}
                 resmap[res1] = {}
             for res2 in self.reslist:
+                # pdbres2 = self.pose.pdb_info().pose2pdb(res2)
                 # Don't calculate twice
                 if res2 in resmap and res1 in resmap[res2]: 
+                    xyz1 = self.pose.residue(res1).xyz('CA')
+                    xyz2 = self.pose.residue(res2).xyz('CA')
+                    assert(
+                            euclidean_distance(xyz1, xyz2) ==
+                            resmap[res2][res1]
+                            )
                     resmap[res1][res2] = resmap[res2][res1]
+                    # resmap[pdbres1][pdbres2] = resmap[pdbres2][pdbres1]
                 else:
                     xyz1 = self.pose.residue(res1).xyz('CA')
                     xyz2 = self.pose.residue(res2).xyz('CA')
                     resmap[res1][res2] = euclidean_distance(xyz1, xyz2)
+                    # resmap[pdbres1][pdbres2] = euclidean_distance(xyz1,
+                            # xyz2)
         if len(resmap) > 0:
             resmap = pd.DataFrame(resmap).fillna(0).unstack().reset_index()
             resmap.columns = ['res1', 'res2', 'dist']
@@ -90,14 +102,21 @@ class Patches(object):
             self.resmap = None
 
     def nearest_n_residues(self, resnum, n, cutoff=30.0, pymol=False):
+        print('------------------')
+        print(resnum)
         if np.any(self.resmap) and not self.resmap.empty:
             neighbors = self.resmap[(self.resmap['res1']==resnum) &
                     (self.resmap['dist'] <
-                        cutoff)].sort_values(by='dist')['res2']
+                        cutoff)].sort_values(by='dist')
+            print(neighbors)
+            neighbors = neighbors['res2']
             if not pymol:
                 return set(neighbors[0:n].tolist())
             else:
-                return reslist_to_pdb_numbers(set(neighbors[0:n].tolist()))
+                print('pymol baby')
+                print(self.pose.pdb_info().pose2pdb(resnum))
+                return reslist_to_pdb_numbers(set(neighbors[0:n].tolist()),
+                            self.pose)
         else:
             return None
 

@@ -84,17 +84,18 @@ def test_3n2n():
     patches.map_residues()
 
     parent_folder = os.path.abspath(os.path.join('..', 'test_files',
-        'test_rifgen'))
+        'boundary'))
     i = 1
     for res in patches.reslist:
+        print('RES CENTER {}'.format(res))
         patch_folder = os.path.join(parent_folder, 'patch_{}'.format(i))
         i += 1
         if not os.path.exists(patch_folder):
             os.makedirs(patch_folder, exist_ok=True)
-        print(patches.nearest_n_residues(res, 100, cutoff=21))
-        write_to_file(patches.nearest_n_residues(res, 100, cutoff=16),
-                patch_folder)
-        write_flags(patch_folder, posefile)
+        print(patches.nearest_n_residues(res, 100, cutoff=21, pymol=True))
+        # write_to_file(patches.nearest_n_residues(res, 100, cutoff=16),
+                # patch_folder)
+        # write_flags(patch_folder, posefile)
 
 
 def main():
@@ -115,10 +116,11 @@ def main():
         i += 1
         if not os.path.exists(patch_folder):
             os.makedirs(patch_folder, exist_ok=True)
-        print(patches.nearest_n_residues(res, 100, cutoff=21))
-        write_to_file(patches.nearest_n_residues(res, 100, cutoff=21),
-                patch_folder)
-        write_flags(patch_folder, posefile)
+        print(patches.nearest_n_residues(res, 100, cutoff=21,
+            pymol=True))
+        # write_to_file(patches.nearest_n_residues(res, 100, cutoff=21),
+                # patch_folder)
+        # write_flags(patch_folder, posefile)
 
 
 if __name__=='__main__':
