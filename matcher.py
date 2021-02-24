@@ -6,6 +6,8 @@ Usage:
 
 options:
     --local, -l  Run locally
+    --sge=NUM, -t  Run on the cluster using SGE. Argument should be # of
+    tasks in total.
     --verbose, -v  Verbose output
     --database=PATH, -d  Database of relative helix orientations  
     [default:database/bins_2.5A_15D/]
@@ -587,7 +589,10 @@ def main():
         name = os.path.basename(path).split('.')[0]
         matcher = HelixLookup(args['--database'], query_bins, name=name,
                 verbose=args['--verbose'])
-        matcher.submit_local(args['--out'])
+        if args['--sge']:
+            matcher.submit_cluster(args['--out'], args['--sge'])
+        else:
+            matcher.submit_local(args['--out'])
 
 
 if __name__=='__main__':
