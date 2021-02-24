@@ -7,6 +7,9 @@ Usage:
 options:
     --local, -l  Run locally
     --verbose, -v  Verbose output
+    --database=PATH, -d  Database of relative helix orientations  
+    [default:database/bins_2.5A_15D/]
+    --out=PATH,  -o  Where to save outputs  [default: .]
 '''
 import docopt
 import pandas as pd
@@ -77,11 +80,13 @@ class Match(object):
     '''
     Class to construct a potential match.
     '''
-    def __init__(self, name, query_db, main_db):
+    def __init__(self, name, query_db, main_db, verbose=False):
+        self.verbose = verbose
         self.name = name
         self.query = query_db
         self.db = main_db.xs(name, level='name')
         self.graph = gt.Graph(directed=False)
+        # self.graph = nx.Graph()
         # Track helix pairs so we don't add them to the graph more than
         # once
 
@@ -123,36 +128,47 @@ class Match(object):
         print('Finding edges')
         edges = []
         self.nodes = {}
+        property_map = {}
         i = 0
         for doc in self.db.iterrows():
-            compatible_bins = self.query.xs(doc.index())
-            # compatible_bins = self.query.find({'bin': doc['bin']})
-            for result in compatible_bins.iterrows():
-                idx_pair1 = (doc[1]['idx1'], result[1]['idx1'])
-                idx_pair2 = (doc[1]['idx2'], result[1]['idx2'])
-                # Track which nodes have been sampled
-                if idx_pair1 not in self.nodes:
-                    self.nodes[idx_pair1] = i
-                    i += 1
-                    # self.nodes.append(idx_pair1)
-                    # self.graph.add_node(idx_pair1)
-                if idx_pair2 not in self.nodes:
-                    self.nodes[idx_pair2] = i
-                    i += 1
-                    # self.nodes.append(idx_pair2)
-                    # self.graph.add_node(idx_pair2)
-                # print('Edge found:')
-                # print(idx_pair1)
-                # print(idx_pair2)
-                edges.append((self.nodes[idx_pair1],
-                    self.nodes[idx_pair2]))
+            if doc[0] in self.query.index:
+                compatible_bins = self.query.xs(doc[0])
+                # compatible_bins = self.query.find({'bin': doc['bin']})
+                for result in compatible_bins.iterrows():
+                    idx_pair1 = (doc[1]['idx1'], result[1]['idx1'])
+                    idx_pair2 = (doc[1]['idx2'], result[1]['idx2'])
+                    # Track which nodes have been sampled
+                    if idx_pair1 not in self.nodes:
+                        self.nodes[idx_pair1] = i
+                        property_map[i] = idx_pair1
+                        i += 1
+                        # self.nodes.append(idx_pair1)
+                        # self.graph.add_node(idx_pair1)
+                    if idx_pair2 not in self.nodes:
+                        self.nodes[idx_pair2] = i
+                        property_map[i] = idx_pair2
+                        i += 1
+                        # self.nodes.append(idx_pair2)
+                        # self.graph.add_node(idx_pair2)
+                    # print('Edge found:')
+                    # print(idx_pair1)
+                    # print(idx_pair2)
+                    edges.append((self.nodes[idx_pair1],
+                        self.nodes[idx_pair2]))
                 # i += 2
         # nodes = set(self.nodes)
         # self.graph.add_edge(idx_pair1, idx_pair2)
         # print(nodes)
-        print('All edges:')
-        print(edges)
+        if self.verbose:
+            print('All edges:')
+            print(edges)
         self.graph.add_edge_list(edges)
+
+        # Add properties
+        prop_dict = self.graph.new_vertex_property('object')
+        for v in self.graph.vertices():
+            prop_dict[v] = {'query_idx':property_map[v][0],
+                    'lookup_idx':property_map[v][1]}
 
 
 class HelixBin(object):
@@ -190,7 +206,7 @@ class HelixBin(object):
         ntbins = int((tstop - tstart) // self.angstroms) + 1
         self.tbins = np.linspace(tstart, tstop, ntbins)
 
-    def bin_db(self, check_dups=False):
+    def bin_db(self, outdir=None):
         '''
         Bin dataframes.
         '''
@@ -256,26 +272,27 @@ class HelixBin(object):
 
             # Save when memory footprint of dataframe gets larger than 4
             # GB. This way each sub-dataframe can be read into memory.
-            if df_mem * 10**-9 > 4 or final:
+            if outdir:
+                if df_mem * 10**-9 > 4 or final:
+                    bins.set_index(['bin', 'name'], inplace=True)
+                    outfile = 'bins_{}A_{}D_{:04d}.pkl'.format(self.angstroms,
+                            self.degrees, self.saveno)
+                    out = os.path.join(outdir, outfile)
+                    print('Saving current dataframe to {}'.format(out))
+                    if not os.path.exists(outdir):
+                        os.makedirs(outdir, exist_ok=True)
+                    bins.to_pickle(out)
+                    self.saveno += 1
+                    if self.verbose:
+                        print('Saved.')
+
+                    # If saved to disk, return an empty dataframe.
+                    return pd.DataFrame()
+
+            elif final:
                 bins.set_index(['bin', 'name'], inplace=True)
-                outfolder = 'database/bins_{}A_{}D/'.format(self.angstroms, self.degrees)
-                outfile = 'bins_{}A_{}D_{:04d}.pkl'.format(self.angstroms,
-                        self.degrees, self.saveno)
-                out = os.path.join(outfolder, outfile)
-                print('Saving current dataframe to {}'.format(out))
-                if not os.path.exists(outfolder):
-                    os.makedirs(outfolder, exist_ok=True)
-                bins.to_pickle(out)
-                self.saveno += 1
-                if self.verbose:
-                    print('Saved.')
-
-                # If saved to disk, return an empty dataframe.
-                return pd.DataFrame()
-
-            else:
-                # Return input dataframe if we have not saved it to disk.
-                return bins
+            # Return input dataframe if we have not saved it to disk.
+            return bins
 
         groups = self.df.groupby(['name'])
         names = sorted(list(groups.groups.keys()))
@@ -350,9 +367,12 @@ class HelixLookup(object):
     this is it for now.
     '''
 
-    def __init__(self, lookup, query):
-        self.lookup = lookup
+    def __init__(self, lookup_folder, query, name='unknown',
+            verbose=False):
+        self.verbose = verbose
+        self.lookup_folder = lookup_folder
         self.query = query
+        self.name = name
 
     def score_match(self, list_of_index_pairs):
         """
@@ -361,20 +381,38 @@ class HelixLookup(object):
             for each bin in the FOUND PDB, look for matches in the QUERY
             pdb.
         """
-        for tup in list_of_index_pairs:
-            query_row = self.query_df.loc[tup[0]]
-            db_row = self.df.loc[tupe[1]]
+        # TO DO: score clashes
+        return
+
+    def submit_local(self, outdir):
+        import glob
+        lookups = sorted(glob.glob(self.lookup_folder + '/*.pkl'))
+        i = 0
+        for lookup in lookups:
+            print('MATCHING AGAINST {}'.format(lookup))
+            out = os.path.join(outdir, '{}_results_{:03d}'.format(
+                self.name, i)
+                )
+            self.match(lookup, out=out)
+            i += 1
 
 
-    def match(self):
+    def match(self, lookup, out=None):
         names = []
+        lookup = pd.read_pickle(lookup)
 
         # Pandas rewrite
+        print('Starting forward search...')
         for _bin, group in self.query.groupby(level='bin'):
-            for result in self.lookup.xs(_bin, level='bin').iterrows():
-                names.append(
-                        result['name']
-                        )
+            if self.verbose:
+                print('Searching bin {}'.format(_bin))
+            if _bin in lookup.index:
+                for result in lookup.xs(_bin, level='bin').iterrows():
+                    # xs results in (index, row) tuples; db is indexed by
+                    # name, so row[0] is the name.
+                    names.append(
+                            result[0]
+                            )
 
         print('Forward search done.')
 
@@ -397,14 +435,11 @@ class HelixLookup(object):
             result['name'] = name
             print('-------------------------------------------------')
             print('Name: {}'.format(name))
-            match = Match(name, self.query, self.lookup)
+            match = Match(name, self.query, lookup, verbose=self.verbose)
             match.find_edges()
             result['matches'] = match.max_subgraph()
             result['graph'] = match.graph
             results.append(result)
-            if i % 100 == 0:
-                df = pd.DataFrame(results[i-99:i+1])
-                df.to_pickle('match_results_{}.pkl'.format(i))
             # match.plot_graph()
             # print('searching {}'.format(name))
             # for _bin in self.binned.find({'name': name[0]}):
@@ -417,7 +452,10 @@ class HelixLookup(object):
                         # print(doc)
 
         df = pd.DataFrame(results)
-        df.to_pickle('match_results.pkl')
+        if out:
+            df.to_pickle(out)
+
+        return df
         # for key in results:
             # print('------------------RESULTS FOR {}----------------'.format(
                             # key
@@ -511,9 +549,30 @@ def main():
         lookup = HelixBin(pd.read_pickle(args['<helix_dataframe>']),
                 exposed_cutoff=0.3, length_cutoff=10.8, angstroms=2.5,
                 degrees=15, verbose=args['--verbose'])
-        lookup.bin_db()
+        lookup.bin_db(outdir=args['--database'])
+    if args['match']:
+        import scan_helices
+        # Import pdb
+        path = args['<pdb>']
+        init()
+        pose = pose_from_file(path)
 
+        # Scan pdb helices
+        scanner = scan_helices.PoseScanner(pose)
+        helices = scanner.scan_pose_helices()
+        helices = pd.DataFrame(helices)
 
+        # Bin pdb helices
+        query = HelixBin(helices, exposed_cutoff=0.3,
+                length_cutoff=10.8, angstroms=2.5, degrees=15,
+                verbose=args['--verbose'])
+        query_bins = query.bin_db()
+
+        # Match
+        name = os.path.basename(path).split('.')[0]
+        matcher = HelixLookup(args['--database'], query_bins, name=name,
+                verbose=args['--verbose'])
+        matcher.submit_local(args['--out'])
 
 
 if __name__=='__main__':
