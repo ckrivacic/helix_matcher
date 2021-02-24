@@ -393,13 +393,28 @@ class HelixLookup(object):
             out = os.path.join(outdir, '{}_results_{:03d}'.format(
                 self.name, i)
                 )
-            self.match(lookup, out=out)
+            self.match(pd.read_pickle(lookup), out=out)
             i += 1
 
+    def submit_cluster(self, outdir, total_tasks):
+        import glob
+        lookups = sorted(glob.glob(self.lookup_folder + '/*.pkl'))
+        task = os.environ['SGE_TASK_ID']
+        out = os.path.join(outdir, '{}_results_{:03d}'.format(self.name,
+            task
+        increment = total_tasks // len(lookups) - 1
+        lookups_idx = task//increment
+
+        lookup = pd.read_pickle(lookups[lookups_idx])
+        num_rows = lookup.shape[0]
+        row_increment = num_rows // increment - 1
+        rowstart = task%row_increment * row_increment
+        rowend = rowstart + row_increment
+        lookup = lookup.iloc[rowstart:rowend]
+        self.match(lookup, out=out)
 
     def match(self, lookup, out=None):
         names = []
-        lookup = pd.read_pickle(lookup)
 
         # Pandas rewrite
         print('Starting forward search...')
