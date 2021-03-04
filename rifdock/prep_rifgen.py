@@ -92,10 +92,10 @@ def test_3n2n():
         i += 1
         if not os.path.exists(patch_folder):
             os.makedirs(patch_folder, exist_ok=True)
-        print(patches.nearest_n_residues(res, 100, cutoff=21, pymol=True))
-        # write_to_file(patches.nearest_n_residues(res, 100, cutoff=16),
-                # patch_folder)
-        # write_flags(patch_folder, posefile)
+        print(patches.nearest_n_residues(res, 100, cutoff=10.5, pymol=True))
+        write_to_file(patches.nearest_n_residues(res, 100, cutoff=16),
+                patch_folder)
+        write_flags(patch_folder, posefile)
 
 
 def main():
