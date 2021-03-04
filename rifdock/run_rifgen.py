@@ -50,8 +50,8 @@ def main():
         if exit_code != 0:
             print(stdout)
             print(stderr)
-        #output = subprocess.check_output([rifgen, '@', flags])
-        #print(output)
+        output = subprocess.check_output([rifgen, '@', flags])
+        print(output)
 
 
 if __name__=='__main__':
