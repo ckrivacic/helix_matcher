@@ -1,3 +1,19 @@
+'''
+Create bins or match a query protein.
+Usage:
+    matcher.py bin <helix_dataframe> [options]
+    matcher.py match <pdb> [options]
+
+options:
+    --local, -l  Run locally
+    --tasks=NUM, -j  Run on the cluster using SGE. Argument should be # of
+    tasks in total.
+    --verbose, -v  Verbose output
+    --database=PATH, -d  Database of relative helix orientations  
+    [default:database/bins_2.5A_15D/]
+    --out=PATH,  -o  Where to save outputs  [default: .]
+'''
+import docopt
 import pandas as pd
 import numpy as np
 import numeric
@@ -11,32 +27,6 @@ from pyrosetta import init, pose_from_file
 # import networkx as nx
 import graph_tool.all as gt
 import collections
-'''
-Here's the plan.
-
-1. Hash the table? Idk. Look into this.
-2. Take a pair of helices and align it to a pair of helices in the
-database.
-3. Look for 3rd, 4th matching helices.
-
-Okay, how to see if a helix matches?
-Both tips within a certain distance? EZPZ.
-
-
-Hashing:
-    1. For PDB database, take all pairs of helices within a protein and
-    bin their relative positions. (Need to bin twice for each
-    orientation and distance.)
-    2. Hash binned relative positions and store the indices from the
-    original PDB database. Maybe limit hashing to helices with some %
-    surface exposure.
-    3. Hash query helix pair, lookup hash table, then lookup original
-    helices.
-
-A dictionary is already a hash table. So just use the binned
-superposition matrices as the keys.
-
-'''
 
 
 def plot_vectors(vectors, color='darkgray'):
@@ -92,11 +82,13 @@ class Match(object):
     '''
     Class to construct a potential match.
     '''
-    def __init__(self, name, query_db, main_db):
+    def __init__(self, name, query_db, main_db, verbose=False):
+        self.verbose = verbose
         self.name = name
         self.query = query_db
-        self.db = main_db.find({'name':name})
+        self.db = main_db.xs(name, level='name')
         self.graph = gt.Graph(directed=False)
+        # self.graph = nx.Graph()
         # Track helix pairs so we don't add them to the graph more than
         # once
 
@@ -138,103 +130,75 @@ class Match(object):
         print('Finding edges')
         edges = []
         self.nodes = {}
+        property_map = {}
         i = 0
-        for doc in self.db:
-            compatible_bins = self.query.find({'bin': doc['bin']})
-            for result in compatible_bins:
-                # idx_pair1 = str(doc['idx1']) + str(result['idx1'])
-                # idx_pair2 = str(doc['idx2']) + str(result['idx2'])
-                idx_pair1 = (doc['idx1'], result['idx1'])
-                idx_pair2 = (doc['idx2'], result['idx2'])
-                # Track which nodes have been sampled
-                if idx_pair1 not in self.nodes:
-                    self.nodes[idx_pair1] = i
-                    i += 1
-                    # self.nodes.append(idx_pair1)
-                    # self.graph.add_node(idx_pair1)
-                if idx_pair2 not in self.nodes:
-                    self.nodes[idx_pair2] = i
-                    i += 1
-                    # self.nodes.append(idx_pair2)
-                    # self.graph.add_node(idx_pair2)
-                # print('Edge found:')
-                # print(idx_pair1)
-                # print(idx_pair2)
-                edges.append((self.nodes[idx_pair1],
-                    self.nodes[idx_pair2]))
+        for doc in self.db.iterrows():
+            if doc[0] in self.query.index:
+                compatible_bins = self.query.xs(doc[0])
+                # compatible_bins = self.query.find({'bin': doc['bin']})
+                for result in compatible_bins.iterrows():
+                    idx_pair1 = (doc[1]['idx1'], result[1]['idx1'])
+                    idx_pair2 = (doc[1]['idx2'], result[1]['idx2'])
+                    # Track which nodes have been sampled
+                    if idx_pair1 not in self.nodes:
+                        self.nodes[idx_pair1] = i
+                        property_map[i] = idx_pair1
+                        i += 1
+                        # self.nodes.append(idx_pair1)
+                        # self.graph.add_node(idx_pair1)
+                    if idx_pair2 not in self.nodes:
+                        self.nodes[idx_pair2] = i
+                        property_map[i] = idx_pair2
+                        i += 1
+                        # self.nodes.append(idx_pair2)
+                        # self.graph.add_node(idx_pair2)
+                    # print('Edge found:')
+                    # print(idx_pair1)
+                    # print(idx_pair2)
+                    edges.append((self.nodes[idx_pair1],
+                        self.nodes[idx_pair2]))
                 # i += 2
         # nodes = set(self.nodes)
         # self.graph.add_edge(idx_pair1, idx_pair2)
         # print(nodes)
-        print('All edges:')
-        print(edges)
+        if self.verbose:
+            print('All edges:')
+            print(edges)
         self.graph.add_edge_list(edges)
 
+        # Add properties
+        prop_dict = self.graph.new_vertex_property('object')
+        for v in self.graph.vertices():
+            prop_dict[v] = {'query_idx':property_map[v][0],
+                    'lookup_idx':property_map[v][1]}
 
 
-class HelixLookup(object):
-    '''
-    Class to handle binning and matching of helix databases. This maybe
-    should be two classes, one for binning and one for matching, but
-    this is it for now.
-    '''
-
-    def __init__(self, df, exposed_cutoff=0.5, length_cutoff=10.8,
-            query_df=None, query_name=None, angstroms=2, degrees=20,
-            reset_querydb=False, dbname='helix_bins', verbose=False):
-        # Setup pymongo
-        self.client = MongoClient()
-        try:
-            print(self.client.server_info())
-        except:
-            print('Problem with MongoDB server connection; attempting to open...')
-            subprocess.Popen(['mongod', '--dbpath',
-                '/Users/codykrivacic/data/db'])
-            print(self.client.server_info())
-
+class HelixBin(object):
+    def __init__(self, helix_db, exposed_cutoff=0.3, length_cutoff=10.8,
+            query_df=None, query_name=None, angstroms=2.5, degrees=15,
+            verbose=False, start=None, stop=None):
         self.verbose = verbose
-        # Dataframe consisting of vectors (is this needed when not
-        # creating database?)
-        self.df = df
+        self.df = helix_db
         self.df['idx'] = self.df.index
-        if 'normalized_vector' not in self.df.columns:
-            self.df['normalized_vector'] = self.df.apply(lambda x:
-                    final_vector(x['direction'], 1, x['centroid']), axis=1)
-        # TEMPORARY try/except just to speed things up (not feed a
-        # dataframe)
-        try:
-            if exposed_cutoff is not None:
-                self.df = self.df[self.df['percent_exposed'] > exposed_cutoff]
-            if length_cutoff is not None:
-                self.df = self.df[self.df['length'] > length_cutoff]
-        except:
-            pass
+
+        # Binning parameters
         self.degrees = degrees
         self.angstroms = angstroms
         self.setup_bins()
-        binned_name = 'bins_{}A_{}D'.format(self.angstroms, self.degrees)
+        binned_name = 'bins_{}A_{}D'.format(self.angstroms,
+                self.degrees)
+        self.start = start
+        self.stop = stop
 
-        # Questioning whether to define this here or not.
-        self.dbname = dbname
-        self.binned = self.client[self.dbname][binned_name]
-
-        # Setting up the query df, if provided.
-        if query_df is not None:
-            self.query_df = query_df
-            if query_name is None:
-                query_name = self.query_df.iloc[0]['name']
-            self.query_df['idx'] = self.query_df.index
-            if 'normalized_vector' not in self.query_df.columns:
-                self.query_df['normalized_vector'] =\
-                        self.query_df.apply(lambda x:
-                            final_vector(x['direction'], 1, x['centroid']),
-                            axis=1)
-            if reset_querydb:
-                print('Deleting old query db')
-                client = MongoClient()
-                client[query_name][binned_name].drop()
-            self.query_bins = self.bin_db(self.query_df, query_name,
-                    check_dups=True)
+        # Trimming dataframe
+        if length_cutoff:
+            self.df = self.df[self.df['length'] > length_cutoff]
+        if exposed_cutoff:
+            self.df = self.df[self.df['percent_exposed'] >
+                    exposed_cutoff]
+        if 'normalized_vector' not in self.df.columns:
+            self.df['normalized_vector'] = self.df.apply(lambda x:
+                    final_vector(x['direction'], 1, x['centroid']), axis=1)
 
     def setup_bins(self):
         nrbins = int(360//self.degrees) + 1
@@ -244,66 +208,106 @@ class HelixLookup(object):
         ntbins = int((tstop - tstart) // self.angstroms) + 1
         self.tbins = np.linspace(tstart, tstop, ntbins)
 
-    def update_bin_db(self):
-        self.bin_db(self.df, self.dbname, check_name=True)
-
-    def bin_db(self, df, dbname, check_name=True, check_dups=False):
+    def bin_db(self, outdir=None):
         '''
-        Save parameter tells pymongo where to save (must have MongoDB
-        installed and running).
+        Bin dataframes.
         '''
 
         from scipy.spatial.transform import Rotation as R
         import subprocess
         import time
 
-        db = self.client[dbname]
-        bins = db['bins_{}A_{}D'.format(
-            self.angstroms, self.degrees
-            )]
-        total_proteins = len(set(df['name']))
+        # db = self.client[dbname]
+        # bins = db['bins_{}A_{}D'.format(
+            # self.angstroms, self.degrees
+            # )]
+        bins = pd.DataFrame(columns=['bin', 'name', 'idx1', 'idx2'])
+        # Pandas indices are hash lookups and we can have multiple of
+        # them, but they cannot be added piecewise. Therefore we will
+        # create partial tables, then create the indices and save the
+        # dataframes. Results will be saved in chunks.
+        # bins.set_index(['bin', 'name'], inplace=True)
+        total_proteins = len(set(self.df['name']))
         interval = 500
 
         # import shelve
 
         # binned = shelve.open('binned_0p3/hashtable', 'c', writeback=True)
+        # i tracks # of names analyzed
         i = 0
+        # saveno tracks how many dataframes have been saved.
+        self.saveno = 1
         unsaved_docs = []
         start_time = time.time()
 
-        def update(bins, start_time, unsaved_docs, interval, i):
-            mem_used = psutil.Process(os.getpid()).memory_info().rss
+        def update(bins, start_time, unsaved_docs, interval, i,
+                final=False):
             print('{} of {} PDBs processed so far.'.format(
                 i, total_proteins))
-            print('Currently using {} G of memory'.format(
-                mem_used * 10**-9
-                ))
-            print('Saving to db...')
-            if len(unsaved_docs) > 0:
-                bins.insert_many(unsaved_docs, ordered=False)
-                bins.create_index([('bin', 'hashed')])
-                bins.create_index([('name', 'hashed')])
-            else:
-                print('Nothing to update for this batch.')
+            mem_used = psutil.Process(os.getpid()).memory_info().rss
+            if self.verbose:
+                print('Currently using {} GB of memory'.format(
+                    mem_used * 10**-9
+                    ))
+            df_mem = bins.memory_usage(index=True, deep=True).sum()
+            if self.verbose:
+                print('Dataframe is using {} GB of memory'.format(
+                    df_mem * 10**-9
+                    ))
             elapsed = time.time() - start_time
             rate = interval / elapsed
             remaining = (total_proteins - i) / rate / 3600
-            print('Done. 500 pdbs took {} seconds. Est. {} h remaining'.format(
+            print('Analysis of 500 pdbs took {} seconds. Est. {} h remaining'.format(
                 elapsed, remaining
                 ))
 
-        for name, group in df.groupby(['name']):
-            if check_name:
-                if len(list(bins.find({'name':name}))) > 0:
-                    if i%interval == 0:
-                        i += 1
-                        update(bins, start_time, unsaved_docs, interval, i)
-                        start_time = time.time()
-                        unsaved_docs = []
-                    continue
+            if len(unsaved_docs) > 0:
+                if self.verbose:
+                    print('Adding to dataframe...')
+                bins = bins.append(unsaved_docs, ignore_index=True)
+                if self.verbose:
+                    print(bins)
+            else:
+                if self.verbose:
+                    print('Nothing to update for this batch.')
 
+
+            # Save when memory footprint of dataframe gets larger than 4
+            # GB. This way each sub-dataframe can be read into memory.
+            if outdir:
+                if df_mem * 10**-9 > 4 or final:
+                    bins.set_index(['bin', 'name'], inplace=True)
+                    outfile = 'bins_{}A_{}D_{:04d}.pkl'.format(self.angstroms,
+                            self.degrees, self.saveno)
+                    out = os.path.join(outdir, outfile)
+                    print('Saving current dataframe to {}'.format(out))
+                    if not os.path.exists(outdir):
+                        os.makedirs(outdir, exist_ok=True)
+                    bins.to_pickle(out)
+                    self.saveno += 1
+                    if self.verbose:
+                        print('Saved.')
+
+                    # If saved to disk, return an empty dataframe.
+                    return pd.DataFrame()
+
+            elif final:
+                bins.set_index(['bin', 'name'], inplace=True)
+            # Return input dataframe if we have not saved it to disk.
+            return bins
+
+        groups = self.df.groupby(['name'])
+        names = sorted(list(groups.groups.keys()))
+        if self.start:
+            names = names[self.start:]
+        if self.stop:
+            names = names[:self.stop]
+        for name in names:
+        # for name, group in df.groupby(['name']):
+            group = groups.groups[name]
             i += 1
-            for combination in product(group.T.to_dict().values(),
+
+            for combination in product(self.df.loc[group].T.to_dict().values(),
                     repeat=2):
                 if combination[0]['idx'] != combination[1]['idx']:
                     # vector1 = combination[0]['vector']
@@ -313,14 +317,11 @@ class HelixLookup(object):
 
                     idx1 = combination[0]['idx']
                     idx2 = combination[1]['idx']
-                    # transform = numeric.Transformation(vector1,
-                            # vector2)
-                    # rot = R.from_matrix(transform.rotation)
-                    if self.verbose:
-                        print('------------------------------------')
-                        print(combination[0])
-                        print(combination[1])
-                    # rot = rot.as_euler('ZYZ', degrees=True)
+                    # if self.verbose:
+                        # print('------------------------------------')
+                        # print(combination[0])
+                        # print(combination[1])
+
                     dist, angle1, angle2, dihedral =\
                             relative_position(combination[0], combination[1])
                     dist = np.array([dist])
@@ -346,43 +347,34 @@ class HelixLookup(object):
                                 'idx1':idx1,
                                 'idx2':idx2
                         }
-                        if check_dups:
-                            if len(list(bins.find(doc))) == 0:
-                                unsaved_docs.append(doc)
-                        else:
-                            unsaved_docs.append(doc)
+                        # if check_dups:
+                            # if len(list(bins.find(doc))) == 0:
+                                # unsaved_docs.append(doc)
+                        # else:
+                        unsaved_docs.append(doc)
 
-                        # bins.insert_one(doc)
-                        # if bin_12 not in binned:
-                            # binned[bin_12] = {}
-                        # if name not in binned[bin_12]:
-                            # binned[bin_12][name] = []
-                        # binned[bin_12][name].append((idx1, idx2))
             if i%interval == 0:
-                update(bins, start_time, unsaved_docs, interval, i)
+                bins = update(bins, start_time, unsaved_docs, interval, i)
                 start_time = time.time()
                 unsaved_docs = []
-                # For large databases, dump dictionaries when memory
-                # usage goes over 6 GB. Only use for forming initial lookup
-                # database.
-                # print('Syncing db...')
-                # binned.sync()
-                # print('Done.')
-                # If more than 6G memory used, dump just in case.
-                # if mem_used > 12 * 10**9:
-                    # out = "binned_0p3/{}.pkl".format(j)
-                    # j += 1
-                    # with open(out, 'wb') as f:
-                        # pickle.dump(binned, f)
-                    # del binned
-                    # binned = {}
 
-        update(bins, start_time, unsaved_docs, interval, i)
-        bins.create_index([('bin', 'hashed')])
-        bins.create_index([('name', 'hashed')])
+        bins = update(bins, start_time, unsaved_docs, interval, i, final=True)
 
         return bins
 
+class HelixLookup(object):
+    '''
+    Class to handle binning and matching of helix databases. This maybe
+    should be two classes, one for binning and one for matching, but
+    this is it for now.
+    '''
+
+    def __init__(self, lookup_folder, query, name='unknown',
+            verbose=False):
+        self.verbose = verbose
+        self.lookup_folder = lookup_folder
+        self.query = query
+        self.name = name
 
     def score_match(self, list_of_index_pairs):
         """
@@ -391,22 +383,53 @@ class HelixLookup(object):
             for each bin in the FOUND PDB, look for matches in the QUERY
             pdb.
         """
-        for tup in list_of_index_pairs:
-            query_row = self.query_df.loc[tup[0]]
-            db_row = self.df.loc[tupe[1]]
+        # TO DO: score clashes
+        return
 
+    def submit_local(self, outdir):
+        import glob
+        lookups = sorted(glob.glob(self.lookup_folder + '/*.pkl'))
+        i = 0
+        for lookup in lookups:
+            print('MATCHING AGAINST {}'.format(lookup))
+            out = os.path.join(outdir, '{}_results_{:03d}'.format(
+                self.name, i)
+                )
+            self.match(pd.read_pickle(lookup), out=out)
+            i += 1
 
+    def submit_cluster(self, outdir, total_tasks):
+        import glob
+        lookups = sorted(glob.glob(self.lookup_folder + '/*.pkl'))
+        task = os.environ['SGE_TASK_ID']
+        out = os.path.join(outdir, '{}_results_{:03d}'.format(self.name,
+            task
+        increment = total_tasks // len(lookups) - 1
+        lookups_idx = task//increment
 
-    def match(self):
+        lookup = pd.read_pickle(lookups[lookups_idx])
+        num_rows = lookup.shape[0]
+        row_increment = num_rows // increment - 1
+        rowstart = task%row_increment * row_increment
+        rowend = rowstart + row_increment
+        lookup = lookup.iloc[rowstart:rowend]
+        self.match(lookup, out=out)
+
+    def match(self, lookup, out=None):
         names = []
-        for _bin in self.query_bins.find():
-            __bin = _bin['bin']
-            # print('-------------------------------------------------')
-            # print('RESULTS FOR {}'.format(__bin))
-            for result in self.binned.find({'bin':__bin}):
-                # print(result)
-                # names.append(result['name'])
-                names.append(result['name'])
+
+        # Pandas rewrite
+        print('Starting forward search...')
+        for _bin, group in self.query.groupby(level='bin'):
+            if self.verbose:
+                print('Searching bin {}'.format(_bin))
+            if _bin in lookup.index:
+                for result in lookup.xs(_bin, level='bin').iterrows():
+                    # xs results in (index, row) tuples; db is indexed by
+                    # name, so row[0] is the name.
+                    names.append(
+                            result[0]
+                            )
 
         print('Forward search done.')
 
@@ -414,10 +437,7 @@ class HelixLookup(object):
         names = [item for item, count in
                 collections.Counter(names).items() if
                 count >= min_matches]
-        # names.append('6r9d_1')
-        # names.insert(0,'6r9d_2')
-        # names.append('6r9d_3')
-        # names.append('6r9d_4')
+
         print(names)
         print(len(names))
 
@@ -432,14 +452,11 @@ class HelixLookup(object):
             result['name'] = name
             print('-------------------------------------------------')
             print('Name: {}'.format(name))
-            match = Match(name, self.query_bins, self.binned)
+            match = Match(name, self.query, lookup, verbose=self.verbose)
             match.find_edges()
             result['matches'] = match.max_subgraph()
             result['graph'] = match.graph
             results.append(result)
-            if i % 100 == 0:
-                df = pd.DataFrame(results[i-99:i+1])
-                df.to_pickle('match_results_{}.pkl'.format(i))
             # match.plot_graph()
             # print('searching {}'.format(name))
             # for _bin in self.binned.find({'name': name[0]}):
@@ -452,7 +469,10 @@ class HelixLookup(object):
                         # print(doc)
 
         df = pd.DataFrame(results)
-        df.to_pickle('match_results.pkl')
+        if out:
+            df.to_pickle(out)
+
+        return df
         # for key in results:
             # print('------------------RESULTS FOR {}----------------'.format(
                             # key
@@ -533,15 +553,51 @@ def make_test_hash_table():
     client = MongoClient()
     deg=15
     angstroms=2.5
-    client['test_bins']['bins_{}A_{}D'.format(angstroms, deg)].drop()
+    # client['test_bins']['bins_{}A_{}D'.format(angstroms, deg)].drop()
     lookup=HelixLookup(pd.read_pickle('out.pkl'), exposed_cutoff=0.3,
             length_cutoff=10.8, angstroms=angstroms, degrees=deg,
             dbname='test_bins')
     lookup.update_bin_db()
 
 
+def main():
+    args = docopt.docopt(__doc__)
+    if args['bin']:
+        lookup = HelixBin(pd.read_pickle(args['<helix_dataframe>']),
+                exposed_cutoff=0.3, length_cutoff=10.8, angstroms=2.5,
+                degrees=15, verbose=args['--verbose'])
+        lookup.bin_db(outdir=args['--database'])
+    if args['match']:
+        import scan_helices
+        # Import pdb
+        path = args['<pdb>']
+        init()
+        pose = pose_from_file(path)
+
+        # Scan pdb helices
+        scanner = scan_helices.PoseScanner(pose)
+        helices = scanner.scan_pose_helices()
+        helices = pd.DataFrame(helices)
+
+        # Bin pdb helices
+        query = HelixBin(helices, exposed_cutoff=0.3,
+                length_cutoff=10.8, angstroms=2.5, degrees=15,
+                verbose=args['--verbose'])
+        query_bins = query.bin_db()
+
+        # Match
+        name = os.path.basename(path).split('.')[0]
+        matcher = HelixLookup(args['--database'], query_bins, name=name,
+                verbose=args['--verbose'])
+        if args['--sge']:
+            matcher.submit_cluster(args['--out'], int(args['--sge']))
+        else:
+            matcher.submit_local(args['--out'])
+
+
 if __name__=='__main__':
     # test()
-    test_rifdock()
+    # test_rifdock()
     # make_hash_table()
     # make_test_hash_table()
+    main()

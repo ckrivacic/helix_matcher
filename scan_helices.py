@@ -186,7 +186,7 @@ class PoseScanner(object):
                     pythonize_vector(self.selector.apply(pose))
                     )
             for helix in positions['H']:
-                print(helix)
+                # print(helix)
                 if helix[1] - helix[0] > 1:
                     helix_info = {}
                     helix_info['start'] = helix[0]
