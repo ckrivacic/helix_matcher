@@ -72,9 +72,9 @@ def write_to_file(reslist, folder):
 def test_3n2n():
     init()
     posefile = os.path.abspath('../test_files/3n2n.pdb')
-    pose = pose_from_file(posefile).split_by_chain(1)
+    pose = pose_from_file(posefile)
     patches = Patches(pose)
-    ranges = [(50,97), (118, 138), (150, 173), (201, 220)]
+    ranges = [(50,138), (150, 173), (201, 220)]
     reslist = []
     for r in ranges:
         reslist.extend(np.arange(r[0]-35, r[1]-35))
@@ -92,8 +92,9 @@ def test_3n2n():
         i += 1
         if not os.path.exists(patch_folder):
             os.makedirs(patch_folder, exist_ok=True)
+
         print(patches.nearest_n_residues(res, 100, cutoff=10.5, pymol=True))
-        write_to_file(patches.nearest_n_residues(res, 100, cutoff=16),
+        write_to_file(patches.nearest_n_residues(res, 100, cutoff=10.5),
                 patch_folder)
         write_flags(patch_folder, posefile)
 
@@ -118,9 +119,9 @@ def main():
             os.makedirs(patch_folder, exist_ok=True)
         print(patches.nearest_n_residues(res, 100, cutoff=21,
             pymol=True))
-        # write_to_file(patches.nearest_n_residues(res, 100, cutoff=21),
-                # patch_folder)
-        # write_flags(patch_folder, posefile)
+        write_to_file(patches.nearest_n_residues(res, 100, cutoff=21),
+                patch_folder)
+        write_flags(patch_folder, posefile)
 
 
 if __name__=='__main__':
