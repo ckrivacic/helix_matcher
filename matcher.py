@@ -1,17 +1,22 @@
 '''
 Create bins or match a query protein.
+
 Usage:
     matcher.py bin <helix_dataframe> [options]
     matcher.py match <pdb> [options]
 
 options:
     --local, -l  Run locally
+
     --tasks=NUM, -j  Run on the cluster using SGE. Argument should be # of
     tasks in total.
+
     --verbose, -v  Verbose output
+
     --database=PATH, -d  Database of relative helix orientations  
     [default:database/bins_2.5A_15D/]
-    --out=PATH,  -o  Where to save outputs  [default: .]
+
+    --out=PATH, -o  Where to save outputs  [default: .]
 '''
 import docopt
 import pandas as pd
@@ -151,7 +156,7 @@ class Match(object):
                     if idx_pair2 not in self.nodes:
                         # self.nodes[idx_pair2] = i
                         # property_map[i] = idx_pair2
-                        self.nodes.add_idx_pair2)
+                        self.nodes.add(idx_pair2)
                         self.graph.add_node(idx_pair2)
                         i += 1
                         # self.nodes.append(idx_pair2)
@@ -597,8 +602,8 @@ def main():
         name = os.path.basename(path).split('.')[0]
         matcher = HelixLookup(args['--database'], query_bins, name=name,
                 verbose=args['--verbose'])
-        if args['--sge']:
-            matcher.submit_cluster(args['--out'], int(args['--sge']))
+        if args['--tasks']:
+            matcher.submit_cluster(args['--out'], int(args['--tasks']))
         else:
             matcher.submit_local(args['--out'])
 
