@@ -22,7 +22,7 @@ def main():
     if '--tasks' in args:
         ntask = args['--tasks']
     else:
-        ntask = len(glob.glob(args['<pdb>'] * /'*.pdb.gz'))
+        ntask = len(glob.glob(args['<pdb>'] + '/*.pdb.gz'))
 
     qsub_command = 'qsub', '-h', '-cwd'
     qsub_command += '-o', args['--log']
