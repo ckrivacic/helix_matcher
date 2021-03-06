@@ -11,7 +11,7 @@ options:
 '''
 from klab import cluster, process
 import docopt
-import sys, os, importlib, shutil
+import sys, os, importlib, shutil, glob
 
 def main():
     
@@ -19,7 +19,10 @@ def main():
 
     max_runtime = args['--max-runtime']
     max_memory = args['--max-memory']
-    ntask = args['--tasks']
+    if '--tasks' in args:
+        ntask = args['--tasks']
+    else:
+        ntask = len(glob.glob(args['<pdb>'] * /'*.pdb.gz'))
 
     qsub_command = 'qsub', '-h', '-cwd'
     qsub_command += '-o', args['--log']
