@@ -108,6 +108,8 @@ class StructureCluster(object):
                     design_j)
             dist_matrix[j,i] = dist_matrix[i,j]
 
+        print(dist_matrix)
+
 
 
         # Cluster design such that no two designs in a cluster are
@@ -119,14 +121,15 @@ class StructureCluster(object):
         print(self.threshold)
         print(mean_dist)
         print(self.threshold or mean_dist)
-        sys.exit()
         clusters = sp_clust.fcluster(
                 hierarchy, self.threshold or mean_dist, criterion='distance')
+        print(clusters)
         # clusters = sp_clust.fcluster(
                 # hierarchy, 20,
                 # criterion='maxclust')
 
         for cluster, design in zip(clusters, self.designs):
+            print('hi')
             design.structure_cluster = cluster
             if cluster not in self.clusters:
                 clst = Cluster(cluster)
@@ -187,11 +190,13 @@ class StructureCluster(object):
 
 if __name__=='__main__':
     clust = StructureCluster(sys.argv[1], threshold=10)
+    print('Clustering...')
     clust.cluster_coords(verbose=True)
     clusters = clust.clusters
 
     outpath = os.path.join(sys.argv[1], 'cluster_representatives')
     if not os.path.exists(outpath):
+        print('PATH NO EXIST')
         os.mkdir(outpath)
 
     overwrite = True

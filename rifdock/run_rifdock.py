@@ -59,7 +59,7 @@ def write_flags(folder):
 
 # set to true to align all output to scaffolds instead of target
 # mostly useful for small molecule binder design
--rif_dock:align_output_to_scaffold true
+-rif_dock:align_output_to_scaffold false
 
 # include some pikaa lines in output pdbs for rif residues(??)
 -rif_dock:pdb_info_pikaa false # this is default I think
