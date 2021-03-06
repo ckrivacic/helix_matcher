@@ -7,7 +7,7 @@ options:
     the job to run  [default:12:00:00]
     --max-memory=MEM  Maximum memory allocated to the job  [default: 6G]
     --tasks=#, -j  Number of tasks to split the job into  [default: 500]
-    --out, -o  Where to save results  [default: results/]
+    --out=FOLDER, -o  Where to save results  [default: results/]
 '''
 from klab import cluster, process
 import docopt
