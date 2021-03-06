@@ -1,6 +1,6 @@
 '''
 Usage:
-    python3 submit_match.py <pdb> [options]
+    submit_match.py <pdb> [options]
 
 Options:
     --max-runtime=TIME  Maximum amount of time the cluster will allow
@@ -11,6 +11,8 @@ Options:
     --tasks=#, -j  Number of tasks to split the job into  [default: 500]
 
     --out=FOLDER, -o  Where to save results  [default: results/]
+
+    --log=FOLDER, -l  Where to save log files  [default: logs/]
 '''
 #Script for submitting matching jobs on the cluster.
 
