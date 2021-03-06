@@ -1,7 +1,7 @@
 '''
 Script for submitting matching jobs on the cluster.
 Usage:
-    python3 submit_matcher.py <pdb> [options]
+    python3 submit_match.py <pdb> [options]
 options:
     --max-runtime=TIME  Maximum amount of time the cluster will allow
     the job to run  [default:12:00:00]
