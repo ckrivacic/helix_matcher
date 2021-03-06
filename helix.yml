@@ -1,6 +1,5 @@
 name: helix
 channels:
-  - https://conda.graylab.jhu.edu
   - schrodinger
   - conda-forge
   - defaults
