@@ -23,8 +23,8 @@ import pickle
 import subprocess
 from scan_helices import final_vector
 from pyrosetta import init, pose_from_file
-# import networkx as nx
-import graph_tool.all as gt
+import networkx as nx
+# import graph_tool.all as gt
 import collections
 
 
@@ -86,8 +86,8 @@ class Match(object):
         self.name = name
         self.query = query_db
         self.db = main_db.xs(name, level='name')
-        self.graph = gt.Graph(directed=False)
-        # self.graph = nx.Graph()
+        # self.graph = gt.Graph(directed=False)
+        self.graph = nx.Graph()
         # Track helix pairs so we don't add them to the graph more than
         # once
 
@@ -99,7 +99,8 @@ class Match(object):
         with the set of query helices.
         '''
         max_subgraph_len = 0
-        for f in gt.max_cliques(self.graph):
+        # for f in gt.max_cliques(self.graph):
+        for f in nx.find_cliques(self.graph):
             if len(f) > max_subgraph_len:
                 max_subgraph_len = len(f)
 
@@ -109,13 +110,13 @@ class Match(object):
 
 
     def plot_graph(self):
-        # import matplotlib.pyplot as plt
-        # import graph_tool.draw as draw
-        # plt.subplot(111)
-        gt.remove_parallel_edges(self.graph)
-        pos = gt.fruchterman_reingold_layout(self.graph, n_iter=1000)
-        gt.graph_draw(self.graph, pos=pos)
-        # plt.show()
+        import matplotlib.pyplot as plt
+        import graph_tool.draw as draw
+        plt.subplot(111)
+        # gt.remove_parallel_edges(self.graph)
+        # pos = gt.fruchterman_reingold_layout(self.graph, n_iter=1000)
+        # gt.graph_draw(self.graph, pos=pos)
+        plt.show()
 
     def find_edges(self):
         '''
@@ -128,7 +129,7 @@ class Match(object):
         '''
         print('Finding edges')
         edges = []
-        self.nodes = {}
+        self.nodes = set()
         property_map = {}
         i = 0
         for doc in self.db.iterrows():
@@ -140,36 +141,41 @@ class Match(object):
                     idx_pair2 = (doc[1]['idx2'], result[1]['idx2'])
                     # Track which nodes have been sampled
                     if idx_pair1 not in self.nodes:
-                        self.nodes[idx_pair1] = i
-                        property_map[i] = idx_pair1
+                        self.nodes.add(idx_pair1)
+                        self.graph.add_node(idx_pair1)
+                        # self.nodes[idx_pair1] = i
+                        # property_map[i] = idx_pair1
                         i += 1
                         # self.nodes.append(idx_pair1)
                         # self.graph.add_node(idx_pair1)
                     if idx_pair2 not in self.nodes:
-                        self.nodes[idx_pair2] = i
-                        property_map[i] = idx_pair2
+                        # self.nodes[idx_pair2] = i
+                        # property_map[i] = idx_pair2
+                        self.nodes.add_idx_pair2)
+                        self.graph.add_node(idx_pair2)
                         i += 1
                         # self.nodes.append(idx_pair2)
                         # self.graph.add_node(idx_pair2)
+                    self.graph.add_edge(idx_pair1, idx_pair2)
                     # print('Edge found:')
                     # print(idx_pair1)
                     # print(idx_pair2)
-                    edges.append((self.nodes[idx_pair1],
-                        self.nodes[idx_pair2]))
+                    # edges.append((self.nodes[idx_pair1],
+                        # self.nodes[idx_pair2]))
                 # i += 2
         # nodes = set(self.nodes)
         # self.graph.add_edge(idx_pair1, idx_pair2)
         # print(nodes)
-        if self.verbose:
-            print('All edges:')
-            print(edges)
-        self.graph.add_edge_list(edges)
+        # if self.verbose:
+            # print('All edges:')
+            # print(edges)
+        # self.graph.add_edge_list(edges)
 
         # Add properties
-        prop_dict = self.graph.new_vertex_property('object')
-        for v in self.graph.vertices():
-            prop_dict[v] = {'query_idx':property_map[v][0],
-                    'lookup_idx':property_map[v][1]}
+        # prop_dict = self.graph.new_vertex_property('object')
+        # for v in self.graph.vertices():
+            # prop_dict[v] = {'query_idx':property_map[v][0],
+                    # 'lookup_idx':property_map[v][1]}
 
 
 class HelixBin(object):
