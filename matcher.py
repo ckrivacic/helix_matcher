@@ -22,7 +22,6 @@ import os, psutil, sys
 import pickle
 import subprocess
 from scan_helices import final_vector
-from pymongo import MongoClient
 from pyrosetta import init, pose_from_file
 # import networkx as nx
 import graph_tool.all as gt
