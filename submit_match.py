@@ -18,6 +18,7 @@ Options:
 
 from klab import cluster, process
 import docopt
+import re
 import sys, os, importlib, shutil, glob
 
 def main():
@@ -38,7 +39,7 @@ def main():
     qsub_command += '-l', 'h_rt={}'.format(max_runtime)
     qsub_command += '-l', 'mem_free={}'.format(max_memory)
     qsub_command += '-b', 'y'
-    qsub_command += 'N', 'helix_matcher'
+    qsub_command += '-N', 'helix_matcher'
     qsub_command += os.environ['ROSEASY_PYTHON'],
     qsub_command += 'matcher.py',
     qsub_command += args['<pdb>'],
