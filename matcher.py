@@ -14,7 +14,7 @@ options:
     --verbose, -v  Verbose output
 
     --database=PATH, -d  Database of relative helix orientations  
-    [default:database/bins_2.5A_15D/]
+    [default: database/bins_2.5A_15D/]
 
     --out=PATH, -o  Where to save outputs  [default: .]
 '''
@@ -411,7 +411,7 @@ class HelixLookup(object):
     def submit_cluster(self, outdir, total_tasks):
         import glob
         lookups = sorted(glob.glob(self.lookup_folder + '/*.pkl'))
-        task = os.environ['SGE_TASK_ID']
+        task = int(os.environ['SGE_TASK_ID'])
         out = os.path.join(outdir, '{}_results_{:03d}'.format(self.name,
             task))
         print('Saving to {}'.format(out))
@@ -600,6 +600,8 @@ def main():
 
         # Match
         name = os.path.basename(path).split('.')[0]
+        print('Database:')
+        print(args['--database'])
         matcher = HelixLookup(args['--database'], query_bins, name=name,
                 verbose=args['--verbose'])
         if args['--tasks']:
