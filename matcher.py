@@ -426,6 +426,7 @@ class HelixLookup(object):
         rowstart = task%row_increment * row_increment
         rowend = rowstart + row_increment
         lookup = lookup.iloc[rowstart:rowend]
+        print('Looking up rows {} through {}'.format(rowstart, rowend))
         self.match(lookup, out=out)
 
     def match(self, lookup, out=None):
