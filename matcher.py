@@ -589,14 +589,20 @@ def main():
 
         # Scan pdb helices
         scanner = scan_helices.PoseScanner(pose)
-        helices = scanner.scan_pose_helices()
+        helices = scanner.scan_pose_helices(name='query',
+                split_chains=False)
         helices = pd.DataFrame(helices)
+        print("HELICES")
+        print(helices)
+        print(helices['name'])
 
         # Bin pdb helices
         query = HelixBin(helices, exposed_cutoff=0.3,
                 length_cutoff=10.8, angstroms=2.5, degrees=15,
                 verbose=args['--verbose'])
         query_bins = query.bin_db()
+        print('QUERY BINS')
+        print(query_bins)
 
         # Match
         name = os.path.basename(path).split('.')[0]

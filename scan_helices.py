@@ -173,7 +173,7 @@ class PoseScanner(object):
         """
         if not name:
             name = self.pose.pdb_info().name()
-            print('NAM E')
+            print('NAME')
             print(name)
         chains = self.pose.split_by_chain()
         # Calculate which residues in pose are at surface only once
