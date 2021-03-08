@@ -415,15 +415,17 @@ class HelixLookup(object):
         out = os.path.join(outdir, '{}_results_{:03d}.pkl'.format(self.name,
             task))
         print('Saving to {}'.format(out))
-        increment = total_tasks // len(lookups) - 1
+        # Warning: total_tasks must be a multiple of len(lookups) for
+        # now.
+        increment = total_tasks // len(lookups)
         print('Increment {}'.format(increment))
         lookups_idx = task//increment
         print('Reading database file # {}'.format(lookups_idx))
 
         lookup = pd.read_pickle(lookups[lookups_idx])
         num_rows = lookup.shape[0]
-        row_increment = num_rows // increment - 1
-        rowstart = task%row_increment * row_increment
+        row_increment = num_rows // increment
+        rowstart = (task%increment) * row_increment
         rowend = rowstart + row_increment
         lookup = lookup.iloc[rowstart:rowend]
         print('Looking up rows {} through {}'.format(rowstart, rowend))
