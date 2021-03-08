@@ -412,7 +412,7 @@ class HelixLookup(object):
         import glob
         lookups = sorted(glob.glob(self.lookup_folder + '/*.pkl'))
         task = int(os.environ['SGE_TASK_ID'])
-        out = os.path.join(outdir, '{}_results_{:03d}'.format(self.name,
+        out = os.path.join(outdir, '{}_results_{:03d}.pkl'.format(self.name,
             task))
         print('Saving to {}'.format(out))
         increment = total_tasks // len(lookups) - 1
