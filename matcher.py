@@ -441,17 +441,20 @@ class HelixLookup(object):
                 for result in lookup.xs(_bin, level='bin').iterrows():
                     # xs results in (index, row) tuples; db is indexed by
                     # name, so row[0] is the name.
+                    if self.verbose:
+                        print('Matched to pdb {}'.format(result[0]))
                     names.append(
                             result[0]
                             )
 
         print('Forward search done.')
 
-        min_matches = 4
+        min_matches = 2
         names = [item for item, count in
                 collections.Counter(names).items() if
                 count >= min_matches]
 
+        print('All matches:')
         print(names)
         print(len(names))
 
@@ -595,7 +598,7 @@ def main():
         helices = pd.DataFrame(helices)
         print("HELICES")
         print(helices)
-        print(helices['name'])
+        print(helices['vector'])
 
         # Bin pdb helices
         query = HelixBin(helices, exposed_cutoff=0.3,
