@@ -411,7 +411,7 @@ class HelixLookup(object):
     def submit_cluster(self, outdir, total_tasks):
         import glob
         lookups = sorted(glob.glob(self.lookup_folder + '/*.pkl'))
-        task = int(os.environ['SGE_TASK_ID'])
+        task = int(os.environ['SGE_TASK_ID']) - 1
         out = os.path.join(outdir, '{}_results_{:03d}.pkl'.format(self.name,
             task))
         print('Saving to {}'.format(out))
