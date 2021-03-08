@@ -427,6 +427,7 @@ class HelixLookup(object):
         rowend = rowstart + row_increment
         lookup = lookup.iloc[rowstart:rowend]
         print('Looking up rows {} through {}'.format(rowstart, rowend))
+        print(lookup)
         self.match(lookup, out=out)
 
     def match(self, lookup, out=None):
@@ -449,6 +450,8 @@ class HelixLookup(object):
 
         print('Forward search done.')
 
+        print('Original name list:')
+        print(names)
         min_matches = 2
         names = [item for item, count in
                 collections.Counter(names).items() if
