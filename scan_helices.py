@@ -164,7 +164,8 @@ class PoseScanner(object):
         self.pose = pose
 
 
-    def scan_pose_helices(self, name=None, test=False, split_chains=True):
+    def scan_pose_helices(self, name=None, test=False,
+            split_chains=True, path=None):
         """
         Scan a pose for helices, then find their centroid, direction,
         length, name, and solvent accessibility.
@@ -175,7 +176,10 @@ class PoseScanner(object):
             name = self.pose.pdb_info().name()
             print('NAME')
             print(name)
-        chains = self.pose.split_by_chain()
+        if split_chains:
+            chains = self.pose.split_by_chain()
+        else:
+            chains = [self.pose]
         # Calculate which residues in pose are at surface only once
         ch = 1
         helices_found = []
@@ -219,6 +223,9 @@ class PoseScanner(object):
                     helix_info['percent_exposed'] =\
                             np.count_nonzero(helix_info['surface']) /\
                             len(helix_info['surface'])
+                    helix_info['chain'] = pose.pdb_info().pose2pdb(helix_info['start'])
+                    if path:
+                        helix_info['path'] = path
                     helices_found.append(helix_info)
                     if test:
                         plot_resis(resis, helix_info['vector'])

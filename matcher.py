@@ -3,7 +3,7 @@ Create bins or match a query protein.
 
 Usage:
     matcher.py bin <helix_dataframe> [options]
-    matcher.py match <pdb> [options]
+    matcher.py match <pdb_folder> [options]
 
 options:
     --local, -l  Run locally
@@ -592,15 +592,22 @@ def main():
     if args['match']:
         import scan_helices
         # Import pdb
-        path = args['<pdb>']
+        pdbfolder = args['<pdb_folder>']
         init()
-        pose = pose_from_file(path)
 
-        # Scan pdb helices
-        scanner = scan_helices.PoseScanner(pose)
-        helices = scanner.scan_pose_helices(name='query',
-                split_chains=False)
-        helices = pd.DataFrame(helices)
+        all_helices = []
+        import glob
+        pdbs = sorted(glob.glob(pdbfolder + '/*.pdb.gz'))
+        for path in pdbs:
+            pose = pose_from_file(path)
+
+            # Scan pdb helices
+            scanner = scan_helices.PoseScanner(pose)
+            helices = scanner.scan_pose_helices(name='query',
+                    split_chains=False, path=path)
+            all_helices.extend(helices)
+        helices = pd.DataFrame(all_helices)
+        helices.to_pickle(args['<pdb_folder>'] + 'query_bins.pkl')
         print("HELICES")
         print(helices)
         print(helices['vector'])
