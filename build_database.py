@@ -98,14 +98,14 @@ def main():
                 # except:
                     # print("Error scanning {}".format(f))
 
-    df.to_pickle('dataframes/{}.pkl'.format(
+    df.to_pickle('nr_dataframes/{}.pkl'.format(
         idx
         ))
-    df.to_csv('dataframes/{}.csv'.format(
+    df.to_csv('nr_dataframes/{}.csv'.format(
         idx
         ))
 
-    errorlog = os.path.join('dataframes', 'errors',
+    errorlog = os.path.join('nr_dataframes', 'errors',
             'helix_scan.e{}'.format(idx))
     with open(errorlog, 'w') as f:
         for err in errors:
