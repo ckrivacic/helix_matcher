@@ -596,7 +596,7 @@ def main():
         init()
 
 
-        helicepath = os.path.join(pdbfolder, 'query_bins.pkl')
+        helicepath = os.path.join(pdbfolder, 'query_helices.pkl')
         if os.path.exists(helicepath):
             helices = pd.read_pickle(helicepath)
         else:
@@ -604,7 +604,7 @@ def main():
             import glob
             pdbs = sorted(glob.glob(pdbfolder + '/*.pdb.gz'))
             for path in pdbs:
-                pose = pose_from_file(path)
+                pose = pose_from_file(path).split_by_chain(1)
 
                 # Scan pdb helices
                 scanner = scan_helices.PoseScanner(pose)
