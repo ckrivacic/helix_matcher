@@ -595,19 +595,24 @@ def main():
         pdbfolder = args['<pdb_folder>']
         init()
 
-        all_helices = []
-        import glob
-        pdbs = sorted(glob.glob(pdbfolder + '/*.pdb.gz'))
-        for path in pdbs:
-            pose = pose_from_file(path)
 
-            # Scan pdb helices
-            scanner = scan_helices.PoseScanner(pose)
-            helices = scanner.scan_pose_helices(name='query',
-                    split_chains=False, path=path)
-            all_helices.extend(helices)
-        helices = pd.DataFrame(all_helices)
-        helices.to_pickle(args['<pdb_folder>'] + 'query_bins.pkl')
+        helicepath = os.path.join(pdbfolder, 'query_bins.pkl')
+        if os.path.exists(helicepath):
+            helices = pd.read_pickle(helicepath)
+        else:
+            all_helices = []
+            import glob
+            pdbs = sorted(glob.glob(pdbfolder + '/*.pdb.gz'))
+            for path in pdbs:
+                pose = pose_from_file(path)
+
+                # Scan pdb helices
+                scanner = scan_helices.PoseScanner(pose)
+                helices = scanner.scan_pose_helices(name='query',
+                        split_chains=False, path=path)
+                all_helices.extend(helices)
+            helices = pd.DataFrame(all_helices)
+            helices.to_pickle(helicepath)
         print("HELICES")
         print(helices)
         print(helices['vector'])
