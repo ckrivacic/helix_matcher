@@ -60,7 +60,7 @@ def session_from_graph(graph, query_df, db_df):
         pymol.cmd.fetch(df_row['name'].split('_')[0], 'db')
         query_row = query_df.loc[query_idx]
 
-        query_selstr += "({} resi {}-{}) or ".format(
+        query_selstr += "({} and (resi {}-{})) or ".format(
                 os.path.basename(query_row['path'])[:-7],
                 query_row['start'], query_row['stop']
                 )

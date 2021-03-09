@@ -66,7 +66,8 @@ def main():
                 if pose:
                     scanner = PoseScanner(pose)
                     helices = pd.DataFrame(
-                            scanner.scan_pose_helices(name=pdb)
+                            scanner.scan_pose_helices(name=pdb,
+                                split_chains=True)
                             )
 
                     df = pd.concat([df, helices], ignore_index=True)
