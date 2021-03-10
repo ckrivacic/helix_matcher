@@ -45,21 +45,11 @@ def session_from_graph(graph, query_df, db_df):
     query_selstr = ""
     db_selstr = "db and "
 
-    for name, group in query_df.groupby('path'):
-        print('Loading {} into pymol'.format(
-            name
-            ))
-        pymol.cmd.load(name, os.path.basename(name[:-7]))
-
     query_path = os.path.dirname(query_df.loc[0]['path'])
 
     db_sels = []
     df_row = db_df.loc[subgraph[0][0]]
     pdb = df_row['name'].split('_')[0]
-    print('fetching {}'.format(
-        df_row['name'].split('_')[0]
-        ))
-    pymol.cmd.fetch(df_row['name'].split('_')[0], 'db')
     dfpose = pose_from_file(df_row['name'].split('_')[0] + '.cif')
     query_vectors = []
     df_vectors = []
