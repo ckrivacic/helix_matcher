@@ -24,7 +24,7 @@ def get_pose(line):
     pdb = fields[0].lower()
     chain = fields[1]
     rep = int(fields[5])
-    if rep == '1':
+    if rep == 1:
         path = os.path.join(pdb_prefix, pdb[1:3], 'pdb{}.ent.gz'.format(
             pdb
             ))
