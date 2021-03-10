@@ -14,9 +14,14 @@ options:
     --verbose, -v  Verbose output
 
     --database=PATH, -d  Database of relative helix orientations  
-    [default: database/bins_2.5A_15D/]
+    [default: database/]
 
     --out=PATH, -o  Where to save outputs  [default: .]
+
+    --angstroms=NUM, -a  Binning option. How fine should the distance bins
+    be?  [default: 2.5]
+    --degrees=NUM, -g  Binning option. How fine should the angle bins be?
+    [default: 15]
 '''
 import docopt
 import pandas as pd
@@ -402,7 +407,7 @@ class HelixLookup(object):
         i = 0
         for lookup in lookups:
             print('MATCHING AGAINST {}'.format(lookup))
-            out = os.path.join(outdir, '{}_results_{:03d}'.format(
+            out = os.path.join(outdir, '{}_results_{:03d}.pkl'.format(
                 self.name, i)
                 )
             self.match(pd.read_pickle(lookup), out=out)
@@ -584,11 +589,20 @@ def make_test_hash_table():
 
 def main():
     args = docopt.docopt(__doc__)
+    dbpath = os.path.join(
+            args['--database'],
+            "bins_{}A_{}D".format(
+                float(args['--angstroms']),
+                float(args['--degrees'])
+                )
+            )
     if args['bin']:
         lookup = HelixBin(pd.read_pickle(args['<helix_dataframe>']),
-                exposed_cutoff=0.3, length_cutoff=10.8, angstroms=2.5,
-                degrees=15, verbose=args['--verbose'])
-        lookup.bin_db(outdir=args['--database'])
+                exposed_cutoff=0.3, length_cutoff=10.8,
+                angstroms=float(args['--angstroms']),
+                degrees=float(args['--degrees']), 
+                verbose=args['--verbose'])
+        lookup.bin_db(outdir=dbpath)
     if args['match']:
         import scan_helices
         # Import pdb
@@ -619,17 +633,20 @@ def main():
 
         # Bin pdb helices
         query = HelixBin(helices, exposed_cutoff=0.3,
-                length_cutoff=10.8, angstroms=2.5, degrees=15,
+                length_cutoff=10.8, 
+                angstroms=float(args['--angstroms']), 
+                degrees=float(args['--degrees']),
                 verbose=args['--verbose'])
         query_bins = query.bin_db()
         print('QUERY BINS')
         print(query_bins)
 
         # Match
-        name = os.path.basename(path).split('.')[0]
+        # name = os.path.basename(path).split('.')[0]
+        name = 'query'
         print('Database:')
-        print(args['--database'])
-        matcher = HelixLookup(args['--database'], query_bins, name=name,
+        print(dbpath)
+        matcher = HelixLookup(dbpath, query_bins, name=name,
                 verbose=args['--verbose'])
         if args['--tasks']:
             matcher.submit_cluster(args['--out'], int(args['--tasks']))

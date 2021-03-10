@@ -52,23 +52,6 @@ def find_resis_centroid(resis):
 
     return np.array([mean(x), mean(y), mean(z)])
 
-def match_2_helices():
-    '''
-    Just notes for now. To do:
-    1. Align one helix with a helix on the scaffold.
-    2. From top-down view, find angle between second query helix and
-    second scaffold helix.
-    3. Do some math to rotate around first query helix. (This is the
-    hard part I think)
-
-    Alternatively:
-    1. Align 2 query helix vectors with 2 scaffold helix vectors.
-    2. Calculate RMSD or something.
-    3. From here look for any other matches from same rotation.
-    4. Do this with every pair of helices.
-    '''
-    return
-
 
 def final_vector(direction, length, centroid):
     # rotation_normalizer = np.cross(

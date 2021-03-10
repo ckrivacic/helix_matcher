@@ -14,6 +14,8 @@ import scan_helices
 import networkx as nx
 from pyrosetta import pose_from_file
 from pyrosetta import init
+import numeric
+import subprocess
 import os
 
 
@@ -49,26 +51,43 @@ def session_from_graph(graph, query_df, db_df):
             ))
         pymol.cmd.load(name, os.path.basename(name[:-7]))
 
+    query_path = os.path.dirname(query_df.loc[0]['path'])
+
     db_sels = []
+    df_row = db_df.loc[subgraph[0][0]]
+    pdb = df_row['name'].split('_')[0]
+    print('fetching {}'.format(
+        df_row['name'].split('_')[0]
+        ))
+    pymol.cmd.fetch(df_row['name'].split('_')[0], 'db')
+    dfpose = pose_from_file(df_row['name'].split('_')[0] + '.cif')
+    query_vectors = []
+    df_vectors = []
     for node in subgraph:
         df_idx = node[0]
         query_idx = node[1]
         df_row = db_df.loc[df_idx]
-        print('fetching {}'.format(
-            df_row['name'].split('_')[0]
-            ))
-        pymol.cmd.fetch(df_row['name'].split('_')[0], 'db')
         query_row = query_df.loc[query_idx]
+
+        # start = dfpose.pdb_info().pose2pdb(df_row['start']).split(' ')[0]
+        # stop = dfpose.pdb_info().pose2pdb(df_row['stop']).split(' ')[0]
+        start = df_row['start']
+        stop = df_row['stop']
+        
+        query_vectors.extend(query_row['vector'])
+        df_vectors.extend(df_row['vector'])
 
         query_selstr += "({} and (resi {}-{})) or ".format(
                 os.path.basename(query_row['path'])[:-7],
                 query_row['start'], query_row['stop']
                 )
         db_selstr = "(resi {}-{} and chain {})".format(
-                df_row['start'], df_row['stop'],
-                chain_from_name(df_row['name'])
+                start, stop,
+                df_row['chain']
                 )
         db_sels.append(db_selstr)
+
+    transform = numeric.Transformation(df_vectors, query_vectors)
 
     db_selstr = 'db and ('+ db_sels[0]
     for i in range(1, len(db_sels)):
@@ -77,14 +96,14 @@ def session_from_graph(graph, query_df, db_df):
     db_selstr += ')'
 
     query_selstr = query_selstr[:-4]
+    query_selstr += ' and chain A'
 
     print(query_selstr)
     print(db_selstr)
 
-    pymol.cmd.align(db_selstr, query_selstr)
-
-    pymol.finish_launching()
-
+    subprocess.call(['./launch_pymol.sho', query_path + '/', 
+        pdb, query_selstr,
+        db_selstr])
 
 
 def test():
@@ -95,7 +114,8 @@ def test():
     init()
     helices = pd.read_pickle('test_files/boundary/cluster_representatives/query_helices.pkl')
 
-    testrow = results.iloc[0]
+    results = results.sort_values(by='matches')
+    testrow = results.iloc[-5]
     testgraph = testrow['graph']
 
     session_from_graph(testgraph, helices, df)
