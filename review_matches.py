@@ -94,18 +94,7 @@ def session_from_graph(graph, query_df, db_df):
                 )
         db_sels.append(db_selstr)
 
-    print()
-    print('Sets of df and query vectors:')
-    print(df_vectors)
-    print(query_vectors)
     transform = numeric.Transformation(df_vectors, query_vectors)
-
-    print()
-    print('Transformation matrix:')
-    print(transform.rotation)
-    print('Translation:')
-    print(transform.translation)
-    print()
     pymol_transform = get_pymol_transform(transform)
 
     db_selstr = '('+ db_sels[0]
