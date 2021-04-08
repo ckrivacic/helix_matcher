@@ -404,6 +404,8 @@ class HelixLookup(object):
     def submit_local(self, outdir):
         import glob
         lookups = sorted(glob.glob(self.lookup_folder + '/*.pkl'))
+        print(self.lookup_folder)
+        print(lookups)
         i = 0
         for lookup in lookups:
             print('MATCHING AGAINST {}'.format(lookup))
@@ -616,7 +618,10 @@ def main():
         else:
             all_helices = []
             import glob
-            pdbs = sorted(glob.glob(pdbfolder + '/*.pdb.gz'))
+            gz = glob.glob(pdbfolder + '/*.pdb.gz')
+            dotpdb = glob.glob(pdbfolder + '/*.pdb')
+            gz.extend(dotpdb)
+            pdbs = sorted(gz)
             for path in pdbs:
                 pose = pose_from_file(path).split_by_chain(1)
 
