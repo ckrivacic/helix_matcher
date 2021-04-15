@@ -17,26 +17,23 @@ This will create a sub-directory in output_folder for each surface patch on the 
 Next, run RIFGen:
 
 ```bash
-python3 rifgen.py <folder> [options]
+# You can skip the first command in the future if you add it to your .bashrc file.
+export RIFGEN=/path/to/rifgen_binary
+python3 rifgen.py <folder>
 ```
 
 Where `<folder>` is the same as `<output_folder>` above.
 
-Possible options are:
-```python
---sge # If you want to use an SGE job distributor to run RIFGEN
---tasks=NUM # If using SGE, how many tasks do you want to split RIFGEN into?
+You can also run RIFGEN on the cluster:
+```bash
+./submit_rifgen.sh
 ```
+Currently you will need to edit this script to point to your python path, the `<folder>` used above, and to set the number of tasks. Streamlining this is on the to-do list.
 
 Once RIFGen is complete, run RIFDock:
 
 ```bash
-python3 run_rifdock.py <folder> [options]
+python3 run_rifdock.py <folder>
 ```
 
-Possible options are:
-```python
---sge # Same as above; use this option if running on Wynton
---tasks=NUM # Same as above; how many tasks to split into if using the cluster
-```
 
