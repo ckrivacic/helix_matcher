@@ -1,3 +1,7 @@
+'''
+Usage:
+    python3 prep_rifgen.py <target_pdb> <output_folder>
+'''
 from patches import Patches
 from pyrosetta import pose_from_file
 from pyrosetta import init
