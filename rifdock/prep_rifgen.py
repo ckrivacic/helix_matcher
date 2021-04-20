@@ -1,6 +1,10 @@
 '''
 Usage:
     python3 prep_rifgen.py <target_pdb> <output_folder>
+TO DO:
+    Allow user to input a chain, figure out what Rosetta chain that is,
+    and split that chain
+    Allow user to specify ranges
 '''
 from patches import Patches
 from pyrosetta import pose_from_file
