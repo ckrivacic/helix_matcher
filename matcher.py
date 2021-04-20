@@ -11,6 +11,8 @@ options:
     --tasks=NUM, -j  Run on the cluster using SGE. Argument should be # of
     tasks in total.
 
+    --length, -e  Bin by length
+
     --verbose, -v  Verbose output
 
     --database=PATH, -d  Database of relative helix orientations  
@@ -342,9 +344,10 @@ class HelixBin(object):
                     dist = np.array([dist])
                     angles = np.array([angle1, angle2, dihedral])
 
-                    delta_length = combination[0]['length'] - combination[1]['length']
-                    lbin = bin_array([delta_length], self.tbins)
-                    lbin2 = bin_array([delta_length], self.tbins +
+                    lengths = np.array([combination[0]['length'],
+                        combination[1]['length']])
+                    lbin = bin_array(lengths, self.tbins)
+                    lbin2 = bin_array(lengths, self.tbins +
                             (self.angstroms/2))
 
                     rbin = bin_array(angles, self.rbins)
@@ -357,12 +360,12 @@ class HelixBin(object):
                     abc = [rbin[0], rbin2[0]]
                     bcd = [rbin[1], rbin2[1]]
                     dih = [rbin[2], rbin2[2]]
-                    lengths = [lbin[0], lbin2[0]]
+                    lengths = [lbin, lbin2]
 
                     if bin_length:
                         all_bins = product(x, abc, bcd, dih, lengths)
                     else:
-                        all_bins = product9x, abc, bcd, dih)
+                        all_bins = product(x, abc, bcd, dih)
 
                     for bin_12 in all_bins:
                         bin_12 = ' '.join(map(str, bin_12))
@@ -614,7 +617,7 @@ def main():
                 angstroms=float(args['--angstroms']),
                 degrees=float(args['--degrees']), 
                 verbose=args['--verbose'])
-        lookup.bin_db(outdir=dbpath)
+        lookup.bin_db(outdir=dbpath, bin_length=args['--length'])
     if args['match']:
         import scan_helices
         # Import pdb
@@ -652,7 +655,7 @@ def main():
                 angstroms=float(args['--angstroms']), 
                 degrees=float(args['--degrees']),
                 verbose=args['--verbose'])
-        query_bins = query.bin_db()
+        query_bins = query.bin_db(bin_length=args['--length'])
         print('QUERY BINS')
         print(query_bins)
 
