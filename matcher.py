@@ -1,17 +1,29 @@
 '''
 Create bins or match a query protein.
+
 Usage:
     matcher.py bin <helix_dataframe> [options]
-    matcher.py match <pdb> [options]
+    matcher.py match <pdb_folder> [options]
 
 options:
     --local, -l  Run locally
+
     --tasks=NUM, -j  Run on the cluster using SGE. Argument should be # of
     tasks in total.
+
+    --length, -e  Bin by length
+
     --verbose, -v  Verbose output
+
     --database=PATH, -d  Database of relative helix orientations  
-    [default:database/bins_2.5A_15D/]
-    --out=PATH,  -o  Where to save outputs  [default: .]
+    [default: database/]
+
+    --out=PATH, -o  Where to save outputs  [default: .]
+
+    --angstroms=NUM, -a  Binning option. How fine should the distance bins
+    be?  [default: 2.5]
+    --degrees=NUM, -g  Binning option. How fine should the angle bins be?
+    [default: 15]
 '''
 import docopt
 import pandas as pd
@@ -22,10 +34,9 @@ import os, psutil, sys
 import pickle
 import subprocess
 from scan_helices import final_vector
-from pymongo import MongoClient
 from pyrosetta import init, pose_from_file
-# import networkx as nx
-import graph_tool.all as gt
+import networkx as nx
+# import graph_tool.all as gt
 import collections
 
 
@@ -87,8 +98,8 @@ class Match(object):
         self.name = name
         self.query = query_db
         self.db = main_db.xs(name, level='name')
-        self.graph = gt.Graph(directed=False)
-        # self.graph = nx.Graph()
+        # self.graph = gt.Graph(directed=False)
+        self.graph = nx.Graph()
         # Track helix pairs so we don't add them to the graph more than
         # once
 
@@ -100,7 +111,8 @@ class Match(object):
         with the set of query helices.
         '''
         max_subgraph_len = 0
-        for f in gt.max_cliques(self.graph):
+        # for f in gt.max_cliques(self.graph):
+        for f in nx.find_cliques(self.graph):
             if len(f) > max_subgraph_len:
                 max_subgraph_len = len(f)
 
@@ -110,13 +122,13 @@ class Match(object):
 
 
     def plot_graph(self):
-        # import matplotlib.pyplot as plt
-        # import graph_tool.draw as draw
-        # plt.subplot(111)
-        gt.remove_parallel_edges(self.graph)
-        pos = gt.fruchterman_reingold_layout(self.graph, n_iter=1000)
-        gt.graph_draw(self.graph, pos=pos)
-        # plt.show()
+        import matplotlib.pyplot as plt
+        import graph_tool.draw as draw
+        plt.subplot(111)
+        # gt.remove_parallel_edges(self.graph)
+        # pos = gt.fruchterman_reingold_layout(self.graph, n_iter=1000)
+        # gt.graph_draw(self.graph, pos=pos)
+        plt.show()
 
     def find_edges(self):
         '''
@@ -129,7 +141,7 @@ class Match(object):
         '''
         print('Finding edges')
         edges = []
-        self.nodes = {}
+        self.nodes = set()
         property_map = {}
         i = 0
         for doc in self.db.iterrows():
@@ -141,36 +153,41 @@ class Match(object):
                     idx_pair2 = (doc[1]['idx2'], result[1]['idx2'])
                     # Track which nodes have been sampled
                     if idx_pair1 not in self.nodes:
-                        self.nodes[idx_pair1] = i
-                        property_map[i] = idx_pair1
+                        self.nodes.add(idx_pair1)
+                        self.graph.add_node(idx_pair1)
+                        # self.nodes[idx_pair1] = i
+                        # property_map[i] = idx_pair1
                         i += 1
                         # self.nodes.append(idx_pair1)
                         # self.graph.add_node(idx_pair1)
                     if idx_pair2 not in self.nodes:
-                        self.nodes[idx_pair2] = i
-                        property_map[i] = idx_pair2
+                        # self.nodes[idx_pair2] = i
+                        # property_map[i] = idx_pair2
+                        self.nodes.add(idx_pair2)
+                        self.graph.add_node(idx_pair2)
                         i += 1
                         # self.nodes.append(idx_pair2)
                         # self.graph.add_node(idx_pair2)
+                    self.graph.add_edge(idx_pair1, idx_pair2)
                     # print('Edge found:')
                     # print(idx_pair1)
                     # print(idx_pair2)
-                    edges.append((self.nodes[idx_pair1],
-                        self.nodes[idx_pair2]))
+                    # edges.append((self.nodes[idx_pair1],
+                        # self.nodes[idx_pair2]))
                 # i += 2
         # nodes = set(self.nodes)
         # self.graph.add_edge(idx_pair1, idx_pair2)
         # print(nodes)
-        if self.verbose:
-            print('All edges:')
-            print(edges)
-        self.graph.add_edge_list(edges)
+        # if self.verbose:
+            # print('All edges:')
+            # print(edges)
+        # self.graph.add_edge_list(edges)
 
         # Add properties
-        prop_dict = self.graph.new_vertex_property('object')
-        for v in self.graph.vertices():
-            prop_dict[v] = {'query_idx':property_map[v][0],
-                    'lookup_idx':property_map[v][1]}
+        # prop_dict = self.graph.new_vertex_property('object')
+        # for v in self.graph.vertices():
+            # prop_dict[v] = {'query_idx':property_map[v][0],
+                    # 'lookup_idx':property_map[v][1]}
 
 
 class HelixBin(object):
@@ -208,7 +225,7 @@ class HelixBin(object):
         ntbins = int((tstop - tstart) // self.angstroms) + 1
         self.tbins = np.linspace(tstart, tstop, ntbins)
 
-    def bin_db(self, outdir=None):
+    def bin_db(self, outdir=None, bin_length=False):
         '''
         Bin dataframes.
         '''
@@ -327,6 +344,12 @@ class HelixBin(object):
                     dist = np.array([dist])
                     angles = np.array([angle1, angle2, dihedral])
 
+                    lengths = np.array([combination[0]['length'],
+                        combination[1]['length']])
+                    lbin = bin_array(lengths, self.tbins)
+                    lbin2 = bin_array(lengths, self.tbins +
+                            (self.angstroms/2))
+
                     rbin = bin_array(angles, self.rbins)
                     tbin = bin_array(dist, self.tbins)
                     rbin2 = bin_array(angles, self.rbins + (self.degrees/2))
@@ -337,9 +360,14 @@ class HelixBin(object):
                     abc = [rbin[0], rbin2[0]]
                     bcd = [rbin[1], rbin2[1]]
                     dih = [rbin[2], rbin2[2]]
+                    lengths = [lbin, lbin2]
 
-                    for bin_12 in product(x, abc, bcd,
-                        dih):
+                    if bin_length:
+                        all_bins = product(x, abc, bcd, dih, lengths)
+                    else:
+                        all_bins = product(x, abc, bcd, dih)
+
+                    for bin_12 in all_bins:
                         bin_12 = ' '.join(map(str, bin_12))
                         doc = {
                                 'bin':bin_12, 
@@ -389,10 +417,12 @@ class HelixLookup(object):
     def submit_local(self, outdir):
         import glob
         lookups = sorted(glob.glob(self.lookup_folder + '/*.pkl'))
+        print(self.lookup_folder)
+        print(lookups)
         i = 0
         for lookup in lookups:
             print('MATCHING AGAINST {}'.format(lookup))
-            out = os.path.join(outdir, '{}_results_{:03d}'.format(
+            out = os.path.join(outdir, '{}_results_{:03d}.pkl'.format(
                 self.name, i)
                 )
             self.match(pd.read_pickle(lookup), out=out)
@@ -401,18 +431,25 @@ class HelixLookup(object):
     def submit_cluster(self, outdir, total_tasks):
         import glob
         lookups = sorted(glob.glob(self.lookup_folder + '/*.pkl'))
-        task = os.environ['SGE_TASK_ID']
-        out = os.path.join(outdir, '{}_results_{:03d}'.format(self.name,
-            task
-        increment = total_tasks // len(lookups) - 1
+        task = int(os.environ['SGE_TASK_ID']) - 1
+        out = os.path.join(outdir, '{}_results_{:03d}.pkl'.format(self.name,
+            task))
+        print('Saving to {}'.format(out))
+        # Warning: total_tasks must be a multiple of len(lookups) for
+        # now.
+        increment = total_tasks // len(lookups)
+        print('Increment {}'.format(increment))
         lookups_idx = task//increment
+        print('Reading database file # {}'.format(lookups_idx))
 
         lookup = pd.read_pickle(lookups[lookups_idx])
         num_rows = lookup.shape[0]
-        row_increment = num_rows // increment - 1
-        rowstart = task%row_increment * row_increment
+        row_increment = num_rows // increment
+        rowstart = (task%increment) * row_increment
         rowend = rowstart + row_increment
         lookup = lookup.iloc[rowstart:rowend]
+        print('Looking up rows {} through {}'.format(rowstart, rowend))
+        print(lookup)
         self.match(lookup, out=out)
 
     def match(self, lookup, out=None):
@@ -427,17 +464,22 @@ class HelixLookup(object):
                 for result in lookup.xs(_bin, level='bin').iterrows():
                     # xs results in (index, row) tuples; db is indexed by
                     # name, so row[0] is the name.
+                    if self.verbose:
+                        print('Matched to pdb {}'.format(result[0]))
                     names.append(
                             result[0]
                             )
 
         print('Forward search done.')
 
-        min_matches = 4
+        print('Original name list:')
+        print(names)
+        min_matches = 2
         names = [item for item, count in
                 collections.Counter(names).items() if
                 count >= min_matches]
 
+        print('All matches:')
         print(names)
         print(len(names))
 
@@ -562,35 +604,70 @@ def make_test_hash_table():
 
 def main():
     args = docopt.docopt(__doc__)
+    dbpath = os.path.join(
+            args['--database'],
+            "bins_{}A_{}D".format(
+                float(args['--angstroms']),
+                float(args['--degrees'])
+                )
+            )
     if args['bin']:
         lookup = HelixBin(pd.read_pickle(args['<helix_dataframe>']),
-                exposed_cutoff=0.3, length_cutoff=10.8, angstroms=2.5,
-                degrees=15, verbose=args['--verbose'])
-        lookup.bin_db(outdir=args['--database'])
+                exposed_cutoff=0.3, length_cutoff=10.8,
+                angstroms=float(args['--angstroms']),
+                degrees=float(args['--degrees']), 
+                verbose=args['--verbose'])
+        lookup.bin_db(outdir=dbpath, bin_length=args['--length'])
     if args['match']:
         import scan_helices
         # Import pdb
-        path = args['<pdb>']
+        pdbfolder = args['<pdb_folder>']
         init()
-        pose = pose_from_file(path)
 
-        # Scan pdb helices
-        scanner = scan_helices.PoseScanner(pose)
-        helices = scanner.scan_pose_helices()
-        helices = pd.DataFrame(helices)
+
+        helicepath = os.path.join(pdbfolder, 'query_helices.pkl')
+        if os.path.exists(helicepath):
+            helices = pd.read_pickle(helicepath)
+        else:
+            all_helices = []
+            import glob
+            gz = glob.glob(pdbfolder + '/*.pdb.gz')
+            dotpdb = glob.glob(pdbfolder + '/*.pdb')
+            gz.extend(dotpdb)
+            pdbs = sorted(gz)
+            for path in pdbs:
+                pose = pose_from_file(path).split_by_chain(1)
+
+                # Scan pdb helices
+                scanner = scan_helices.PoseScanner(pose)
+                helices = scanner.scan_pose_helices(name='query',
+                        split_chains=False, path=path)
+                all_helices.extend(helices)
+            helices = pd.DataFrame(all_helices)
+            helices.to_pickle(helicepath)
+        print("HELICES")
+        print(helices)
+        print(helices['vector'])
 
         # Bin pdb helices
         query = HelixBin(helices, exposed_cutoff=0.3,
-                length_cutoff=10.8, angstroms=2.5, degrees=15,
+                length_cutoff=10.8, 
+                angstroms=float(args['--angstroms']), 
+                degrees=float(args['--degrees']),
                 verbose=args['--verbose'])
-        query_bins = query.bin_db()
+        query_bins = query.bin_db(bin_length=args['--length'])
+        print('QUERY BINS')
+        print(query_bins)
 
         # Match
-        name = os.path.basename(path).split('.')[0]
-        matcher = HelixLookup(args['--database'], query_bins, name=name,
+        # name = os.path.basename(path).split('.')[0]
+        name = 'query'
+        print('Database:')
+        print(dbpath)
+        matcher = HelixLookup(dbpath, query_bins, name=name,
                 verbose=args['--verbose'])
-        if args['--sge']:
-            matcher.submit_cluster(args['--out'], int(args['--sge']))
+        if args['--tasks']:
+            matcher.submit_cluster(args['--out'], int(args['--tasks']))
         else:
             matcher.submit_local(args['--out'])
 

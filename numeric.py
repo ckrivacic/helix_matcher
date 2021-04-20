@@ -45,6 +45,21 @@ class Transformation(object):
             rotated[i] = rotated[i] + self.translation
         return rotated
 
+    def plot(self):
+        from mpl_toolkits.mplot3d import Axes3D
+        import matplotlib.pyplot as plt
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        for point in self.xyz1:
+            ax.scatter(point[0], point[1], point[2], color='red')
+        for point in self.xyz2:
+            ax.scatter(point[0], point[1], point[2], color='blue')
+        xyz3 = self.apply(self.xyz1)
+        for point in xyz3:
+            ax.scatter(point[0], point[1], point[2], color='green')
+
+        plt.show()
+
 
 def centroid(vector1, vector2):
     '''

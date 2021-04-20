@@ -23,8 +23,8 @@ def get_pose(line):
     fields = list(filter(None, line.split(' ')))
     pdb = fields[0].lower()
     chain = fields[1]
-    rep = fields[5]
-    if rep:
+    rep = int(fields[5])
+    if rep == 1:
         path = os.path.join(pdb_prefix, pdb[1:3], 'pdb{}.ent.gz'.format(
             pdb
             ))
@@ -66,7 +66,8 @@ def main():
                 if pose:
                     scanner = PoseScanner(pose)
                     helices = pd.DataFrame(
-                            scanner.scan_pose_helices(name=pdb)
+                            scanner.scan_pose_helices(name=pdb,
+                                split_chains=True)
                             )
 
                     df = pd.concat([df, helices], ignore_index=True)
@@ -97,14 +98,14 @@ def main():
                 # except:
                     # print("Error scanning {}".format(f))
 
-    df.to_pickle('dataframes/{}.pkl'.format(
+    df.to_pickle('nr_dataframes/{}.pkl'.format(
         idx
         ))
-    df.to_csv('dataframes/{}.csv'.format(
+    df.to_csv('nr_dataframes/{}.csv'.format(
         idx
         ))
 
-    errorlog = os.path.join('dataframes', 'errors',
+    errorlog = os.path.join('nr_dataframes', 'errors',
             'helix_scan.e{}'.format(idx))
     with open(errorlog, 'w') as f:
         for err in errors:

@@ -52,23 +52,6 @@ def find_resis_centroid(resis):
 
     return np.array([mean(x), mean(y), mean(z)])
 
-def match_2_helices():
-    '''
-    Just notes for now. To do:
-    1. Align one helix with a helix on the scaffold.
-    2. From top-down view, find angle between second query helix and
-    second scaffold helix.
-    3. Do some math to rotate around first query helix. (This is the
-    hard part I think)
-
-    Alternatively:
-    1. Align 2 query helix vectors with 2 scaffold helix vectors.
-    2. Calculate RMSD or something.
-    3. From here look for any other matches from same rotation.
-    4. Do this with every pair of helices.
-    '''
-    return
-
 
 def final_vector(direction, length, centroid):
     # rotation_normalizer = np.cross(
@@ -164,7 +147,8 @@ class PoseScanner(object):
         self.pose = pose
 
 
-    def scan_pose_helices(self, name=None, test=False, split_chains=True):
+    def scan_pose_helices(self, name=None, test=False,
+            split_chains=True, path=None):
         """
         Scan a pose for helices, then find their centroid, direction,
         length, name, and solvent accessibility.
@@ -173,9 +157,12 @@ class PoseScanner(object):
         """
         if not name:
             name = self.pose.pdb_info().name()
-            print('NAM E')
+            print('NAME')
             print(name)
-        chains = self.pose.split_by_chain()
+        if split_chains:
+            chains = self.pose.split_by_chain()
+        else:
+            chains = [self.pose]
         # Calculate which residues in pose are at surface only once
         ch = 1
         helices_found = []
@@ -219,6 +206,9 @@ class PoseScanner(object):
                     helix_info['percent_exposed'] =\
                             np.count_nonzero(helix_info['surface']) /\
                             len(helix_info['surface'])
+                    helix_info['chain'] = pose.pdb_info().pose2pdb(helix_info['start'])
+                    if path:
+                        helix_info['path'] = path
                     helices_found.append(helix_info)
                     if test:
                         plot_resis(resis, helix_info['vector'])

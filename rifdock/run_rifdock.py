@@ -20,7 +20,8 @@ from subprocess import Popen, PIPE
 def write_flags(folder):
 #-rif_dock:target_res            residue_numbers.txt
     
-    target, cache = get_flag_params(folder)
+    scaffold = '/home/ckrivacic/software/helix_matcher/test_files/4turn_dock_helix.pdb'
+    tarpath, cache = get_flag_params(folder)
     flags_rifgen = '''
 -rif_dock:target_pdb            ./{target}.rif.gz_target.pdb.gz
 -rif_dock:target_rf_resl        0.25
@@ -39,7 +40,7 @@ def write_flags(folder):
 -rif_dock:data_cache_dir  .
 -rif_dock:cache_scaffold_data true  # set to false if you don't want to use/generate
 
--rif_dock:scaffolds 6r9d_chainA.pdb # list of scaffold pdb files
+-rif_dock:scaffolds {scaffold} # list of scaffold pdb files
 
  # optional list of 'res' files for each scaffold
  # must be either one file which applies to all input scaffolds
@@ -58,7 +59,7 @@ def write_flags(folder):
 
 # set to true to align all output to scaffolds instead of target
 # mostly useful for small molecule binder design
--rif_dock:align_output_to_scaffold true
+-rif_dock:align_output_to_scaffold false
 
 # include some pikaa lines in output pdbs for rif residues(??)
 -rif_dock:pdb_info_pikaa false # this is default I think
@@ -71,7 +72,7 @@ def write_flags(folder):
 # actually be made
 -require_satisfaction 0
     '''.format(db=os.path.join(os.environ['ROSETTA'], 'database'),
-            target=tarpath, cache=cache)
+            target=tarpath, cache=cache, scaffold=scaffold)
 
     if not os.path.exists(folder):
         os.mkdir(folder)
@@ -102,14 +103,14 @@ def main():
     folder = os.path.abspath(args['<folder>'])
 
     total_jobs = len(glob.glob(folder + '/*/'))
-    #if '--tasks' in args:
-    if args['--tasks']:
+    if '--tasks' in args:
+    #if args['--tasks']:
         num_tasks = int(args['--tasks'])
     else:
         num_tasks = 1
 
-    #if '--sge' in args:
-    if args['--sge']:
+    if '--sge' in args:
+    #if args['--sge']:
         task = os.environ['SGE_TASK_ID'] - 1
     else:
         task = 0
@@ -119,21 +120,22 @@ def main():
 
     folders = sorted(glob.glob(folder + '/*/'))
 
-    rifgen = os.environ['RIFDOCK']
+    rifdock = os.environ['RIFDOCK']
     for fold in folders[start_job:stop_job+1]:
         print(fold)
         os.chdir(fold)
-        flags = os.path.join(fold, 'flags')
-        process = Popen([rifgen, '@', flags], stdout=PIPE, stderr=PIPE)
+        write_flags(fold)
+        flags = os.path.join(fold, 'dock_flags')
+        process = Popen([rifdock, '@', flags], stdout=PIPE, stderr=PIPE)
         stdout, stderr = process.communicate()
         exit_code = process.wait()
         if exit_code != 0:
             print(stdout)
             print(stderr)
-        #output = subprocess.check_output([rifgen, '@', flags])
+        #output = subprocess.check_output([rifdock, '@', flags])
         #print(output)
 
 
 if __name__=='__main__':
-    # main()
-    get_flag_params('../test_files/6r9d/')
+    main()
+    #get_flag_params('../test_files/6r9d/')

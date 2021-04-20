@@ -109,8 +109,7 @@ def main():
     print(patches.reslist)
     patches.map_residues()
     print(patches.resmap)
-    parent_folder = os.path.abspath(os.path.join('..', 'test_files',
-        'test_rifgen'))
+    parent_folder = os.path.abspath(os.path.join(sys.argv[2])
     i = 1
     for res in patches.reslist:
         patch_folder = os.path.join(parent_folder, 'patch_{}'.format(i))
