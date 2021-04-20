@@ -223,7 +223,7 @@ class HelixBin(object):
         ntbins = int((tstop - tstart) // self.angstroms) + 1
         self.tbins = np.linspace(tstart, tstop, ntbins)
 
-    def bin_db(self, outdir=None):
+    def bin_db(self, outdir=None, bin_length=False):
         '''
         Bin dataframes.
         '''
@@ -342,6 +342,11 @@ class HelixBin(object):
                     dist = np.array([dist])
                     angles = np.array([angle1, angle2, dihedral])
 
+                    delta_length = combination[0]['length'] - combination[1]['length']
+                    lbin = bin_array([delta_length], self.tbins)
+                    lbin2 = bin_array([delta_length], self.tbins +
+                            (self.angstroms/2))
+
                     rbin = bin_array(angles, self.rbins)
                     tbin = bin_array(dist, self.tbins)
                     rbin2 = bin_array(angles, self.rbins + (self.degrees/2))
@@ -352,9 +357,14 @@ class HelixBin(object):
                     abc = [rbin[0], rbin2[0]]
                     bcd = [rbin[1], rbin2[1]]
                     dih = [rbin[2], rbin2[2]]
+                    lengths = [lbin[0], lbin2[0]]
 
-                    for bin_12 in product(x, abc, bcd,
-                        dih):
+                    if bin_length:
+                        all_bins = product(x, abc, bcd, dih, lengths)
+                    else:
+                        all_bins = product9x, abc, bcd, dih)
+
+                    for bin_12 in all_bins:
                         bin_12 = ' '.join(map(str, bin_12))
                         doc = {
                                 'bin':bin_12, 
