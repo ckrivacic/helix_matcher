@@ -1,12 +1,17 @@
 '''
 Usage:
-    python3 prep_rifgen.py <target_pdb> <output_folder>
+    prep_rifgen.py <target_pdb> <output_folder> [options]
+
+options:
+    --chain=LETTER, -c  
+    Which chain of the protein to use
 TO DO:
     Allow user to input a chain, figure out what Rosetta chain that is,
     and split that chain
     Allow user to specify ranges
 '''
 from patches import Patches
+import docopt
 from pyrosetta import pose_from_file
 from pyrosetta import init
 import numpy as np
@@ -109,28 +114,43 @@ def test_3n2n():
 
 def main():
     init()
-    posefile = os.path.abspath(sys.argv[1])
-    # just use chain A for now
-    pose = pose_from_file(posefile).split_by_chain(1)
+    args = docopt.docopt(__doc__)
+    posefile = os.path.abspath(args['<target_pdb>'])
+    pose = pose_from_file(posefile)#.split_by_chain(1)
+
+    if args['--chain']:
+        print('MAKING PATCHES FOR CHAIN {}'.format(args['--chain']))
+        for i in range(1, pose.num_chains()):
+            info = pose.split_by_chain(i).pdb_info().pose2pdb(1)
+            if info.split(' ')[1] == args['--chain']:
+                pose = pose.split_by_chain(i)
+                if pose.size() < 5:
+                    raise('Error: chain too small.')
+                break
+    else:
+        pose = pose.split_by_chain(1)
     patches = Patches(pose)
     patches.determine_surface_residues()
     print(patches.reslist)
     patches.map_residues()
     print(patches.resmap)
-    parent_folder = os.path.abspath(os.path.join(sys.argv[2])
+    parent_folder = os.path.abspath(os.path.join(args['<output_folder>']))
+    target_pdb = os.path.join(parent_folder, 'target.pdb')
     i = 1
     for res in patches.reslist:
         patch_folder = os.path.join(parent_folder, 'patch_{}'.format(i))
         i += 1
         if not os.path.exists(patch_folder):
             os.makedirs(patch_folder, exist_ok=True)
-        print(patches.nearest_n_residues(res, 100, cutoff=21,
+        print(patches.nearest_n_residues(res, 100, cutoff=10.5,
             pymol=True))
-        write_to_file(patches.nearest_n_residues(res, 100, cutoff=21),
+        write_to_file(patches.nearest_n_residues(res, 100, cutoff=10.5),
                 patch_folder)
-        write_flags(patch_folder, posefile)
+        write_flags(patch_folder, target_pdb)
+
+    pose.dump_pdb(target_pdb)
 
 
 if __name__=='__main__':
-    # main()
-    test_3n2n()
+    main()
+    # test_3n2n()
