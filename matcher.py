@@ -63,7 +63,7 @@ def bin_array(array, bins):
     return binned
 
 
-def relative_position(row1, row2, vectortype='normalized_vector'):
+def relative_position(row1, row2, vectortype='vector'):
     '''
     Gives the internal relative orientation of two lines, given their
     row from the pandas dataframe created in scan_helices.
@@ -213,9 +213,9 @@ class HelixBin(object):
         if exposed_cutoff:
             self.df = self.df[self.df['percent_exposed'] >
                     exposed_cutoff]
-        if 'normalized_vector' not in self.df.columns:
-            self.df['normalized_vector'] = self.df.apply(lambda x:
-                    final_vector(x['direction'], 1, x['centroid']), axis=1)
+        # if 'normalized_vector' not in self.df.columns:
+            # self.df['normalized_vector'] = self.df.apply(lambda x:
+                    # final_vector(x['direction'], 1, x['centroid']), axis=1)
 
     def setup_bins(self):
         nrbins = int(360//self.degrees) + 1
@@ -234,22 +234,14 @@ class HelixBin(object):
         import subprocess
         import time
 
-        # db = self.client[dbname]
-        # bins = db['bins_{}A_{}D'.format(
-            # self.angstroms, self.degrees
-            # )]
-        bins = pd.DataFrame(columns=['bin', 'name', 'idx1', 'idx2'])
         # Pandas indices are hash lookups and we can have multiple of
         # them, but they cannot be added piecewise. Therefore we will
         # create partial tables, then create the indices and save the
         # dataframes. Results will be saved in chunks.
-        # bins.set_index(['bin', 'name'], inplace=True)
+        bins = pd.DataFrame(columns=['bin', 'name', 'idx1', 'idx2'])
         total_proteins = len(set(self.df['name']))
         interval = 500
 
-        # import shelve
-
-        # binned = shelve.open('binned_0p3/hashtable', 'c', writeback=True)
         # i tracks # of names analyzed
         i = 0
         # saveno tracks how many dataframes have been saved.
@@ -259,6 +251,10 @@ class HelixBin(object):
 
         def update(bins, start_time, unsaved_docs, interval, i,
                 final=False):
+            '''
+            Helper function to add many PDBs to the dataframe at once
+            and print out an estimated time to completion
+            '''
             print('{} of {} PDBs processed so far.'.format(
                 i, total_proteins))
             mem_used = psutil.Process(os.getpid()).memory_info().rss
@@ -313,6 +309,9 @@ class HelixBin(object):
             # Return input dataframe if we have not saved it to disk.
             return bins
 
+        '''
+        Grouping dataframe
+        '''
         groups = self.df.groupby(['name'])
         names = sorted(list(groups.groups.keys()))
         if self.start:
@@ -327,46 +326,47 @@ class HelixBin(object):
             for combination in product(self.df.loc[group].T.to_dict().values(),
                     repeat=2):
                 if combination[0]['idx'] != combination[1]['idx']:
-                    # vector1 = combination[0]['vector']
-                    # vector2 = combination[1]['vector']
-
-                    # plot_vectors([vector1, vector2], color='purple')
-
+                    # Store index
                     idx1 = combination[0]['idx']
                     idx2 = combination[1]['idx']
-                    # if self.verbose:
-                        # print('------------------------------------')
-                        # print(combination[0])
-                        # print(combination[1])
 
+                    # Get relative orientation
                     dist, angle1, angle2, dihedral =\
                             relative_position(combination[0], combination[1])
                     dist = np.array([dist])
                     angles = np.array([angle1, angle2, dihedral])
 
+                    # Bin by length
                     lengths = np.array([combination[0]['length'],
                         combination[1]['length']])
                     lbin = bin_array(lengths, self.tbins)
                     lbin2 = bin_array(lengths, self.tbins +
                             (self.angstroms/2))
-
+                    
+                    # Bin by distance and angle
                     rbin = bin_array(angles, self.rbins)
                     tbin = bin_array(dist, self.tbins)
-                    rbin2 = bin_array(angles, self.rbins + (self.degrees/2))
+                    rbin2 = bin_array(
+                            numeric.wrap_angles(angles, self.degrees/2), 
+                            self.rbins)
                     tbin2 = bin_array(dist, self.tbins +
                             (self.angstroms/2))
 
-                    x = [tbin[0], tbin2[0]]
-                    abc = [rbin[0], rbin2[0]]
-                    bcd = [rbin[1], rbin2[1]]
-                    dih = [rbin[2], rbin2[2]]
-                    lengths = [lbin, lbin2]
+                    # Combine bins
+                    x = set([tbin[0], tbin2[0]])
+                    abc = set([rbin[0], rbin2[0]])
+                    bcd = set([rbin[1], rbin2[1]])
+                    dih = set([rbin[2], rbin2[2]])
+                    lengths = set([lbin, lbin2])
 
+                    # Add length to combined bins if option enabled;
+                    # product bins to get all combinations of bins
                     if bin_length:
                         all_bins = product(x, abc, bcd, dih, lengths)
                     else:
                         all_bins = product(x, abc, bcd, dih)
 
+                    # Iterate through combinations of bins and store
                     for bin_12 in all_bins:
                         bin_12 = ' '.join(map(str, bin_12))
                         doc = {
@@ -381,6 +381,7 @@ class HelixBin(object):
                         # else:
                         unsaved_docs.append(doc)
 
+            # Update dataframe ever <interval> PDBs
             if i%interval == 0:
                 bins = update(bins, start_time, unsaved_docs, interval, i)
                 start_time = time.time()

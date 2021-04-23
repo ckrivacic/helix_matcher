@@ -110,6 +110,24 @@ def dihedral(a, b, c, d):
     return np.degrees(np.arctan2(y, x))
 
 
+def wrap_angle(angle, addition):
+    '''Add a number to an angle and wrap around if out of the bounds of
+    -180, 180'''
+    if angle + addition > 180:
+        return -360 + (angle + addition)
+    elif angle + addition < -180:
+        return 360 + (angle + addition)
+    else:
+        return angle + addition
+
+
+def wrap_angles(angles, addition):
+    '''Wrap a list of angles'''
+    wrapped = []
+    for angle in angles:
+        wrapped.append(wrap_angle(angle, addition))
+    return np.array(wrapped)
+
 
 def line_angle(line1, line2):
     '''

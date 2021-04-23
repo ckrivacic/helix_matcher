@@ -141,6 +141,13 @@ def helix_length(pose, helix_tuple):
     return numeric.euclidean_distance(res1.xyz('CA'), res2.xyz('CA'))
 
 
+def centroid_vector(pose, helix_centroid):
+    '''
+    Returns a vector pointing from the helix centroid to the protein
+    centroid, used for a quick clash filter during matching.
+    '''
+
+
 class PoseScanner(object):
     def __init__(self, pose):
         self.selector = Surface()
