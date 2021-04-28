@@ -111,7 +111,7 @@ def main():
 
     if '--sge' in args:
     #if args['--sge']:
-        task = os.environ['SGE_TASK_ID'] - 1
+        task = int(os.environ['SGE_TASK_ID']) - 1
     else:
         task = 0
     
