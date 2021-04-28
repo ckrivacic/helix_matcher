@@ -150,6 +150,13 @@ def main():
 
     pose.dump_pdb(target_pdb)
 
+    os.symlink(os.environ['RIFGEN'], os.path.join(
+        parent_folder, 'rifgen'
+        ))
+    os.symlink(os.environ['RIFDOCK'], os.path.join(
+        parent_folder, 'rifdock'
+        ))
+
 
 if __name__=='__main__':
     main()

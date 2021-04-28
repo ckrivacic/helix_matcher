@@ -39,7 +39,7 @@ def main():
 
     folders = sorted(glob.glob(folder + '/*/'))
 
-    rifgen = os.environ['RIFGEN']
+    rifgen = os.path.join(folder, 'rifgen')
     for fold in folders[start_job:stop_job+1]:
         print(fold)
         os.chdir(fold)

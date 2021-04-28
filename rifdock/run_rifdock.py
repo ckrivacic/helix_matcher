@@ -120,7 +120,8 @@ def main():
 
     folders = sorted(glob.glob(folder + '/*/'))
 
-    rifdock = os.environ['RIFDOCK']
+    # rifdock = os.environ['RIFDOCK']
+    rifdock = os.path.join(folder, 'rifdock')
     for fold in folders[start_job:stop_job+1]:
         print(fold)
         os.chdir(fold)
