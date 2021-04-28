@@ -63,7 +63,7 @@ def bin_array(array, bins):
     return binned
 
 
-def relative_position(row1, row2, vectortype='vector'):
+def relative_position(row1, row2, vectortype='vector', clash=False):
     '''
     Gives the internal relative orientation of two lines, given their
     row from the pandas dataframe created in scan_helices.
@@ -76,17 +76,37 @@ def relative_position(row1, row2, vectortype='vector'):
     - Dihedral abcd
     '''
 
+    out = {}
     norm_v1 = row1[vectortype]
     norm_v2 = row2[vectortype]
-    centroid_dist = numeric.euclidean_distance(row1['centroid'],
+    out['dist'] = numeric.euclidean_distance(row1['centroid'],
             row2['centroid'])
-    abc = numeric.angle(norm_v1[0], norm_v1[1], norm_v2[0])
-    bcd = numeric.angle(norm_v1[1], norm_v2[0], norm_v2[1])
-    dihedral = numeric.dihedral(norm_v1[0], norm_v1[1], norm_v2[0],
+    out['abc'] = numeric.angle(norm_v1[0], norm_v1[1], norm_v2[0])
+    out['bcd'] = numeric.angle(norm_v1[1], norm_v2[0], norm_v2[1])
+    out['dih'] = numeric.dihedral(norm_v1[0], norm_v1[1], norm_v2[0],
             norm_v2[1])
     # plot_vectors([norm_v1, norm_v2], color='black')
+    if clash:
+        centroid_vector1 = row1['centroid_vector']
+        centroid_vector2 = row2['centroid_vector']
+        out['cen1a'] = numeric.angle(
+                norm_v1[0], centroid_vector1[0], centroid_vector1[1]
+                )
+        out['cen2a'] = numeric.angle(
+                norm_v2[0], centroid_vector2[0], centroid_vector2[1]
+                )
+        out['cen1dih'] = numeric.wrap_angle(
+                numeric.dihedral(
+                    norm_v1[0], norm_v2[0],
+                    centroid_vector1[0], centroid_vector1[1]
+                    ), 180
+                )
+        out['cen2dih'] = numeric.dihedral(
+                norm_v2[0], norm_v1[0],
+                centroid_vector2[0], centroid_vector2[1]
+                )
 
-    return centroid_dist, abc, bcd, dihedral
+    return out
 
 
 class Match(object):
@@ -192,7 +212,7 @@ class Match(object):
 
 class HelixBin(object):
     def __init__(self, helix_db, exposed_cutoff=0.3, length_cutoff=10.8,
-            query_df=None, query_name=None, angstroms=2.5, degrees=15,
+            angstroms=2.5, degrees=15, clash_angle=None,
             verbose=False, start=None, stop=None):
         self.verbose = verbose
         self.df = helix_db
@@ -217,6 +237,8 @@ class HelixBin(object):
             # self.df['normalized_vector'] = self.df.apply(lambda x:
                     # final_vector(x['direction'], 1, x['centroid']), axis=1)
 
+        self.clash_angle = clash_angle
+
     def setup_bins(self):
         nrbins = int(360//self.degrees) + 1
         self.rbins = np.linspace(-180, 180, nrbins)
@@ -225,9 +247,24 @@ class HelixBin(object):
         ntbins = int((tstop - tstart) // self.angstroms) + 1
         self.tbins = np.linspace(tstart, tstop, ntbins)
 
-    def bin_db(self, outdir=None, bin_length=False):
+    def setup_clash_bins(self):
+        start = -180
+        bins = [start]
+        while start < 180:
+            start += (180 - self.clash_angle)
+            bins.append(start)
+        return np.array(bins)
+
+    def clash_bin(self, centroid_vector1, centroid_vector2,
+            clash_angle, reverse=False):
+        return
+
+    def bin_db(self, outdir=None, bin_length=False, clash=None):
         '''
         Bin dataframes.
+        Outdir: Where to save binned dataframe
+        Bin length: Whether to bin by helix length
+        Clash: Angle for clash filter bins
         '''
 
         from scipy.spatial.transform import Rotation as R
@@ -331,10 +368,13 @@ class HelixBin(object):
                     idx2 = combination[1]['idx']
 
                     # Get relative orientation
-                    dist, angle1, angle2, dihedral =\
+                    relative =\
                             relative_position(combination[0], combination[1])
-                    dist = np.array([dist])
-                    angles = np.array([angle1, angle2, dihedral])
+                    dist = np.array([relative['dist']])
+                    angles = np.array([relative['abc'], relative['bcd'], relative['dih']])
+                    if clash:
+                        clash_angles = np.array([relative['cen1a'], relative['cen2a'],
+                            relative['cen1dih'], relative['cen2dih']])
 
                     # Bin by length
                     lengths = np.array([combination[0]['length'],

@@ -5,7 +5,7 @@ from pyrosetta import get_fa_scorefxn
 from pyrosetta import init
 from pyrosetta import pose_from_file
 import sys
-from roseasy.utils import numeric
+import numeric
 import numpy as np
 import pandas as pd
 from statistics import median
@@ -54,24 +54,13 @@ def find_resis_centroid(resis):
 
 
 def final_vector(direction, length, centroid):
-    # rotation_normalizer = np.cross(
-            # np.array([0,0,1]),
-            # direction
-            # )
-    # if np.array_equal(rotation_normalizer, [0,0,0]):
-        # rotation_normalizer = np.array([1,0,0])
-
-    # assert np.dot(rotation_normalizer, np.array([0,0,1])) == 0
-    # assert np.dot(rotation_normalizer, direction) == 0
-            
-    # rotation_norm_1 = rotation_normalizer + centroid
-    # rotation_norm_2 = centroid - rotation_normalizer
-
+    '''
+    Turn direction, length, and centroid into a single vector
+    '''
     vector = direction * length
     line_center = vector / 2
     top = vector + centroid - line_center
     bot = centroid - line_center
-    # return np.array([bot, rotation_norm_1, rotation_norm_2, top])
     return np.array([bot, top])
 
 
@@ -94,19 +83,10 @@ def plot_resis(resis, vector):
             ax.scatter(resi[atom][0], resi[atom][1], resi[atom][2],
                     color=colordict[atom])
 
-    # centroid = find_resis_centroid(resis)
-    # vector_moved = vector + centroid
     x = [point[0] for point in vector]
     y = [point[1] for point in vector]
     z = [point[2] for point in vector]
-    # x = [vector[0][0], vector[1][0]]
-    # y = [vector[0][1], vector[1][1]]
-    # z = [vector[0][2], vector[1][2]]
     ax.plot(x, y, z, color='darkgray', linewidth=4)
-    # x = [0, vector[0]]
-    # y = [0, vector[1]]
-    # z = [0, vector[2]]
-    # ax.scatter(x, y, z, color='black')
 
     plt.show()
 
@@ -146,6 +126,10 @@ def centroid_vector(pose, helix_centroid):
     Returns a vector pointing from the helix centroid to the protein
     centroid, used for a quick clash filter during matching.
     '''
+    # We don't care about the length of this vector, so we can just
+    # return a vector (array) of the helix centroid and the pose
+    # centroid.
+    return np.array([helix_centroid, numeric.pose_centroid(pose)])
 
 
 class PoseScanner(object):
@@ -216,6 +200,8 @@ class PoseScanner(object):
                     helix_info['chain'] = pose.pdb_info().pose2pdb(helix_info['start'])
                     if path:
                         helix_info['path'] = path
+                    helix_info['centroid_vector'] = \
+                            centroid_vector(pose, helix_info['centroid'])
                     helices_found.append(helix_info)
                     if test:
                         plot_resis(resis, helix_info['vector'])

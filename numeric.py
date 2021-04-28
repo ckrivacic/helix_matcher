@@ -110,6 +110,19 @@ def dihedral(a, b, c, d):
     return np.degrees(np.arctan2(y, x))
 
 
+def pose_centroid(pose):
+    from pyrosetta.rosetta.core.id import AtomID
+    cog = np.array([0.,0.,0.])
+    i = 0
+    for res in range(1, pose.size() + 1):
+        for at in range(1, pose.residue(res).natoms() + 1):
+            i += 1
+            cog += xyzV_to_np_array(
+                    pose.xyz(AtomID(at, res))
+                    )
+    return cog / i
+
+
 def wrap_angle(angle, addition):
     '''Add a number to an angle and wrap around if out of the bounds of
     -180, 180'''
@@ -147,11 +160,14 @@ def apply_transformation(Transformation, template_coordinate_set):
     return np.dot(template_coordinate_set, Transformation.rotation.T) +\
             Transformation.translation
 
+
 def xyzV_to_np_array(xyz):
     return np.array([xyz.x, xyz.y, xyz.z])
 
+
 def np_array_to_xyzV(a):
     return rosetta.numeric.xyzVector_double_t(a[0], a[1], a[2])
+
 
 def intlist_to_vector1_size(a):
     vector = rosetta.utility.vector1_unsigned_long()
@@ -159,10 +175,12 @@ def intlist_to_vector1_size(a):
         vector.append(item)
     return vector
 
+
 def xyzM_to_np_array(M):
     return np.array([[M.xx, M.xy, M.xz],
                      [M.yx, M.yy, M.yz],
                      [M.zx, M.zy, M.zz]])
+
 
 def np_array_to_xyzM(a):
     return rosetta.numeric.xyzMatrix_double_t.rows(
@@ -170,12 +188,14 @@ def np_array_to_xyzM(a):
             a[1][0], a[1][1], a[1][2],
             a[2][0], a[2][1], a[2][2])
 
+
 def mult_np_transformation(T1, T2):
     '''Multiply two numpy rigid body transformations'''
     M1, v1 = T1
     M2, v2 = T2
     
     return np.dot(M1, M2), np.dot(M1, v2) + v1
+
 
 def inverse_np_transformation(T):
     '''Inverse an numpy rigid body transformation.'''
