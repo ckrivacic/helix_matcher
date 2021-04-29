@@ -84,7 +84,9 @@ def write_to_file(reslist, folder):
 
 def test_3n2n():
     init()
-    posefile = os.path.abspath('../test_files/3n2n.pdb')
+    args = docopt.docopt(__doc__)
+    # posefile = os.path.abspath('../test_files/3n2n.pdb')
+    posefile = os.path.abspath(args['<target_pdb>'])
     pose = pose_from_file(posefile)
     patches = Patches(pose)
     ranges = [(50,138), (150, 173), (201, 220)]
@@ -96,8 +98,8 @@ def test_3n2n():
     patches.determine_surface_residues()
     patches.map_residues()
 
-    parent_folder = os.path.abspath(os.path.join('..', 'test_files',
-        'boundary'))
+    parent_folder = os.path.abspath(os.path.join(args['<output_folder>']))
+    target_pdb = os.path.join(parent_folder, 'target.pdb')
     i = 1
     for res in patches.reslist:
         print('RES CENTER {}'.format(res))
@@ -105,11 +107,20 @@ def test_3n2n():
         i += 1
         if not os.path.exists(patch_folder):
             os.makedirs(patch_folder, exist_ok=True)
-
-        print(patches.nearest_n_residues(res, 100, cutoff=10.5, pymol=True))
+        print(patches.nearest_n_residues(res, 100, cutoff=10.5,
+            pymol=True))
         write_to_file(patches.nearest_n_residues(res, 100, cutoff=10.5),
                 patch_folder)
-        write_flags(patch_folder, posefile)
+        write_flags(patch_folder, target_pdb)
+
+    pose.dump_pdb(target_pdb)
+
+    os.symlink(os.environ['RIFGEN'], os.path.join(
+        parent_folder, 'rifgen'
+        ))
+    os.symlink(os.environ['RIFDOCK'], os.path.join(
+        parent_folder, 'rifdock'
+        ))
 
 
 def main():
@@ -159,5 +170,5 @@ def main():
 
 
 if __name__=='__main__':
-    main()
-    # test_3n2n()
+    # main()
+    test_3n2n()
