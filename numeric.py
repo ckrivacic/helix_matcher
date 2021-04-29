@@ -123,22 +123,22 @@ def pose_centroid(pose):
     return cog / i
 
 
-def wrap_angle(angle, addition):
+def wrap_angle(angle, addition=0, upper=180, lower=-180):
     '''Add a number to an angle and wrap around if out of the bounds of
     -180, 180'''
-    if angle + addition > 180:
+    if angle + addition > upper:
         return -360 + (angle + addition)
-    elif angle + addition < -180:
+    elif angle + addition < lower:
         return 360 + (angle + addition)
     else:
         return angle + addition
 
 
-def wrap_angles(angles, addition):
+def wrap_angles(angles, addition=0, upper=180, lower=-180):
     '''Wrap a list of angles'''
     wrapped = []
     for angle in angles:
-        wrapped.append(wrap_angle(angle, addition))
+        wrapped.append(wrap_angle(angle, addition, upper, lower))
     return np.array(wrapped)
 
 

@@ -57,7 +57,11 @@ def bin_array(array, bins):
     '''
     Digitize a numpy array.
     TO DO: Circularize the binning of angles somehow.
+    Done?
     '''
+    upper = bins[-1]
+    lower = bins[0]
+    array = numeric.wrap_angles(array, 0, upper, lower)
     inds = np.digitize(array, bins)
     binned = tuple([bins[inds[n]-1] for n in range(array.size)])
     return binned
@@ -386,9 +390,8 @@ class HelixBin(object):
                     # Bin by distance and angle
                     rbin = bin_array(angles, self.rbins)
                     tbin = bin_array(dist, self.tbins)
-                    rbin2 = bin_array(
-                            numeric.wrap_angles(angles, self.degrees/2), 
-                            self.rbins)
+                    rbin2 = bin_array(angles, 
+                            self.rbins + (self.angstroms/2))
                     tbin2 = bin_array(dist, self.tbins +
                             (self.angstroms/2))
 
