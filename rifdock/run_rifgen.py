@@ -21,30 +21,38 @@ def main():
     print(args)
     folder = os.path.abspath(args['<folder>'])
 
-    total_jobs = len(glob.glob(folder + '/*/'))
+    total_jobs = len(glob.glob(folder + '/patch_*'))
+    print('TOTAL JOBS: {}'.format(total_jobs))
     #if '--tasks' in args:
     if args['--tasks']:
         num_tasks = int(args['--tasks'])
     else:
-        num_tasks = 1
+        num_tasks = total_jobs
 
     #if '--sge' in args:
     if args['--sge']:
         task = int(os.environ['SGE_TASK_ID']) - 1
     else:
         task = 0
+
+    print('TASK: {}'.format(task))
     
     start_job = task * math.ceil((total_jobs / num_tasks))
-    stop_job = start_job + math.ceil(total_jobs / num_tasks) - 1
+    stop_job = start_job + math.ceil(total_jobs / num_tasks)
+    print('START JOB: {}'.format(start_job))
+    print('STOP JOB: {}'.format(stop_job))
 
-    folders = sorted(glob.glob(folder + '/*/'))
+    folders = sorted(glob.glob(folder + '/patch_*'))
 
     rifgen = os.path.join(folder, 'rifgen')
-    for fold in folders[start_job:stop_job+1]:
+    for fold in folders[start_job:stop_job]:
         print(fold)
         os.chdir(fold)
         flags = os.path.join(fold, 'flags')
-        process = Popen([rifgen, '@', flags], stdout=PIPE, stderr=PIPE)
+        myenv = os.environ.copy()
+        myenv['LD_LIBRARY_PATH'] = '/wynton/home/kortemme/krivacic/software/anaconda3/lib/'
+        process = Popen([rifgen, '@', flags], stdout=PIPE, stderr=PIPE,
+                env=myenv)
         stdout, stderr = process.communicate()
         exit_code = process.wait()
         if exit_code != 0:

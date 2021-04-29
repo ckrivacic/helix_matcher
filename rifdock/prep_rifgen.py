@@ -67,7 +67,7 @@ def write_flags(folder, tarpath):
 -rifgen:hash_ang_resls     38.8  24.4  17.2  13.6  11.8 # yes worky worky
 -rifgen:lever_radii        23.6 18.785501 13.324600  8.425850  4.855575
 
-    '''.format(db=os.path.join(os.environ['ROSETTA'], 'database'), target=tarpath)
+    '''.format(db='/wynton/home/kortemme/krivacic/software/rosetta_rifdock/database', target=tarpath)
 
     if not os.path.exists(folder):
         os.mkdir(folder)

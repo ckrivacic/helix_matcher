@@ -102,12 +102,12 @@ def main():
     print(args)
     folder = os.path.abspath(args['<folder>'])
 
-    total_jobs = len(glob.glob(folder + '/*/'))
+    total_jobs = len(glob.glob(folder + '/patch_*'))
     if '--tasks' in args:
     #if args['--tasks']:
         num_tasks = int(args['--tasks'])
     else:
-        num_tasks = 1
+        num_tasks = total_jobs
 
     if '--sge' in args:
     #if args['--sge']:
@@ -118,7 +118,7 @@ def main():
     start_job = task * math.ceil((total_jobs / num_tasks))
     stop_job = start_job + math.ceil(total_jobs / num_tasks) - 1
 
-    folders = sorted(glob.glob(folder + '/*/'))
+    folders = sorted(glob.glob(folder + '/patch_*'))
 
     # rifdock = os.environ['RIFDOCK']
     rifdock = os.path.join(folder, 'rifdock')
@@ -127,7 +127,10 @@ def main():
         os.chdir(fold)
         write_flags(fold)
         flags = os.path.join(fold, 'dock_flags')
-        process = Popen([rifdock, '@', flags], stdout=PIPE, stderr=PIPE)
+        myenv['LD_LIBRARY_PATH'] = '/wynton/home/kortemme/krivacic/software/anaconda3/lib/'
+        process = Popen([rifdock, '@', flags], stdout=PIPE, stderr=PIPE,
+                env=myenv)
+        # process = Popen([rifdock, '@', flags], stdout=PIPE, stderr=PIPE)
         stdout, stderr = process.communicate()
         exit_code = process.wait()
         if exit_code != 0:
