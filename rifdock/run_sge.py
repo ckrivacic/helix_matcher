@@ -155,7 +155,7 @@ def main():
         # write_flags(fold)
         print('Prepping RIFDOCK for {}'.format(fold))
         write_flags(tempdir)
-        
+
         flags = os.path.join(tempdir, 'dock_flags')
         print('Running RIFDOCK for {}'.format(fold))
         process = Popen([rifdock, '@', flags], stdout=PIPE, stderr=PIPE,
@@ -169,7 +169,7 @@ def main():
         else:
             outputs = os.path.join(tempdir, 'docked_full')
             final_out = os.path.join(fold, 'docked_full')
-            copytree(outputs, final_output)
+            copytree(outputs, final_out)
         
 
 if __name__ == '__main__':
