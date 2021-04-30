@@ -152,9 +152,11 @@ def main():
             print(stderr)
 
         # write_flags(fold)
+        print('Prepping RIFDOCK for {}'.format(fold))
         write_flags(tempdir)
         
         flags = os.path.join(tempdir, 'dock_flags')
+        print('Running RIFDOCK for {}'.format(fold))
         process = Popen([rifdock, '@', flags], stdout=PIPE, stderr=PIPE,
                 env=myenv)
         stdout, stderr = process.communicate()
