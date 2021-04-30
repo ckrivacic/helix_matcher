@@ -26,6 +26,7 @@ def write_flags(folder, scaffold):
 #-rif_dock:target_res            residue_numbers.txt
     
     tarpath, cache = get_flag_params(folder)
+    scaffold = os.path.abspath(scaffold)
     rosetta_path = '/wynton/home/kortemme/krivacic/software/rosetta_rifdock/'
     flags_rifgen = '''
 -rif_dock:target_pdb            ./{target}.rif.gz_target.pdb.gz
