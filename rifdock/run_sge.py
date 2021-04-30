@@ -4,7 +4,7 @@ Uses node scratch space to store RIF files created during RIFGen, then
 runs RIFDock before copying them back over to the user's patch folder.
 
 Usage:
-    cluster_run.py <folder> [options]
+    cluster_run.py <folder> <scaffold> [options]
 
 Options:
     --sge  Running on the cluster?
@@ -22,7 +22,7 @@ from distutils.dir_util import copy_tree
 
 
 
-def write_flags(folder):
+def write_flags(folder, scaffold):
 #-rif_dock:target_res            residue_numbers.txt
     
     scaffold = '/home/ckrivacic/software/helix_matcher/test_files/4turn_dock_helix.pdb'
@@ -206,7 +206,7 @@ def main():
 
         # write_flags(fold)
         print('Prepping RIFDOCK for {}'.format(fold))
-        write_flags(tempdir)
+        write_flags(tempdir, args['<scaffold>'])
 
         flags = os.path.join(tempdir, 'dock_flags')
         print('Running RIFDOCK for {}'.format(fold))
