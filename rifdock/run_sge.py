@@ -23,6 +23,7 @@ def write_flags(folder):
     
     scaffold = '/home/ckrivacic/software/helix_matcher/test_files/4turn_dock_helix.pdb'
     tarpath, cache = get_flag_params(folder)
+    rosetta_path = '/wynton/home/kortemme/krivacic/software/rosetta_rifdock/'
     flags_rifgen = '''
 -rif_dock:target_pdb            ./{target}.rif.gz_target.pdb.gz
 -rif_dock:target_rf_resl        0.25
@@ -72,7 +73,7 @@ def write_flags(folder):
 # of course, don't make it higher than the number of hbonds that can
 # actually be made
 -require_satisfaction 0
-    '''.format(db=os.path.join(os.environ['ROSETTA'], 'database'),
+    '''.format(db=os.path.join(rosetta_path, 'database'),
             target=tarpath, cache=cache, scaffold=scaffold)
 
     if not os.path.exists(folder):
