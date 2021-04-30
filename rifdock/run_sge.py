@@ -25,7 +25,6 @@ from distutils.dir_util import copy_tree
 def write_flags(folder, scaffold):
 #-rif_dock:target_res            residue_numbers.txt
     
-    scaffold = '/home/ckrivacic/software/helix_matcher/test_files/4turn_dock_helix.pdb'
     tarpath, cache = get_flag_params(folder)
     rosetta_path = '/wynton/home/kortemme/krivacic/software/rosetta_rifdock/'
     flags_rifgen = '''
