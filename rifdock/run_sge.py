@@ -151,7 +151,7 @@ def main():
             print(stdout)
             print(stderr)
 
-        write_flags(fold)
+        # write_flags(fold)
         write_flags(tempdir)
         
         flags = os.path.join(tempdir, 'dock_flags')
