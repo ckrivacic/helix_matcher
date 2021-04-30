@@ -102,37 +102,6 @@ def get_flag_params(folder):
     return target, rfcache
 
 
-def execute(cmd, environment=None):
-    print('Running command:')
-    print(' '.join(cmd))
-    # if args['--task']:
-    # task = int(args['--task'])
-    # else:
-    jobno = os.environ['JOB_ID']
-    task = os.environ['SGE_TASK_ID']
-    logdir = '/wynton/home/kortemme/krivacic/intelligent_design/helix_matcher/rifdock/logs/'
-    logfile_path = os.path.join(logdir, 'rifdock_full.o{}.{}'.format(jobno,
-        task))
-
-    logfile = open(logfile_path, 'a')
-    if not environment:
-        environment = os.environ.copy()
-    import time
-
-    with Popen(cmd, stdout=PIPE, stderr=STDOUT, bufsize=1,
-            env=environment,
-            universal_newlines=True) as p, StringIO() as buf:
-        for line in p.stdout:
-            print(line, end='')
-            buf.write(line)
-            # logfile.write(line)
-            # sys.stdout.buffer.write(line)
-        output = buf.getvalue()
-    rc = p.returncode
-
-    return rc
-
-
 def run_command(cmd, environment=None):
     print("Working directory: {}".format(os.getcwd()))
     print("Command: {}".format(' '.join(cmd)))
@@ -198,7 +167,6 @@ def main():
         myenv = os.environ.copy()
         myenv['LD_LIBRARY_PATH'] = '/wynton/home/kortemme/krivacic/software/anaconda3/lib/'
 
-        # exit_code = execute([rifgen, '@', flags], environment=myenv)
         run_command([rifgen, '@', flags], environment=myenv)
         # if exit_code != 0:
             # print(stdout)
@@ -210,7 +178,6 @@ def main():
 
         flags = os.path.join(tempdir, 'dock_flags')
         print('Running RIFDOCK for {}'.format(fold))
-        # exit_code = execute([rifdock, '@', flags], environment=myenv)
         run_command([rifdock, '@', flags], environment=myenv)
         # if exit_code != 0:
             # print(stdout)
