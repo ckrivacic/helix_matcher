@@ -112,7 +112,6 @@ class Patches(object):
             if not pymol:
                 return set(neighbors[0:n].tolist())
             else:
-                print('pymol baby')
                 print(self.pose.pdb_info().pose2pdb(resnum))
                 return reslist_to_pdb_numbers(set(neighbors[0:n].tolist()),
                             self.pose)
