@@ -8,14 +8,18 @@ Usage:
 
 Options:
     --sge  Running on the cluster?
+    --task=NUM  Which task number, for testing
 '''
 
 import sys, os, docopt
 import glob
 import math
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, STDOUT
+from io import StringIO
 from shutil import copytree
 from shutil import copyfile
+from distutils.dir_util import copy_tree
+
 
 
 def write_flags(folder):
@@ -98,6 +102,51 @@ def get_flag_params(folder):
     return target, rfcache
 
 
+def execute(cmd, environment=None):
+    print('Running command:')
+    print(' '.join(cmd))
+    # if args['--task']:
+    # task = int(args['--task'])
+    # else:
+    jobno = os.environ['JOB_ID']
+    task = os.environ['SGE_TASK_ID']
+    logdir = '/wynton/home/kortemme/krivacic/intelligent_design/helix_matcher/rifdock/logs/'
+    logfile_path = os.path.join(logdir, 'rifdock_full.o{}.{}'.format(jobno,
+        task))
+
+    logfile = open(logfile_path, 'a')
+    if not environment:
+        environment = os.environ.copy()
+    import time
+
+    with Popen(cmd, stdout=PIPE, stderr=STDOUT, bufsize=1,
+            env=environment,
+            universal_newlines=True) as p, StringIO() as buf:
+        for line in p.stdout:
+            print(line, end='')
+            buf.write(line)
+            # logfile.write(line)
+            # sys.stdout.buffer.write(line)
+        output = buf.getvalue()
+    rc = p.returncode
+
+    return rc
+
+
+def run_command(cmd, environment=None):
+    print("Working directory: {}".format(os.getcwd()))
+    print("Command: {}".format(' '.join(cmd)))
+    sys.stdout.flush()
+
+    process = Popen(cmd, env=environment)
+
+    print("Process ID: {}".format(process.pid))
+    print()
+    sys.stdout.flush()
+
+    process.wait()
+
+
 def main():
     args = docopt.docopt(__doc__)
     folder = os.path.abspath(args['<folder>'])
@@ -109,7 +158,10 @@ def main():
     if args['--sge']:
         task = int(os.environ['SGE_TASK_ID']) - 1
     else:
-        task = 0
+        if args['--task']:
+            task = int(args['--task'])
+        else:
+            task = 0
 
     print('TASK: {}'.format(task))
 
@@ -139,18 +191,18 @@ def main():
         print('Running RIFGEN for {}'.format(fold))
         basename = os.path.basename(fold)
         tempdir = os.path.join(outdir_temp, basename)
-        copytree(fold, tempdir)
+        print('TEMPDIR IS {}'.format(tempdir))
+        copy_tree(fold, tempdir)
         os.chdir(tempdir)
         flags = os.path.join(tempdir, 'flags')
         myenv = os.environ.copy()
         myenv['LD_LIBRARY_PATH'] = '/wynton/home/kortemme/krivacic/software/anaconda3/lib/'
-        process = Popen([rifgen, '@', flags], stdout=PIPE, stderr=PIPE,
-               env=myenv)
-        stdout, stderr = process.communicate()
-        exit_code = process.wait()
-        if exit_code != 0:
-            print(stdout)
-            print(stderr)
+
+        # exit_code = execute([rifgen, '@', flags], environment=myenv)
+        run_command([rifgen, '@', flags], environment=myenv)
+        # if exit_code != 0:
+            # print(stdout)
+            # print(stderr)
 
         # write_flags(fold)
         print('Prepping RIFDOCK for {}'.format(fold))
@@ -158,18 +210,16 @@ def main():
 
         flags = os.path.join(tempdir, 'dock_flags')
         print('Running RIFDOCK for {}'.format(fold))
-        process = Popen([rifdock, '@', flags], stdout=PIPE, stderr=PIPE,
-                env=myenv)
-        stdout, stderr = process.communicate()
-        exit_code = process.wait()
-        if exit_code != 0:
-            print(stdout)
-            print(stderr)
+        # exit_code = execute([rifdock, '@', flags], environment=myenv)
+        run_command([rifdock, '@', flags], environment=myenv)
+        # if exit_code != 0:
+            # print(stdout)
+            # print(stderr)
 
-        else:
-            outputs = os.path.join(tempdir, 'docked_full')
-            final_out = os.path.join(fold, 'docked_full')
-            copytree(outputs, final_out)
+        # else:
+        outputs = os.path.join(tempdir, 'docked_full')
+        final_out = os.path.join(fold, 'docked_full')
+        copy_tree(outputs, final_out)
         
 
 if __name__ == '__main__':
