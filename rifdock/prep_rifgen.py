@@ -14,6 +14,7 @@ from patches import Patches
 import docopt
 from pyrosetta import pose_from_file
 from pyrosetta import init
+from pyrosetta.rosetta.core.pose import append_pose_to_pose
 import numpy as np
 import sys, os
 
@@ -131,15 +132,25 @@ def main():
 
     if args['--chain']:
         print('MAKING PATCHES FOR CHAIN {}'.format(args['--chain']))
+        poses = []
         for i in range(1, pose.num_chains()):
-            info = pose.split_by_chain(i).pdb_info().pose2pdb(1)
-            if info.split(' ')[1] == args['--chain']:
-                pose = pose.split_by_chain(i)
+            chain = pose.split_by_chain(i)
+            info = chain.pdb_info().pose2pdb(1)
+            if info.split(' ')[1] in args['--chain'] and chain.residue(1).is_protein():
+                chainpose = pose.split_by_chain(i)
                 if pose.size() < 5:
                     raise('Error: chain too small.')
-                break
+                else:
+                    poses.append(chainpose)
+        if len(poses) > 1:
+            pose = poses[0]
+            for chainpose in poses[1:]:
+                append_pose_to_pose(pose, chainpose)
+
     else:
         pose = pose.split_by_chain(1)
+    print('POSE SIZE')
+    print(pose.size())
     patches = Patches(pose)
     patches.determine_surface_residues()
     print(patches.reslist)
@@ -170,5 +181,5 @@ def main():
 
 
 if __name__=='__main__':
-    # main()
-    test_3n2n()
+    main()
+    # test_3n2n()
