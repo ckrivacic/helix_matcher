@@ -26,6 +26,7 @@ options:
     [default: 15]
 '''
 import docopt
+from copy import deepcopy
 import pandas as pd
 import numpy as np
 import numeric
@@ -257,10 +258,32 @@ class HelixBin(object):
         while start < 180:
             start += (180 - self.clash_angle)
             bins.append(start)
-        return np.array(bins)
+        bins = np.array(bins)
+        return bins, bins + (self.clash_angle / 2)
 
-    def clash_bin(self, centroid_vector1, centroid_vector2,
-            clash_angle, reverse=False):
+    def clash_bin(self, cen_vector_angles, reverse=False):
+        bins = self.setup_clash_bins()
+        for angle in cen_vector_angles:
+            upper = bins[-1]
+            lower = bins[0]
+            array = numeric.wrap_angles(cen_vector_angles, 0, upper, lower)
+            arrays = [array]
+
+            n = upper - 180
+            overshot_angles = []
+            for angle in array:
+                if lower < angle < (lower + n):
+                    overshot_angles.append(360 + angle)
+                else:
+                    overshot_angles.append(angle)
+            if overshot_angles != array:
+                arrays.append(overshot_angles)
+                    
+            for arr in arrays:
+                inds = np.digitize(arr, bins)
+                for bin_array in bins:
+                    binned = tuple([bin_array[inds[n]-1] for n in
+                        range(arr.size)])
         return
 
     def bin_db(self, outdir=None, bin_length=False, clash=None):
