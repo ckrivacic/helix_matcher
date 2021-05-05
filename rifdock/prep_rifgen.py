@@ -139,7 +139,7 @@ def main():
             if info.split(' ')[1] in args['--chain'] and chain.residue(1).is_protein():
                 chainpose = pose.split_by_chain(i)
                 if pose.size() < 5:
-                    raise('Error: chain too small.')
+                    raise('Error: chain {} too small.'.format(args['--chain']))
                 else:
                     poses.append(chainpose)
         if len(poses) > 1:
@@ -149,9 +149,14 @@ def main():
 
     else:
         pose = pose.split_by_chain(1)
+    reslist = []
+    for res in range(1, pose.size() + 1):
+        if pose.residue(res).is_protein():
+            reslist.append(res)
     print('POSE SIZE')
     print(pose.size())
     patches = Patches(pose)
+    patches.set_reslist(reslist)
     patches.determine_surface_residues()
     print(patches.reslist)
     patches.map_residues()
