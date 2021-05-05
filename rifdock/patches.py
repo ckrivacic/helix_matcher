@@ -42,11 +42,11 @@ class Patches(object):
     def determine_surface_residues(self):
         """Restrict reslist to surface residues"""
         # Use only the chain of the given reslist if possible
-        if self.reslist:
-            chain = self.pose.chain(self.reslist.front())
-            chain_pose = self.pose.split_by_chain(chain)
-        else:
-            chain_pose = self.pose
+        # if self.reslist:
+            # chain = self.pose.chain(self.reslist.front())
+            # chain_pose = self.pose.split_by_chain(chain)
+        # else:
+        chain_pose = self.pose
 
 
         surface_selector = residue_selector.LayerSelector()
@@ -58,7 +58,7 @@ class Patches(object):
                 res_selector_to_size_list(surface_selector.apply(chain_pose))
         #    reslist = []
         if self.reslist:
-            reslist = correct_resnums(chain_pose, reslist, self.pose)
+            # reslist = correct_resnums(chain_pose, reslist, self.pose)
             # If a reslist is already defined, only  take surface
             # residues that are in that reslist
             reslist = [res for res in reslist if res in self.reslist]
