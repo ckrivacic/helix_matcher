@@ -68,7 +68,8 @@ def bin_array(array, bins):
     return binned
 
 
-def relative_position(row1, row2, vectortype='vector', clash=False):
+def relative_position(row1, row2, vectortype='vector', clash=False,
+        reverse=False):
     '''
     Gives the internal relative orientation of two lines, given their
     row from the pandas dataframe created in scan_helices.
@@ -110,6 +111,11 @@ def relative_position(row1, row2, vectortype='vector', clash=False):
                 norm_v2[0], norm_v1[0],
                 centroid_vector2[0], centroid_vector2[1]
                 )
+        if reverse:
+            out['cen1a'] = numeric.wrap_angle(out['cen1a'], addition=180)
+            out['cen2a'] = numeric.wrap_angle(out['cen2a'], addition=180)
+            out['cen1dih'] = numeric.wrap_angle(out['cen1dih'], addition=180)
+            out['cen2dih'] = numeric.wrap_angle(out['cen2dih'], addition=180)
 
     return out
 
@@ -261,7 +267,7 @@ class HelixBin(object):
         bins = np.array(bins)
         return bins, bins + (self.clash_angle / 2)
 
-    def clash_bin(self, cen_vector_angles, reverse=False):
+    def bin_clashes(self, cen_vector_angles):
         bins = self.setup_clash_bins()
         for angle in cen_vector_angles:
             upper = bins[-1]
@@ -279,14 +285,15 @@ class HelixBin(object):
             if overshot_angles != array:
                 arrays.append(overshot_angles)
                     
+            binned_list = []
             for arr in arrays:
                 inds = np.digitize(arr, bins)
                 for bin_array in bins:
-                    binned = tuple([bin_array[inds[n]-1] for n in
-                        range(arr.size)])
-        return
+                    binned_list.append(tuple([bin_array[inds[n]-1] for n in
+                        range(arr.size)]))
+        return binned_list
 
-    def bin_db(self, outdir=None, bin_length=False, clash=None):
+    def bin_db(self, outdir=None, bin_length=False, clash_angle=None):
         '''
         Bin dataframes.
         Outdir: Where to save binned dataframe
@@ -396,12 +403,20 @@ class HelixBin(object):
 
                     # Get relative orientation
                     relative =\
-                            relative_position(combination[0], combination[1])
+                            relative_position(combination[0],
+                                    combination[1], clash=clash_angle is not None)
                     dist = np.array([relative['dist']])
                     angles = np.array([relative['abc'], relative['bcd'], relative['dih']])
-                    if clash:
+                    if clash_angle:
                         clash_angles = np.array([relative['cen1a'], relative['cen2a'],
                             relative['cen1dih'], relative['cen2dih']])
+                        clashbin1, clashbin2 = self.bin_clashes(clash_angles)
+                        clasha1 = set([clashbin1[0], clashbin2[0]])
+                        clasha2 = set([clashbin1[1], clashbin2[1]])
+                        clashdih1 = set([clashbin1[2], clashbin2[2]])
+                        clashdih2 = set([clashbin1[3], clashbin2[3]])
+                        clashes = [clasha1, clasha2, clashdih1,
+                                clashdih2]
 
                     # Bin by length
                     lengths = np.array([combination[0]['length'],
@@ -409,7 +424,7 @@ class HelixBin(object):
                     lbin = bin_array(lengths, self.tbins)
                     lbin2 = bin_array(lengths, self.tbins +
                             (self.angstroms/2))
-                    
+ 
                     # Bin by distance and angle
                     rbin = bin_array(angles, self.rbins)
                     tbin = bin_array(dist, self.tbins)
@@ -417,6 +432,7 @@ class HelixBin(object):
                             self.rbins + (self.angstroms/2))
                     tbin2 = bin_array(dist, self.tbins +
                             (self.angstroms/2))
+
 
                     # Combine bins
                     x = set([tbin[0], tbin2[0]])
@@ -427,10 +443,11 @@ class HelixBin(object):
 
                     # Add length to combined bins if option enabled;
                     # product bins to get all combinations of bins
+                    all_bins = [x, abc, bcd, dih]
                     if bin_length:
-                        all_bins = product(x, abc, bcd, dih, lengths)
-                    else:
-                        all_bins = product(x, abc, bcd, dih)
+                        all_bins.append(lengths)
+                    if clash:
+                        all_bins.extend(clashes)
 
                     # Iterate through combinations of bins and store
                     for bin_12 in all_bins:
