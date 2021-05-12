@@ -9,7 +9,7 @@ def find_nstruct(pdb_prefix):
 
 
 pdb_prefix = '/wynton/home/database/pdb/remediated/pdb/'
-nstruct = int(find_nstruct(pdb_prefix) / 2000)
+nstruct = int(find_nstruct(pdb_prefix) / 5000)
 max_runtime = '10:00:00'
 max_memory = '6G'
 

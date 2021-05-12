@@ -8,7 +8,7 @@ import gzip
 pdb_prefix = '/wynton/home/database/pdb/remediated/pdb/'
 idx = int(os.environ['SGE_TASK_ID']) - 1
 print('IDX = {}'.format(idx))
-num = 2000
+num = 5000
 
 
 def test_iterate():
@@ -53,7 +53,8 @@ def main():
     stop = idx * num + num - 1
     print('START: {}'.format(start))
     print('STOP: {}'.format(stop))
-    with gzip.open('test_files/nrpdb.gz', 'rb') as f:
+    # with gzip.open('test_files/nrpdb.gz', 'rb') as f:
+    with gzip.open('test_files/nr_custom.gz', 'rb') as f:
         lines = f.readlines()[start:stop]
     errors = []
     for line in lines:
@@ -98,6 +99,7 @@ def main():
                 # except:
                     # print("Error scanning {}".format(f))
 
+    os.makedirs('nr_dataframes/', exist_ok=True)
     df.to_pickle('nr_dataframes/{}.pkl'.format(
         idx
         ))
