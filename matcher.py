@@ -18,12 +18,15 @@ options:
     --database=PATH, -d  Database of relative helix orientations  
     [default: database/]
 
-    --out=PATH, -o  Where to save outputs  [default: .]
+    --out=PATH, -o  Where to save (match) outputs  [default: .]
 
     --angstroms=NUM, -a  Binning option. How fine should the distance bins
     be?  [default: 2.5]
     --degrees=NUM, -g  Binning option. How fine should the angle bins be?
     [default: 15]
+
+    --clash=NUM, -c  If you want to bin by clash angle, what is the
+    cutoff?
 '''
 import docopt
 from copy import deepcopy
@@ -293,7 +296,8 @@ class HelixBin(object):
                         range(arr.size)]))
         return binned_list
 
-    def bin_db(self, outdir=None, bin_length=False, clash_angle=None):
+    def bin_db(self, outdir=None, bin_length=False,
+            reverse=False):
         '''
         Bin dataframes.
         Outdir: Where to save binned dataframe
@@ -404,10 +408,12 @@ class HelixBin(object):
                     # Get relative orientation
                     relative =\
                             relative_position(combination[0],
-                                    combination[1], clash=clash_angle is not None)
+                                    combination[1], clash=self.clash_angle is
+                                    not None, reverse=reverse)
                     dist = np.array([relative['dist']])
                     angles = np.array([relative['abc'], relative['bcd'], relative['dih']])
-                    if clash_angle:
+                    if self.clash_angle:
+                        print('CLASH YA')
                         clash_angles = np.array([relative['cen1a'], relative['cen2a'],
                             relative['cen1dih'], relative['cen2dih']])
                         clashbin1, clashbin2 = self.bin_clashes(clash_angles)
@@ -446,8 +452,9 @@ class HelixBin(object):
                     all_bins = [x, abc, bcd, dih]
                     if bin_length:
                         all_bins.append(lengths)
-                    if clash:
+                    if self.clash_angle:
                         all_bins.extend(clashes)
+                    all_bins = product(*all_bins)
 
                     # Iterate through combinations of bins and store
                     for bin_12 in all_bins:
@@ -504,6 +511,7 @@ class HelixLookup(object):
         print(self.lookup_folder)
         print(lookups)
         i = 0
+        os.makedirs(outdir, exist_ok=True)
         for lookup in lookups:
             print('MATCHING AGAINST {}'.format(lookup))
             out = os.path.join(outdir, '{}_results_{:03d}.pkl'.format(
@@ -695,13 +703,17 @@ def main():
                 float(args['--degrees'])
                 )
             )
+
     if args['bin']:
         lookup = HelixBin(pd.read_pickle(args['<helix_dataframe>']),
                 exposed_cutoff=0.3, length_cutoff=10.8,
                 angstroms=float(args['--angstroms']),
                 degrees=float(args['--degrees']), 
-                verbose=args['--verbose'])
-        lookup.bin_db(outdir=dbpath, bin_length=args['--length'])
+                verbose=args['--verbose'],
+                clash_angle=args['--clash'])
+        lookup.bin_db(outdir=dbpath, bin_length=args['--length'],
+                reverse=True)
+
     if args['match']:
         import scan_helices
         # Import pdb

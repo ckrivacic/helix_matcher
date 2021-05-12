@@ -196,8 +196,8 @@ if __name__=='__main__':
 
     outpath = os.path.join(sys.argv[1], 'cluster_representatives')
     if not os.path.exists(outpath):
-        print('PATH NO EXIST')
-        os.mkdir(outpath)
+        # print('PATH NO EXIST')
+        os.makedirs(outpath, exist_ok=True)
 
     overwrite = True
     if overwrite:
