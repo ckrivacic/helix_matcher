@@ -197,7 +197,7 @@ class PoseScanner(object):
                     helix_info['percent_exposed'] =\
                             np.count_nonzero(helix_info['surface']) /\
                             len(helix_info['surface'])
-                    helix_info['chain'] = pose.pdb_info().pose2pdb(helix_info['start'])
+                    helix_info['chain'] = pose.pdb_info().pose2pdb(helix_info['start']).split(' ')[1]
                     if path:
                         helix_info['path'] = path
                     helix_info['centroid_vector'] = \

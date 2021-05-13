@@ -272,28 +272,29 @@ class HelixBin(object):
 
     def bin_clashes(self, cen_vector_angles):
         bins = self.setup_clash_bins()
-        for angle in cen_vector_angles:
-            upper = bins[-1]
-            lower = bins[0]
+        binned_list = []
+        for bin_array in bins:
+            upper = bin_array[-1]
+            lower = bin_array[0]
             array = numeric.wrap_angles(cen_vector_angles, 0, upper, lower)
             arrays = [array]
+            for angle in cen_vector_angles:
 
-            n = upper - 180
-            overshot_angles = []
-            for angle in array:
-                if lower < angle < (lower + n):
-                    overshot_angles.append(360 + angle)
-                else:
-                    overshot_angles.append(angle)
-            if overshot_angles != array:
-                arrays.append(overshot_angles)
-                    
-            binned_list = []
+                n = upper - 180
+                overshot_angles = []
+                for angle in array:
+                    if lower < angle < (lower + n):
+                        overshot_angles.append(360 + angle)
+                    else:
+                        overshot_angles.append(angle)
+                if np.any(overshot_angles != array):
+                    arrays.append(np.array(overshot_angles))
+                        
             for arr in arrays:
-                inds = np.digitize(arr, bins)
-                for bin_array in bins:
-                    binned_list.append(tuple([bin_array[inds[n]-1] for n in
-                        range(arr.size)]))
+                inds = np.digitize(arr, bin_array)
+                # for bin_array in bins:
+                binned_list.append(tuple([bin_array[inds[n]-1] for n in
+                    range(arr.size)]))
         return binned_list
 
     def bin_db(self, outdir=None, bin_length=False,
@@ -345,8 +346,8 @@ class HelixBin(object):
             elapsed = time.time() - start_time
             rate = interval / elapsed
             remaining = (total_proteins - i) / rate / 3600
-            print('Analysis of 500 pdbs took {} seconds. Est. {} h remaining'.format(
-                elapsed, remaining
+            print('Analysis of {} pdbs took {} seconds. Est. {} h remaining'.format(
+                interval - i%interval, elapsed, remaining
                 ))
 
             if len(unsaved_docs) > 0:
@@ -412,15 +413,20 @@ class HelixBin(object):
                                     not None, reverse=reverse)
                     dist = np.array([relative['dist']])
                     angles = np.array([relative['abc'], relative['bcd'], relative['dih']])
+
+                    # Bin clash vectors if applicable
                     if self.clash_angle:
-                        print('CLASH YA')
                         clash_angles = np.array([relative['cen1a'], relative['cen2a'],
                             relative['cen1dih'], relative['cen2dih']])
-                        clashbin1, clashbin2 = self.bin_clashes(clash_angles)
-                        clasha1 = set([clashbin1[0], clashbin2[0]])
-                        clasha2 = set([clashbin1[1], clashbin2[1]])
-                        clashdih1 = set([clashbin1[2], clashbin2[2]])
-                        clashdih2 = set([clashbin1[3], clashbin2[3]])
+                        clashbins = self.bin_clashes(clash_angles)
+                        clasha1 = set([clashbin[0] for clashbin in
+                            clashbins])
+                        clasha2 = set([clashbin[1] for clashbin in
+                            clashbins])
+                        clashdih1 = set([clashbin[2] for clashbin in
+                            clashbins])
+                        clashdih2 = set([clashbin[3] for clashbin in
+                            clashbins])
                         clashes = [clasha1, clasha2, clashdih1,
                                 clashdih2]
 
@@ -710,7 +716,7 @@ def main():
                 angstroms=float(args['--angstroms']),
                 degrees=float(args['--degrees']), 
                 verbose=args['--verbose'],
-                clash_angle=args['--clash'])
+                clash_angle=float(args['--clash']))
         lookup.bin_db(outdir=dbpath, bin_length=args['--length'],
                 reverse=True)
 
@@ -750,7 +756,8 @@ def main():
                 length_cutoff=10.8, 
                 angstroms=float(args['--angstroms']), 
                 degrees=float(args['--degrees']),
-                verbose=args['--verbose'])
+                verbose=args['--verbose'],
+                clash_angle=float(args['--clash']))
         query_bins = query.bin_db(bin_length=args['--length'])
         print('QUERY BINS')
         print(query_bins)
