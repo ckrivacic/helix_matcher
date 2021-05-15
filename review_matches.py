@@ -90,7 +90,7 @@ def session_from_graph(graph, query_df, db_df):
                 )
         db_selstr = "(resi {}-{} and chain {})".format(
                 start, stop,
-                df_row['chain'].split(' ')[1]
+                df_row['chain']#.split(' ')[1]
                 )
         db_sels.append(db_selstr)
 
@@ -116,7 +116,7 @@ def session_from_graph(graph, query_df, db_df):
     cmd.append(pdb)
     cmd.append(query_selstr)
     cmd.append(db_selstr)
-    cmd.append(df_row['chain'].split(' ')[1])
+    cmd.append(df_row['chain'])#.split(' ')[1])
     cmd.extend(pymol_transform)
     cmd.append(qobjs)
 

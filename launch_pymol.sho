@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-model_path="$1/*.pdb.gz $1/*.pdb"
+model_path="$1/*.pdb.gz"
 pdb=$2
 tarstr=$3
 dbstr=$4

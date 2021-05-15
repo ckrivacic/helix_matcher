@@ -115,8 +115,8 @@ def relative_position(row1, row2, vectortype='vector', clash=False,
                 centroid_vector2[0], centroid_vector2[1]
                 )
         if reverse:
-            out['cen1a'] = numeric.wrap_angle(out['cen1a'], addition=180)
-            out['cen2a'] = numeric.wrap_angle(out['cen2a'], addition=180)
+            out['cen1a'] = 180 - out['cen1a'] 
+            out['cen2a'] = 180 - out['cen2a']
             out['cen1dih'] = numeric.wrap_angle(out['cen1dih'], addition=180)
             out['cen2dih'] = numeric.wrap_angle(out['cen2dih'], addition=180)
 
