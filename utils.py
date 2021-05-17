@@ -2,6 +2,7 @@ from pyrosetta import *
 from pyrosetta.rosetta.core.select import residue_selector
 from numeric import intlist_to_vector1_size
 import os, wget
+import networkx as nx
 
 def three_to_one(restype):
     three_to_one = {
@@ -37,7 +38,7 @@ def download_and_clean_pdb(pdbid, prefix=None):
         wget.download(url, path + '.pdb')
 
     pyrosetta.toolbox.cleanATOM(path + '.pdb')
-    os.remove(path)
+    os.remove(path + '.pdb')
 
     return path + '.clean.pdb'
 
