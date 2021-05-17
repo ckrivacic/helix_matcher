@@ -420,6 +420,7 @@ class HelixLookup(object):
         print(self.lookup_folder)
         print(lookups)
         i = 0
+        os.makedirs(outdir, exist_ok=True)
         for lookup in lookups:
             print('MATCHING AGAINST {}'.format(lookup))
             out = os.path.join(outdir, '{}_results_{:03d}.pkl'.format(
