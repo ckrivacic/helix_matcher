@@ -181,7 +181,7 @@ def main():
         os.symlink(os.environ['RIFGEN'], os.path.join(
             parent_folder, 'rifgen'
             ))
-    if not os.path.exists(ospath.join(parent_folder, 'rifdock')):
+    if not os.path.exists(os.path.join(parent_folder, 'rifdock')):
         os.symlink(os.environ['RIFDOCK'], os.path.join(
             parent_folder, 'rifdock'
             ))
