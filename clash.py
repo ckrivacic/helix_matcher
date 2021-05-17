@@ -80,7 +80,7 @@ class ClashScore(object):
         return df_vectors, query_vectors
 
 
-def get_alphashape(pdb, chain='B'):
+def get_alphashape(pdb, chain='B', plot=False):
     '''
     Returns an AlphaShape object of a pdb file, outlining its general
     shape for use in a clash filter.
@@ -91,16 +91,17 @@ def get_alphashape(pdb, chain='B'):
     coords = atoms.getCoordsets()[0]
     # coords = [(0., 0.), (0., 1.), (1., 1.), (1., 0.), (0.5, 0.5)]
 
-    alpha_shape = alphashape.alphashape(coords, 0.05)
+    alpha_shape = alphashape.alphashape(coords, 0.18)
 
-    # fig = plt.figure()
-    # ax = fig.add_subplot(projection='3d')
-    # ax = Axes3D(fig)
-    # ax.scatter(*zip(*coords))
-    # # ax.add_patch(PolygonPatch(alpha_shape, alpha=0.2))
-    # ax.plot_trisurf(*zip(*alpha_shape.vertices),
-            # triangles=alpha_shape.faces)
-    # plt.show()
+    if plot:
+        fig = plt.figure()
+        # ax = fig.add_subplot(projection='3d')
+        ax = Axes3D(fig)
+        ax.scatter(*zip(*coords))
+        # # ax.add_patch(PolygonPatch(alpha_shape, alpha=0.2))
+        ax.plot_trisurf(*zip(*alpha_shape.vertices),
+                triangles=alpha_shape.faces, alpha=0.3)
+        plt.show()
     return alpha_shape
 
 
