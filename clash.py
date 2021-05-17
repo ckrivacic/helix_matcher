@@ -1,6 +1,7 @@
 import alphashape
 from shapely.ops import triangulate
 import os
+from copy import deepcopy
 import numeric
 import pandas as pd
 from utils import max_subgraph
@@ -34,8 +35,9 @@ class ClashScore(object):
         '''
         best_score = 9999
         best_subgraph = None
+        original_atoms = prody.parsePDB(self.pdb_path, chain=self.chain)
         for subgraph in self.subgraphs:
-            atoms = prody.parsePDB(self.pdb_path, chain=self.chain)
+            atoms = deepcopy(original_atoms)
             df_vectors, query_vectors = self.get_vectors(subgraph)
             transform = numeric.Transformation(df_vectors, query_vectors)
             prody_transform =\
