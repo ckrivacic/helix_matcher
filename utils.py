@@ -27,6 +27,21 @@ def pose_from_rcsb(pdbid, prefix=None):
     return pose
 
 
+def download_and_clean_pdb(pdbid, prefix=None):
+    if prefix:
+        path = os.path.join(prefix, pdbid)
+    else:
+        path = pdbid
+    if not os.path.exists(path + '.pdb'):
+        url = 'https://files.rcsb.org/download/' + pdbid + '.pdb'
+        wget.download(url, path + '.pdb')
+
+    pyrosetta.toolbox.cleanATOM(path + '.pdb')
+    os.remove(path)
+
+    return path + '.clean.pdb'
+
+
 def list_to_str(l):
     return ','.join(list(str(i) for i in l))
 
@@ -139,6 +154,22 @@ def test_correct_resnums():
     chain_pose = pose.split_by_chain(2)
     reslist = [60]
     correct_resnums(pose, reslist, pose)
+
+
+def max_subgraph(graph):
+    max_subgraph_len = 0
+    max_subgraph = None
+    subgraphs = []
+    for f in nx.find_cliques(graph):
+        if len(f) > max_subgraph_len:
+            subgraphs = []
+            max_subgraph_len = len(f)
+            subgraphs.append(f)
+        elif len(f) == max_subgraph_len:
+            subgraphs.append(f)
+
+    return subgraphs
+
 
 if __name__=='__main__':
     init()
