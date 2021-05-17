@@ -177,12 +177,14 @@ def main():
 
     pose.dump_pdb(target_pdb)
 
-    os.symlink(os.environ['RIFGEN'], os.path.join(
-        parent_folder, 'rifgen'
-        ))
-    os.symlink(os.environ['RIFDOCK'], os.path.join(
-        parent_folder, 'rifdock'
-        ))
+    if not os.path.exists(os.path.join(parent_folder, 'rifgen')):
+        os.symlink(os.environ['RIFGEN'], os.path.join(
+            parent_folder, 'rifgen'
+            ))
+    if not os.path.exists(ospath.join(parent_folder, 'rifdock')):
+        os.symlink(os.environ['RIFDOCK'], os.path.join(
+            parent_folder, 'rifdock'
+            ))
 
 
 if __name__=='__main__':
