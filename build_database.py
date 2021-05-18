@@ -99,7 +99,7 @@ def main():
                 # except:
                     # print("Error scanning {}".format(f))
 
-    os.makedirs('nr_dataframes/', exist_ok=True)
+    os.makedirs('nr_dataframes/errors/', exist_ok=True)
     df.to_pickle('nr_dataframes/{}.pkl'.format(
         idx
         ))
