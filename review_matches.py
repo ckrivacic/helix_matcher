@@ -6,7 +6,7 @@ options:
     --dataframe=PKL, -d
         Path to dataframe of helix vectors  [default: nr_dataframes/final.pkl]
 '''
-
+import clash
 import docopt
 import pandas as pd
 import pymol
@@ -44,14 +44,20 @@ def get_pymol_transform(transformation):
     
     return pymol_transform
 
-def session_from_graph(graph, query_df, db_df):
+def session_from_graph(results_row, query_df, db_df, alpha):
 
     def chain_from_name(string):
         chainno = int(string.split('_')[-1])
         chain = chr(ord('@')+chainno)
         return chain
 
-    subgraph = max_subgraph(graph)[0]
+    clash_score = clash.ClashScore(results_row, db_df, query_df,
+            alpha=alpha)
+    clash_score.apply()
+    print('SCORE IS {}'.format(clash_score.score))
+    if clash_score.score > 150:
+        return
+    subgraph = clash_score.subgraph
     print(subgraph)
     query_selstr = ""
     db_selstr = "db and "
@@ -90,7 +96,7 @@ def session_from_graph(graph, query_df, db_df):
                 )
         db_selstr = "(resi {}-{} and chain {})".format(
                 start, stop,
-                df_row['chain']
+                df_row['chain'].split(' ')[1]
                 )
         db_sels.append(db_selstr)
 
@@ -102,6 +108,7 @@ def session_from_graph(graph, query_df, db_df):
         db_selstr += ' or '
         db_selstr += db_sels[i]
     db_selstr += ')'
+    print(db_selstr)
 
     query_selstr = query_selstr[:-4]
     query_selstr += ' and chain A'
@@ -116,7 +123,7 @@ def session_from_graph(graph, query_df, db_df):
     cmd.append(pdb)
     cmd.append(query_selstr)
     cmd.append(db_selstr)
-    cmd.append(df_row['chain'])
+    cmd.append(df_row['chain'].split(' ')[1])
     cmd.extend(pymol_transform)
     cmd.append(qobjs)
 
@@ -131,14 +138,18 @@ def test():
     df = pd.read_pickle(args['--dataframe'])
     # Re-build query dataframe
     init()
-    helices = pd.read_pickle('test_files/boundary/cluster_representatives/query_helices.pkl')
+    helixpath = os.path.expanduser('~/intelligent_design/helix_matcher')
+    helices = pd.read_pickle(os.path.join(helixpath,
+        'test_files/boundary/cluster_representatives/query_helices.pkl'))
 
-    results = results.sort_values(by='matches')
+    results = results.sort_values(by='matches', ascending=False)
+    alphapath = helices.iloc[0]['path']
+    alpha = clash.get_alphashape(alphapath, chain='B')
     for i in range(0, 100): # Review top 100 matches for now.
-        testrow = results.iloc[-i]
-        testgraph = testrow['graph']
+        testrow = results.iloc[i]
+        # testgraph = testrow['graph']
 
-        session_from_graph(testgraph, helices, df)
+        session_from_graph(testrow, helices, df, alpha)
 
 if __name__=='__main__':
     test()
