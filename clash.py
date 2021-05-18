@@ -1,14 +1,14 @@
-import alphashape
-from shapely.ops import triangulate
-import os
-from copy import deepcopy
 import numeric
-import pandas as pd
 from utils import max_subgraph
+from utils import download_and_clean_pdb
+import alphashape
+from copy import deepcopy
+import os
+import numpy as np
+import pandas as pd
 import prody
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import axes3d, Axes3D
-from utils import download_and_clean_pdb
 # from descartes import PolygonPatch
 
 
