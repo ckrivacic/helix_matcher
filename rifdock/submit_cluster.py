@@ -60,7 +60,7 @@ def submit_qsub(parent, folders):
 def main():
     import glob
     parent = sys.argv[1]
-    folders = glob.glob('{}/*_output')
+    folders = glob.glob('{}/*_output'.format(parent))
     submit_qsub(parent, folders)
 
 
