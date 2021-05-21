@@ -189,7 +189,7 @@ class StructureCluster(object):
 
 
 if __name__=='__main__':
-    folders = sorted(glob.glob(sys.argv[1] + '/_output'))
+    folders = sorted(glob.glob(sys.argv[1] + '/*_output'))
     task = int(os.environ['SGE_TASK_ID'])
     workspace = folders[task - 1]
     clust = StructureCluster(workspace, threshold=10)
