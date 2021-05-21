@@ -18,7 +18,7 @@ def submit_qsub(parent, folders):
     max_memory = '6G'
     # ntasks = ntasks * len(tasks)
     script_path = os.path.join(
-            os.path.abspath(__file__),
+            os.path.dirname(os.path.abspath(__file__)),
             'cluster_sge.py'
             )
     ntasks = len(folders)
