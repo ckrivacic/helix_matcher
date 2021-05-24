@@ -172,6 +172,20 @@ def max_subgraph(graph):
     return subgraphs
 
 
+def run_command(command):
+    print("Working directory:", os.getcwd())
+    print("Command:", ' '.join(command))
+    sys.stdout.flush()
+
+    process = subprocess.Popen(command)
+
+    print("Process ID:", process.pid)
+    print()
+    sys.stdout.flush()
+
+    process.wait()
+
+
 if __name__=='__main__':
     init()
     test_correct_resnums()
