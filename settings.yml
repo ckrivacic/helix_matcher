@@ -1,5 +1,5 @@
 match:
-  - -a: "5"
-  - -g: "30"
-  - --database: "database/"
-  - --out: "matcher_outputs/"
+  -a: "5"
+  -g: "30"
+  --database: "database/"
+  --out: "matcher_outputs/"
