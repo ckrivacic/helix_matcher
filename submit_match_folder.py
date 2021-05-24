@@ -35,6 +35,8 @@ def main():
         ntask = len(glob.glob(args['<parent_directory>'] +
             '/*/cluster_representatives/'))
 
+    os.makedirs(args['--log'], exist_ok=True)
+
     qsub_command = 'qsub', '-h', '-cwd'
     qsub_command += '-o', args['--log']
     qsub_command += '-e', args['--log']
