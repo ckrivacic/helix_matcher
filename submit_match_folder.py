@@ -8,7 +8,7 @@ Options:
 
     --max-memory=MEM  Maximum memory allocated to the job  [default: 6G]
 
-    --tasks=#, -j  Number of tasks to split the job into  [default: 500]
+    --tasks=#, -j  Number of tasks to split the job into
 
     --out=FOLDER, -o  Where to save results  [default: results/]
 
