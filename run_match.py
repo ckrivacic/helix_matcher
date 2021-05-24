@@ -20,7 +20,7 @@ def main():
             )
     settings = yaml.load(open('settings.yml', 'r'))
 
-    cmd = python, matcher_script, 'match'
+    cmd = python, matcher_script
     cmd += 'match', folder
     cmd += '-a', settings['match']['-a']
     cmd += '-d',  settings['match']['-g']
