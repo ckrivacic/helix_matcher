@@ -46,6 +46,7 @@ def main():
     qsub_command += os.environ['ROSEASY_PYTHON'],
     qsub_command += 'run_match.py',
     qsub_command += args['<parent_directory>'],
+    qsub_command += os.environ['ROSEASY_PYTHON'],
 
     status = process.check_output(qsub_command).decode('utf-8')
     status_pattern = re.compile(r'Your job-array (\d+).[0-9:-]+ \(".*"\) has been submitted')

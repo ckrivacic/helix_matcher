@@ -11,7 +11,7 @@ def main():
     folders = sorted(folders)
     task = int(os.environ['SGE_TASK_ID'])
     folder = os.path.abspath(folders[task - 1])
-    python = os.environ['ROSEASY_PYTHON']
+    python = sys.argv[2]
     matcher_script = os.path.join(
             os.path.dirname(
                 os.path.realpath(__file__)
