@@ -173,6 +173,7 @@ def max_subgraph(graph):
 
 
 def run_command(command):
+    import subprocess
     print("Working directory:", os.getcwd())
     print("Command:", ' '.join(command))
     sys.stdout.flush()
