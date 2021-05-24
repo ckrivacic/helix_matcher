@@ -28,4 +28,10 @@ def main():
     cmd += '--out', os.path.join(settings['match']['--out'],
             os.path.basename(folder))
 
+    print(cmd)
+
     run_command(cmd)
+
+
+if __name__=='__main__':
+    main()

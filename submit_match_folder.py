@@ -45,7 +45,6 @@ def main():
     qsub_command += '-N', 'helix_matcher'
     qsub_command += os.environ['ROSEASY_PYTHON'],
     qsub_command += 'run_match.py',
-    qsub_command += 'match',
     qsub_command += args['<parent_directory>'],
 
     status = process.check_output(qsub_command).decode('utf-8')
