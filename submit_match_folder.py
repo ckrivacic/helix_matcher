@@ -27,11 +27,13 @@ def main():
 
     max_runtime = args['--max-runtime']
     max_memory = args['--max-memory']
-    if '--tasks' in args:
+    if args['--tasks']:
         ntask = args['--tasks']
     else:
+        print(glob.glob(args['<parent_directory>'] +
+            '/*/cluster_representatives'))
         ntask = len(glob.glob(args['<parent_directory>'] +
-            '*/cluster_representatives/'))
+            '/*/cluster_representatives/'))
 
     qsub_command = 'qsub', '-h', '-cwd'
     qsub_command += '-o', args['--log']
