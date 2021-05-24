@@ -23,7 +23,7 @@ def main():
     cmd = python, matcher_script, 'match'
     cmd += 'match', folder
     cmd += '-a', settings['match']['-a']
-    cmd += '-d',  settings['match']['-d']
+    cmd += '-d',  settings['match']['-g']
     cmd += '--database', settings['match']['--database']
     cmd += '--out', os.path.join(settings['match']['--out'],
             os.path.basename(folder))
