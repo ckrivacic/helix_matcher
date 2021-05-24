@@ -42,7 +42,7 @@ def main():
     qsub_command += '-b', 'y'
     qsub_command += '-N', 'helix_matcher'
     qsub_command += os.environ['ROSEASY_PYTHON'],
-    qsub_command += 'matcher.py',
+    qsub_command += 'run_match.py',
     qsub_command += 'match',
     qsub_command += args['<pdb>'],
 
