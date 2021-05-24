@@ -4,7 +4,7 @@ Usage:
 
 Options:
     --max-runtime=TIME  Maximum amount of time the cluster will allow
-    the job to run  [default:12:00:00]
+    the job to run  [default: 12:00:00]
 
     --max-memory=MEM  Maximum memory allocated to the job  [default: 6G]
 
