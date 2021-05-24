@@ -9,7 +9,7 @@ from utils import run_command
 def main():
     folders = glob.glob(sys.argv[1] + '/cluster_representatives/')
     folders = sorted(folders)
-    task = os.environ['SGE_TASK_ID']
+    task = int(os.environ['SGE_TASK_ID'])
     folder = os.path.abspath(folders[task - 1])
     python = os.environ['ROSEASY_PYTHON']
     matcher_script = os.path.join(
