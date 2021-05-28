@@ -102,10 +102,13 @@ def get_alphashape(pdb, chain=None, plot=False):
     alpha_shape = alphashape.alphashape(coords, 0.18)
 
     if plot:
+        helix = prody.parsePDB(pdb, chain='A')
+        helixcoords = helix.getCoordsets()[0]
         fig = plt.figure()
         # ax = fig.add_subplot(projection='3d')
         ax = Axes3D(fig)
         ax.scatter(*zip(*coords))
+        ax.scatter(*zip(*helixcoords))
         # # ax.add_patch(PolygonPatch(alpha_shape, alpha=0.2))
         ax.plot_trisurf(*zip(*alpha_shape.vertices),
                 triangles=alpha_shape.faces, alpha=0.3)
@@ -128,7 +131,7 @@ def test():
     results.sort_values(by='matches', inplace=True, ascending=False)
 
     pdb = os.path.join(helixdir, 'test_files/boundary/cluster_representatives/clst10_rep.pdb.gz')
-    alpha_shape = get_alphashape(pdb, chain=None)
+    alpha_shape = get_alphashape(pdb, chain=None, plot=True)
 
     for idx, row in results.iterrows():
         clash_score = ClashScore(row, df_helices, query_helices,
