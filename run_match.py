@@ -20,13 +20,13 @@ def main():
             )
     settings = yaml.load(open('settings.yml', 'r'))
 
-    cmd = python, matcher_script, 'match'
+    cmd = python, matcher_script
     cmd += 'match', folder
     cmd += '-a', settings['match']['-a']
-    cmd += '-d',  settings['match']['-g']
+    cmd += '-g',  settings['match']['-g']
     cmd += '--database', settings['match']['--database']
     cmd += '--out', os.path.join(settings['match']['--out'],
-            os.path.basename(folder))
+            os.path.basename(os.path.dirname(folder)))
 
     print(cmd)
 
