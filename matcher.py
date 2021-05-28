@@ -123,7 +123,7 @@ class Match(object):
 
     def plot_graph(self):
         import matplotlib.pyplot as plt
-        import graph_tool.draw as draw
+        # import graph_tool.draw as draw
         plt.subplot(111)
         # gt.remove_parallel_edges(self.graph)
         # pos = gt.fruchterman_reingold_layout(self.graph, n_iter=1000)

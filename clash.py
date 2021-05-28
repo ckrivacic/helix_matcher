@@ -80,15 +80,23 @@ class ClashScore(object):
         return df_vectors, query_vectors
 
 
-def get_alphashape(pdb, chain='B', plot=False):
+def get_alphashape(pdb, chain=None, plot=False):
     '''
     Returns an AlphaShape object of a pdb file, outlining its general
     shape for use in a clash filter.
     '''
-    atoms = prody.parsePDB(pdb, chain=chain)
+    if chain:
+        atoms = prody.parsePDB(pdb, chain=chain)
+    else:
+        atoms = prody.parsePDB(pdb)
+        atoms = atoms.select('not chain A')
     # For some reason there is a level which is not populated. This may
     # be for proteins w/ multiple chains.
-    coords = atoms.getCoordsets()[0]
+    coordsets = atoms.getCoordsets()
+    coords = []
+    for coordset in coordsets:
+        coords.extend(coordset)
+
     # coords = [(0., 0.), (0., 1.), (1., 1.), (1., 0.), (0.5, 0.5)]
 
     alpha_shape = alphashape.alphashape(coords, 0.18)
@@ -120,7 +128,7 @@ def test():
     results.sort_values(by='matches', inplace=True, ascending=False)
 
     pdb = os.path.join(helixdir, 'test_files/boundary/cluster_representatives/clst10_rep.pdb.gz')
-    alpha_shape = get_alphashape(pdb, chain='B')
+    alpha_shape = get_alphashape(pdb, chain=None)
 
     for idx, row in results.iterrows():
         clash_score = ClashScore(row, df_helices, query_helices,
