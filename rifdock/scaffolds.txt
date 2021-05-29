@@ -1,0 +1,4 @@
+$HOME/intelligent_design/helix_matcher/test_files/3turn_dock_helix.pdb
+$HOME/intelligent_design/helix_matcher/test_files/4turn_dock_helix.pdb
+$HOME/intelligent_design/helix_matcher/test_files/6turn_dock_helix.pdb
+$HOME/intelligent_design/helix_matcher/test_files/8turn_dock_helix.pdb
