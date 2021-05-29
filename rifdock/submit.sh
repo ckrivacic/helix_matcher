@@ -1,4 +1,4 @@
-export PYTHON_PATH=/wynton/home/kortemme/krivacic/software/anaconda3/bin/python
+export PYTHON_PATH="/wynton/home/kortemme/krivacic/software/anaconda3/bin/python"
 export RUNDIR=$1
 export SCAFFOLD=$(realpath $2)
 export num_tasks=$(echo $(ls $RUNDIR | grep patch | wc -l))

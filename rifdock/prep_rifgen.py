@@ -138,12 +138,13 @@ def main():
             info = chain.pdb_info().pose2pdb(1)
             if info.split(' ')[1] in args['--chain'] and chain.residue(1).is_protein():
                 chainpose = pose.split_by_chain(i)
+                print(chainpose.size())
                 if pose.size() < 5:
                     raise('Error: chain {} too small.'.format(args['--chain']))
                 else:
                     poses.append(chainpose)
+        pose = poses[0]
         if len(poses) > 1:
-            pose = poses[0]
             for chainpose in poses[1:]:
                 append_pose_to_pose(pose, chainpose)
 
