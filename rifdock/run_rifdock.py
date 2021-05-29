@@ -20,7 +20,7 @@ from subprocess import Popen, PIPE
 def write_flags(folder):
 #-rif_dock:target_res            residue_numbers.txt
     
-    scaffold = '/home/ckrivacic/software/helix_matcher/test_files/4turn_dock_helix.pdb'
+    scaffold = '/home/ckrivacic/software/helix_matcher/test_files/scaffolds.txt'
     tarpath, cache = get_flag_params(folder)
     flags_rifgen = '''
 -rif_dock:target_pdb            ./{target}.rif.gz_target.pdb.gz
