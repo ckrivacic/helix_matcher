@@ -132,6 +132,19 @@ def session_from_graph(results_row, query_df, db_df, alpha):
     subprocess.call(cmd)
 
 
+def score_matches(results, query_df, db_df):
+    '''Go through results dataframe and score the matches'''
+    # for i in range(0, 100): # Review top 100 matches for now.
+        # testrow = results.iloc[i]
+    alphapath = query_df.iloc[0]['path']
+    alpha = clash.get_alphashape(alphapath)
+    for idx, row in results.iterrows():
+        clash_score = clash.ClashScore(results_row, db_df, query_df,
+                alpha=alpha)
+        clash_score.apply()
+        print('SCORE IS {}'.format(clash_score.score))
+
+
 def test():
     args = docopt.docopt(__doc__)
     results = pd.read_pickle(args['<results>'])
