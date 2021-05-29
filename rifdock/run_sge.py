@@ -28,7 +28,7 @@ def write_flags(folder, scaffold):
     tarpath, cache = get_flag_params(folder)
     scaffold = os.path.abspath(scaffold)
     rosetta_path = '/wynton/home/kortemme/krivacic/software/rosetta_rifdock/'
-    flags_rifgen = '''
+    flags_rifdock = '''
 -rif_dock:target_pdb            ./{target}.rif.gz_target.pdb.gz
 -rif_dock:target_rf_resl        0.25
 -rif_dock:target_rf_cache       ./{cache}
@@ -83,7 +83,8 @@ def write_flags(folder, scaffold):
     if not os.path.exists(folder):
         os.mkdir(folder)
     with open(os.path.join(folder, 'dock_flags'), 'w') as f:
-        f.write(flags_rifgen)
+        f.write(flags_rifdock)
+    return flags_rifdock
 
 
 def get_flag_params(folder):
@@ -178,11 +179,13 @@ def main():
             f = open(args['<scaffold>'], 'r')
             scaffold = ''
             for line in f:
-                scaffold += line + ' '
+                scaffold += line
             f.close()
+            scaffold = scaffold.replace('\n', ' ')
         else:
             scaffold = args['<scaffold>']
-        write_flags(tempdir, args['<scaffold>'])
+        flags_rifdock = write_flags(tempdir, scaffold)
+        print(flags_rifdock)
 
         flags = os.path.join(tempdir, 'dock_flags')
         print('Running RIFDOCK for {}'.format(fold))
