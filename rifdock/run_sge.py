@@ -175,7 +175,7 @@ def main():
         # write_flags(fold)
         print('Prepping RIFDOCK for {}'.format(fold))
         if not args['<scaffold>'].endswith('.pdb'):
-            f = open(args['<scaffold.'], 'r')
+            f = open(args['<scaffold>'], 'r')
             scaffold = ''
             for line in f:
                 scaffold += line + ' '
