@@ -43,7 +43,11 @@ class Design(object):
         if len(glob.glob(os.path.dirname(self.path) + '/all.d*')) > 1:
             print('WARNING: Multiple docking scorefiles detected.')
             print('This may result in the wrong score being used.')
-        scorefile = os.path.join(os.path.dirname(self.path), 'all.dok')
+        scorefiles = sorted(glob.glob(os.path.join(
+            os.path.dirname(self.path), 'all.dok*'
+            )))
+        # scorefile = os.path.join(os.path.dirname(self.path), 'all.dok')
+        scorefile = scorefiles[-1]
         with open(scorefile, 'r') as f:
             for line in f:
                 score = line[76:82]
@@ -78,11 +82,17 @@ class Cluster(object):
 
 
 class StructureCluster(object):
-    def __init__(self, folder, threshold=None):
+    def __init__(self, folder, length=None, threshold=None):
         self.threshold=threshold
         self.designs = []
         # Path sould be to parent rifdock directory.
-        for path in glob.glob(folder + '/*/docked_full/*.pdb.gz'):
+        if length:
+            search = folder + '/*/docked_full/{}turn_*.pdb.gz'.format(length)
+        else:
+            search = folder + '/*/docked_full/*.pdb.gz'
+        for path in glob.glob(
+                search
+                ):
             design = Design(path)
             design.read_coords(chain='A')
             self.designs.append(design)
@@ -191,27 +201,32 @@ class StructureCluster(object):
 if __name__=='__main__':
     folders = sorted(glob.glob(sys.argv[1] + '/*_output'))
     task = int(os.environ['SGE_TASK_ID'])
+    task = 1
     workspace = folders[task - 1]
-    clust = StructureCluster(workspace, threshold=10)
-    print('Clustering...')
-    clust.cluster_coords(verbose=True)
-    clusters = clust.clusters
+    # workspace = 'boundary'
+    
+    for helixlength in [3,4,6,8]:
+        clust = StructureCluster(workspace, length=helixlength, threshold=10)
+        print('Clustering...')
+        clust.cluster_coords(verbose=True)
+        clusters = clust.clusters
 
-    outpath = os.path.join(workspace, 'cluster_representatives')
-    if not os.path.exists(outpath):
-        print('PATH NO EXIST')
-        os.mkdir(outpath)
+        outpath = os.path.join(workspace, 'cluster_representatives')
+        if not os.path.exists(outpath):
+            print('PATH NO EXIST')
+            os.mkdir(outpath)
 
-    overwrite = True
-    if overwrite:
-        for f in glob.glob(sys.argv[1] +
-                '/cluster_representatives/*.pdb.gz'):
-            os.remove(f)
+        overwrite = True
+        # overwrite = False
+        if overwrite:
+            for f in glob.glob(sys.argv[1] +
+                    '/cluster_representatives/*.pdb.gz'):
+                os.remove(f)
 
 
-    for clst in clusters:
-        print('CLUSTER {}'.format(clst))
-        print('REP:')
-        print(clusters[clst].rep.path)
-        copyfile(clusters[clst].rep.path, os.path.join(outpath,
-            'clst{}_rep.pdb.gz'.format(clst)))
+        for clst in clusters:
+            print('CLUSTER {}'.format(clst))
+            print('REP:')
+            print(clusters[clst].rep.path)
+            copyfile(clusters[clst].rep.path, os.path.join(outpath,
+                '{}turn_clst{}_rep.pdb.gz'.format(helixlength, clst)))
