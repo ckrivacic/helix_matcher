@@ -20,14 +20,17 @@ def main():
             'matcher.py'
             )
     settings = yaml.load(open(settings_file, 'r'))
+    out = os.path.join(settings['match']['--out'],
+            os.path.basename(os.path.dirname(os.path.dirname(folder))),
+            os.path.basename(folder))
+    print('SAVING TO {}'.format(out))
 
     cmd = python, matcher_script
     cmd += 'match', folder
     cmd += '-a', settings['match']['-a']
     cmd += '-g',  settings['match']['-g']
     cmd += '--database', settings['match']['--database']
-    cmd += '--out', os.path.join(settings['match']['--out'],
-            os.path.basename(os.path.dirname(folder)))
+    cmd += '--out', out 
 
     print(cmd)
 
