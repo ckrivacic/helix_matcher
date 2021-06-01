@@ -40,9 +40,9 @@ class Design(object):
         self.backbone_coords = np.array(coords)
 
     def get_score(self):
-        if len(glob.glob(os.path.dirname(self.path) + '/all.d*')) > 1:
-            print('WARNING: Multiple docking scorefiles detected.')
-            print('This may result in the wrong score being used.')
+        # if len(glob.glob(os.path.dirname(self.path) + '/all.d*')) > 1:
+            # print('WARNING: Multiple docking scorefiles detected.')
+            # print('This may result in the wrong score being used.')
         scorefiles = sorted(glob.glob(os.path.join(
             os.path.dirname(self.path), 'all.dok*'
             )))
@@ -199,10 +199,10 @@ class StructureCluster(object):
 
 
 if __name__=='__main__':
-    folders = sorted(glob.glob(sys.argv[1] + '/*_output'))
-    task = int(os.environ['SGE_TASK_ID'])
-    workspace = folders[task - 1]
-    # workspace = 'boundary'
+    # folders = sorted(glob.glob(sys.argv[1] + '/*_output'))
+    # task = int(os.environ['SGE_TASK_ID'])
+    # workspace = folders[task - 1]
+    workspace = 'boundary'
     
     for helixlength in [3,4,6,8]:
         clust = StructureCluster(workspace, length=helixlength, threshold=10)
@@ -214,18 +214,49 @@ if __name__=='__main__':
         if not os.path.exists(outpath):
             print('PATH NO EXIST')
             os.mkdir(outpath)
+        scores = open(os.path.join(
+            outpath,
+            '{}turn.scores'.format(helixlength)), 'w')
 
         overwrite = True
         # overwrite = False
-        if overwrite:
-            for f in glob.glob(sys.argv[1] +
-                    '/cluster_representatives/*.pdb.gz'):
-                os.remove(f)
 
 
         for clst in clusters:
+            outfile = '{}turn_clst{}_rep.pdb.gz'.format(helixlength,
+                    clst)
+            out = os.path.join(outpath, outfile)
+            if overwrite:
+                if os.path.exists(out):
+                    os.remove(out)
             print('CLUSTER {}'.format(clst))
             print('REP:')
             print(clusters[clst].rep.path)
-            copyfile(clusters[clst].rep.path, os.path.join(outpath,
-                '{}turn_clst{}_rep.pdb.gz'.format(helixlength, clst)))
+            rep_dir = os.path.dirname(
+                    os.path.abspath(
+                        clusters[clst].rep.path
+                        )
+                    )
+            relpath = os.path.relpath(
+                    rep_dir,
+                    outpath
+                    )
+            # copyfile(clusters[clst].rep.path, os.path.join(outpath,
+                # '{}turn_clst{}_rep.pdb.gz'.format(helixlength, clst)))
+            os.symlink(
+                    os.path.join(relpath,
+                        os.path.basename(clusters[clst].rep.path)),
+                    out
+                    )
+            dokfile = sorted(glob.glob(rep_dir + '/*.dok.*'))[-1]
+            with open(dokfile, 'r') as f:
+                for line in f:
+                    filename = os.path.basename(line.split(' ')[-1])
+                    print(filename)
+                    print(os.path.basename(clusters[clst].rep.path))
+                    if filename == os.path.basename(
+                                    clusters[clst].rep.path):
+                        print('TRUE DAT')
+                        scores.write(line)
+
+        scores.close()
