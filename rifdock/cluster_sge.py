@@ -201,7 +201,6 @@ class StructureCluster(object):
 if __name__=='__main__':
     folders = sorted(glob.glob(sys.argv[1] + '/*_output'))
     task = int(os.environ['SGE_TASK_ID'])
-    task = 1
     workspace = folders[task - 1]
     # workspace = 'boundary'
     
