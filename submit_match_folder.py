@@ -33,7 +33,7 @@ def main():
         print(glob.glob(args['<parent_directory>'] +
             '/*/cluster_representatives'))
         ntask = len(glob.glob(args['<parent_directory>'] +
-            '/*/cluster_representatives/'))
+            '/*/cluster_representatives/*turn/'))
 
     os.makedirs(args['--log'], exist_ok=True)
 

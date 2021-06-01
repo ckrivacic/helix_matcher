@@ -7,7 +7,7 @@ import yaml
 from utils import run_command
 
 def main():
-    folders = glob.glob(sys.argv[1] + '/*/cluster_representatives/')
+    folders = glob.glob(sys.argv[1] + '/*/cluster_representatives/*turn/')
     folders = sorted(folders)
     task = int(os.environ['SGE_TASK_ID'])
     folder = os.path.abspath(folders[task - 1])
