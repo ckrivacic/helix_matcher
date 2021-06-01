@@ -3,6 +3,9 @@ import sys, os, glob
 
 
 parent = sys.argv[1]
+# task = int(os.environ['SGE_TASK_ID'])
+folders = sorted(glob.glob(parent + '/*_output'))
+# folder = folders[task - 1]
 for folder in glob.glob(parent + '/*_output'):
     print('Aligning for folder {}'.format(folder))
     pdbs = sorted(glob.glob(folder + '/*/docked_full/*.pdb.gz'))
