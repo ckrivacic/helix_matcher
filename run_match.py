@@ -11,14 +11,15 @@ def main():
     folders = sorted(folders)
     task = int(os.environ['SGE_TASK_ID'])
     folder = os.path.abspath(folders[task - 1])
-    python = sys.argv[2]
+    settings_file = sys.argv[2]
+    python = sys.argv[3]
     matcher_script = os.path.join(
             os.path.dirname(
                 os.path.realpath(__file__)
                 ),
             'matcher.py'
             )
-    settings = yaml.load(open('settings.yml', 'r'))
+    settings = yaml.load(open(settings_file, 'r'))
 
     cmd = python, matcher_script
     cmd += 'match', folder

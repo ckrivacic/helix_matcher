@@ -13,6 +13,8 @@ Options:
     --out=FOLDER, -o  Where to save results  [default: results/]
 
     --log=FOLDER, -l  Where to save log files  [default: logs/]
+
+    --settings=YML, -s  Settings file for submission  [defualt: settings.yml]
 '''
 #Script for submitting matching jobs on the cluster.
 
@@ -22,7 +24,7 @@ import re
 import sys, os, importlib, shutil, glob
 
 def main():
-    
+
     args = docopt.docopt(__doc__)
 
     max_runtime = args['--max-runtime']
@@ -48,6 +50,7 @@ def main():
     qsub_command += os.environ['ROSEASY_PYTHON'],
     qsub_command += 'run_match.py',
     qsub_command += args['<parent_directory>'],
+    qsub_command += args['--settings'],
     qsub_command += os.environ['ROSEASY_PYTHON'],
 
     status = process.check_output(qsub_command).decode('utf-8')
