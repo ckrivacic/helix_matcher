@@ -2,7 +2,7 @@ import os, glob, sys
 from shutil import copyfile
 
 lengths = [3,4,6,8]
-folders = glob.glob(sys.argv[1]) + '/*/cluster_representatives/'
+folders = glob.glob(sys.argv[1] + '/*/cluster_representatives/')
 
 for f in folders:
     for length in lengths:
