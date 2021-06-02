@@ -27,8 +27,8 @@ def main():
 
     cmd = python, matcher_script
     cmd += 'match', folder
-    cmd += '-a', settings['match']['-a']
-    cmd += '-g',  settings['match']['-g']
+    cmd += '-a', settings['match']['--angstroms']
+    cmd += '-g',  settings['match']['--degrees']
     cmd += '--database', settings['match']['--database']
     cmd += '--out', out 
     if '--length' in settings:
