@@ -31,6 +31,8 @@ def main():
     cmd += '-g',  settings['match']['-g']
     cmd += '--database', settings['match']['--database']
     cmd += '--out', out 
+    if '--length' in settings:
+        cmd += '--length',
 
     print(cmd)
 
