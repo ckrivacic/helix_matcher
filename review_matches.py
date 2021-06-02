@@ -151,8 +151,16 @@ def score_matches(results, query_df, db_df):
 
 
 def test_scoring():
-    # results = 
-    return
+    results = pd.read_pickle('matcher_outputs/query_results_000.pkl')
+    helixpath = os.path.join(
+                os.path.expanduser('~/intelligent_design/helix_matcher')
+                )
+    helices = pd.read_pickle(
+            os.path.join(helixpath,
+                'rifdock/boundary/cluster_representatives/4_turn/query_helices.pkl')
+            )
+    df = pd.read_pickle('dataframes_clash/final.pkl')
+    score_matches(results, query_df, db_df)
 
 
 def test():
