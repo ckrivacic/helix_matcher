@@ -199,10 +199,10 @@ class StructureCluster(object):
 
 
 if __name__=='__main__':
-    # folders = sorted(glob.glob(sys.argv[1] + '/*_output'))
-    # task = int(os.environ['SGE_TASK_ID'])
-    # workspace = folders[task - 1]
-    workspace = 'boundary'
+    folders = sorted(glob.glob(sys.argv[1] + '/*_output'))
+    task = int(os.environ['SGE_TASK_ID'])
+    workspace = folders[task - 1]
+    # workspace = 'boundary'
     
     for helixlength in [3,4,6,8]:
         clust = StructureCluster(workspace, length=helixlength, threshold=10)
@@ -210,10 +210,12 @@ if __name__=='__main__':
         clust.cluster_coords(verbose=True)
         clusters = clust.clusters
 
-        outpath = os.path.join(workspace, 'cluster_representatives')
-        if not os.path.exists(outpath):
-            print('PATH NO EXIST')
-            os.mkdir(outpath)
+        outpath = os.path.join(workspace, 'cluster_representatives',
+                '{}_turn'.format(helixlength))
+        # if not os.path.exists(outpath):
+            # print('PATH NO EXIST')
+            # os.mkdir(outpath)
+        os.makedirs(outpath, exist_ok=True)
         scores = open(os.path.join(
             outpath,
             '{}turn.scores'.format(helixlength)), 'w')
@@ -251,12 +253,9 @@ if __name__=='__main__':
             dokfile = sorted(glob.glob(rep_dir + '/*.dok.*'))[-1]
             with open(dokfile, 'r') as f:
                 for line in f:
-                    filename = os.path.basename(line.split(' ')[-1])
-                    print(filename)
-                    print(os.path.basename(clusters[clst].rep.path))
+                    filename = os.path.basename(line.split(' ')[-1]).strip('\n')
                     if filename == os.path.basename(
                                     clusters[clst].rep.path):
-                        print('TRUE DAT')
                         scores.write(line)
 
         scores.close()
