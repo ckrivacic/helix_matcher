@@ -5,10 +5,9 @@ import pickle
 from klab.rosetta import input_files
 from roseasy import pipeline
 from roseasy.big_jobs import run_command
-
 '''
 Usage:
-    python3 submit_cluster.py <folder>
+    python3 submit_align.py <folder>
 '''
 
 
@@ -19,10 +18,10 @@ def submit_qsub(parent, folders):
     # ntasks = ntasks * len(tasks)
     script_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
-            'cluster_sge.py'
+            'align_SGE.py'
             )
     ntasks = len(folders)
-    logdir = os.path.join(parent, 'cluster', 'logs')
+    logdir = os.path.join(parent, 'align', 'logs')
     os.makedirs(logdir, exist_ok=True)
     qsub_command = 'qsub', '-h', '-cwd',
     qsub_command += '-o', logdir,
@@ -31,7 +30,7 @@ def submit_qsub(parent, folders):
     qsub_command += '-l', 'h_rt={}'.format(max_runtime),
     qsub_command += '-l', 'mem_free={}'.format(max_memory),
     qsub_command += '-b', 'y',
-    qsub_command += '-N', 'cluster',
+    qsub_command += '-N', 'align',
     qsub_command += python_path,
     qsub_command += script_path,
     qsub_command += parent,

@@ -159,10 +159,11 @@ def mult_np_transformation(T1, T2):
     
     return np.dot(M1, M2), np.dot(M1, v2) + v1
 
+
 def inverse_np_transformation(T):
     '''Inverse an numpy rigid body transformation.'''
     M, v = T
-    
+
     invM = np.linalg.inv(M)   
     return invM, - np.dot(invM, v)
 

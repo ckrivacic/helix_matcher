@@ -35,7 +35,7 @@ def main():
         print(glob.glob(args['<parent_directory>'] +
             '/*/cluster_representatives'))
         ntask = len(glob.glob(args['<parent_directory>'] +
-            '/*/cluster_representatives/*turn/'))
+            '/*/cluster_representatives/'))
 
     os.makedirs(args['--log'], exist_ok=True)
 
@@ -46,9 +46,9 @@ def main():
     qsub_command += '-l', 'h_rt={}'.format(max_runtime)
     qsub_command += '-l', 'mem_free={}'.format(max_memory)
     qsub_command += '-b', 'y'
-    qsub_command += '-N', 'helix_matcher'
+    qsub_command += '-N', 'lhelix_matcher'
     qsub_command += os.environ['ROSEASY_PYTHON'],
-    qsub_command += 'run_match.py',
+    qsub_command += 'run_length_match.py',
     qsub_command += args['<parent_directory>'],
     qsub_command += args['--settings'],
     qsub_command += os.environ['ROSEASY_PYTHON'],

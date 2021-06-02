@@ -7,7 +7,7 @@ import yaml
 from utils import run_command
 
 def main():
-    folders = glob.glob(sys.argv[1] + '/*/cluster_representatives/*turn/')
+    folders = glob.glob(sys.argv[1] + '/*/cluster_representatives/')
     folders = sorted(folders)
     task = int(os.environ['SGE_TASK_ID'])
     folder = os.path.abspath(folders[task - 1])
@@ -27,12 +27,11 @@ def main():
 
     cmd = python, matcher_script
     cmd += 'match', folder
-    cmd += '-a', settings['match']['--angstroms']
-    cmd += '-g',  settings['match']['--degrees']
+    cmd += '-a', settings['match']['-a']
+    cmd += '-g',  settings['match']['-g']
     cmd += '--database', settings['match']['--database']
     cmd += '--out', out 
-    if '--length' in settings:
-        cmd += '--length',
+    cmd += '--length',
 
     print(cmd)
 

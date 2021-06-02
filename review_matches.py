@@ -132,6 +132,11 @@ def session_from_graph(results_row, query_df, db_df, alpha):
     subprocess.call(cmd)
 
 
+def collect_scores(results_row, query_df):
+    print(results_row)
+    query_path = os.readlink(query_df.loc[0]['path'])
+
+
 def score_matches(results, query_df, db_df):
     '''Go through results dataframe and score the matches'''
     # for i in range(0, 100): # Review top 100 matches for now.
@@ -143,6 +148,19 @@ def score_matches(results, query_df, db_df):
                 alpha=alpha)
         clash_score.apply()
         print('SCORE IS {}'.format(clash_score.score))
+
+
+def test_scoring():
+    results = pd.read_pickle('matcher_outputs/query_results_000.pkl')
+    helixpath = os.path.join(
+                os.path.expanduser('~/intelligent_design/helix_matcher')
+                )
+    helices = pd.read_pickle(
+            os.path.join(helixpath,
+                'rifdock/boundary/cluster_representatives/4_turn/query_helices.pkl')
+            )
+    df = pd.read_pickle('dataframes_clash/final.pkl')
+    score_matches(results, query_df, db_df)
 
 
 def test():
