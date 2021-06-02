@@ -30,7 +30,7 @@ def submit_qsub(parent, folders):
     qsub_command += '-l', 'h_rt={}'.format(max_runtime),
     qsub_command += '-l', 'mem_free={}'.format(max_memory),
     qsub_command += '-b', 'y',
-    qsub_command += '-N', 'cluster',
+    qsub_command += '-N', 'align',
     qsub_command += python_path,
     qsub_command += script_path,
     qsub_command += parent,
