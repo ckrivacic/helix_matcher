@@ -249,7 +249,7 @@ if __name__=='__main__':
                         os.path.basename(clusters[clst].rep.path)),
                     out
                     )
-            dokfile = sorted(glob.glob(rep_dir + '/*.dok.*'))[-1]
+            dokfile = sorted(glob.glob(rep_dir + '/*.dok*'))[-1]
             with open(dokfile, 'r') as f:
                 for line in f:
                     filename = os.path.basename(line.split(' ')[-1]).strip('\n')
