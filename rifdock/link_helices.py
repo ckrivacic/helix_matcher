@@ -9,7 +9,7 @@ for f in folders:
         subfolder = '{}_turn'.format(length)
         for pdb in glob.glob(
                 os.path.join(
-                    f, subfolder
+                    f, subfolder, '*.pdb.gz'
                     )
                 ):
             os.symlink(pdb, 
