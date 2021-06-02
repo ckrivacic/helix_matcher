@@ -139,7 +139,6 @@ class StructureCluster(object):
                 # criterion='maxclust')
 
         for cluster, design in zip(clusters, self.designs):
-            print('hi')
             design.structure_cluster = cluster
             if cluster not in self.clusters:
                 clst = Cluster(cluster)
