@@ -22,8 +22,11 @@ options:
 
     --angstroms=NUM, -a  Binning option. How fine should the distance bins
     be?  [default: 2.5]
+
     --degrees=NUM, -g  Binning option. How fine should the angle bins be?
     [default: 15]
+
+    --settings=YML, -s  Provide a settings file.
 '''
 import docopt
 import pandas as pd
@@ -606,6 +609,17 @@ def make_test_hash_table():
 
 def main():
     args = docopt.docopt(__doc__)
+    print(args)
+
+    if args['--settings']:
+        import yaml
+        runtype = 'bin' if args['bin'] else 'match'
+        settings = yaml.load(open(args['--settings'], 'r'))
+        print(settings)
+        for option in settings[runtype]:
+            args[option] = settings[runtype][option]
+        print(args)
+
     dbpath = os.path.join(
             args['--database'],
             "bins_{}A_{}D".format(

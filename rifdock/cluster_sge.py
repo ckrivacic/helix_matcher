@@ -203,7 +203,7 @@ if __name__=='__main__':
     task = int(os.environ['SGE_TASK_ID'])
     workspace = folders[task - 1]
     # workspace = 'boundary'
-    
+
     for helixlength in [3,4,6,8]:
         clust = StructureCluster(workspace, length=helixlength, threshold=10)
         print('Clustering...')
