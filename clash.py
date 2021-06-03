@@ -22,6 +22,7 @@ class ClashScore(object):
         self.pdb_path = download_and_clean_pdb(self.name)
         self.subgraphs = max_subgraph(self.graph)
         self.chain = self.db_helices.loc[self.subgraphs[0][0][0]]['chain']
+        self.original_atoms = prody.parsePDB(self.pdb_path, chain=self.chain)
 
         if not alpha:
             self.alpha = get_alphashape(self.pdb_path)
@@ -51,6 +52,19 @@ class ClashScore(object):
 
         self.score = best_score
         self.subgraph = best_subgraph
+
+    def apply_subgraph(self, subgraph):
+        '''Find the score of a specific subgraph'''
+        atoms = deepcopy(self.original_atoms)
+        df_vectors, query_vectors = self.get_vectors(subgraph)
+        transform = numeric.Transformation(df_vectors, query_vectors)
+        prody_transform =\
+                prody.measure.transform.Transformation(transform.rotation,
+                transform.translation)
+        prody_transform.apply(atoms)
+        score = self.calculate(atoms)
+        return score
+
 
     def calculate(self, atoms):
         '''Calculate a clash score from the transformed atoms object and

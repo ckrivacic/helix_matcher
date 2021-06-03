@@ -23,10 +23,10 @@ for d in dirlist:
 		# curr_df = pkl.load(open_file)
 		# open_file.close()
 		curr_df = pd.read_pickle(path + d + '/' + subdir + '/query_results_000.pkl')
-                query_helices = os.path.join('./rifdock',
-                        'all_outputs', d, 'cluster_representatives',
-                        subdir, 'query_helices.pkl')
-                cur_df['query_helices'] = query_helices
+		query_helices = os.path.join('./rifdock',
+				'all_outputs', d, 'cluster_representatives',
+				subdir, 'query_helices.pkl')
+		curr_df['query_helices'] = query_helices
 		print(curr_df)
 		row = curr_df.loc[lambda curr_df: curr_df['name'].str.startswith(d.split('_')[0].lower())]
 		if not row.empty:

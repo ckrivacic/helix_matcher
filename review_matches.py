@@ -63,6 +63,8 @@ def session_from_graph(results_row, query_df, db_df, alpha):
     db_selstr = "db and "
 
     query_path = os.path.dirname(query_df.loc[0]['path'])
+    print(query_path.split('/')[6:])
+    sys.exit()
 
     db_sels = []
     df_row = db_df.loc[subgraph[0][0]]
@@ -166,7 +168,8 @@ def test_scoring():
 def test():
     args = docopt.docopt(__doc__)
     results = pd.read_pickle(args['<results>'])
-    df = pd.read_pickle(args['--dataframe'])
+    #df = pd.read_pickle(args['--dataframe'])
+    df = pd.read_pickle('../benchmark/nonred_pdb_helix_info.pkl')
     # Re-build query dataframe
     init()
     helixpath = os.path.expanduser('~/intelligent_design/helix_matcher')
