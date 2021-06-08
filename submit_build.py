@@ -9,11 +9,12 @@ def find_nstruct(pdb_prefix):
 
 
 pdb_prefix = '/wynton/home/database/pdb/remediated/pdb/'
-nstruct = int(find_nstruct(pdb_prefix) / 5000)
+num = 1000
+nstruct = int(find_nstruct(pdb_prefix) / num)
 max_runtime = '10:00:00'
 max_memory = '6G'
 logdir = 'nr_dataframes/logs/'
-os.makedirs(logdir)
+os.makedirs(logdir, exist_ok=True)
 
 qsub_command = 'qsub', '-h', '-cwd'
 qsub_command += '-o', logdir 
@@ -24,7 +25,7 @@ qsub_command += '-l', 'mem_free={}'.format(max_memory)
 qsub_command += '-b', 'y'
 qsub_command += '-N', 'helix_scan'
 qsub_command += '/wynton/home/kortemme/krivacic/software/anaconda3/bin/python',
-qsub_command += 'build_database.py',
+qsub_command += 'build_database.py', num
 
 status = process.check_output(qsub_command).decode('utf-8')
 status_pattern = re.compile(r'Your job-array (\d+).[0-9:-]+ \(".*"\) has been submitted')
