@@ -12,10 +12,12 @@ pdb_prefix = '/wynton/home/database/pdb/remediated/pdb/'
 nstruct = int(find_nstruct(pdb_prefix) / 5000)
 max_runtime = '10:00:00'
 max_memory = '6G'
+logdir = 'nr_dataframes/logs/'
+os.makedirs(logdir)
 
 qsub_command = 'qsub', '-h', '-cwd'
-qsub_command += '-o', 'logs/'
-qsub_command += '-e', 'logs/'
+qsub_command += '-o', logdir 
+qsub_command += '-e', logdir
 qsub_command += '-t', '1-{}'.format(nstruct)
 qsub_command += '-l', 'h_rt={}'.format(max_runtime)
 qsub_command += '-l', 'mem_free={}'.format(max_memory)
