@@ -8,7 +8,7 @@ import gzip
 pdb_prefix = '/wynton/home/database/pdb/remediated/pdb/'
 idx = int(os.environ['SGE_TASK_ID']) - 1
 print('IDX = {}'.format(idx))
-num = sys.argv[1]
+num = int(sys.argv[1])
 
 
 def test_iterate():
