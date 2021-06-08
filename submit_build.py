@@ -1,4 +1,4 @@
-import glob, re, gzip
+import glob, re, gzip, os
 from klab import process
 
 def find_nstruct(pdb_prefix):
