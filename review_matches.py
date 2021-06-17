@@ -158,6 +158,8 @@ def score_matches(results, query_df, db_df):
                     os.path.dirname(query_row['path']),
                         '{}turn.scores'.format(turnno)
                     )
+            # In the future, would be more efficient to just open all
+            # the score files once and save them to a dataframe.
             with open(scorepath, 'r') as f:
                 for line in f:
                     line = line.strip('\n')
