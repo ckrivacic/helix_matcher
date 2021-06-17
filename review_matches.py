@@ -144,10 +144,29 @@ def score_matches(results, query_df, db_df):
     alphapath = query_df.iloc[0]['path']
     alpha = clash.get_alphashape(alphapath)
     for idx, row in results.iterrows():
-        clash_score = clash.ClashScore(results_row, db_df, query_df,
+        clash_score = clash.ClashScore(row, db_df, query_df,
                 alpha=alpha)
         clash_score.apply()
-        print('SCORE IS {}'.format(clash_score.score))
+        print('CLASH SCORE IS {}'.format(clash_score.score))
+        rifdock_score = 0
+        for node in clash_score.subgraph:
+            query_idx = node[1]
+            query_row = query_df.loc[query_idx]
+            helixpath = os.path.realpath(query_row['path'])
+            turnno = os.path.basename(helixpath).split('_')[0][0]
+            scorepath = os.path.join(
+                    os.path.dirname(query_row['path']),
+                        '{}turn.scores'.format(turnno)
+                    )
+            with open(scorepath, 'r') as f:
+                for line in f:
+                    line = line.strip('\n')
+                    if line.endswith(os.path.basename(helixpath)):
+                        score_line = line
+                        break
+            score = float(score_line.split()[10])
+            rifdock_score += score
+        print('RIFDOCK SCORE IS {}'.format(rifdock_score))
 
 
 def test_scoring():
@@ -160,7 +179,7 @@ def test_scoring():
                 'rifdock/boundary/cluster_representatives/4_turn/query_helices.pkl')
             )
     df = pd.read_pickle('dataframes_clash/final.pkl')
-    score_matches(results, query_df, db_df)
+    score_matches(results, helices, df)
 
 
 def test():
@@ -184,3 +203,4 @@ def test():
 
 if __name__=='__main__':
     test()
+    # test_scoring()
