@@ -1,5 +1,0 @@
-match:
-  --angstroms: "5"
-  --degrees: "30"
-  --database: "database/"
-  --out: "matcher_outputs/"
