@@ -3,6 +3,11 @@ from ss_generator.alpha_helix import build_ideal_straight_alpha_helix as build
 from pyrosetta import *
 import numpy as np
 
+'''
+Usage:
+    make_helix <nres> [outpath]
+'''
+
 def make_helix(pose):
     '''Build an ideal straight alpha helix.'''
     
@@ -28,30 +33,31 @@ def make_helix(pose):
         pose.set_psi(i, psi)
         pose.set_omega(i, omega)
 
+if __name__=='__main__':
 
-length = int(sys.argv[1])
-if len(sys.argv) > 2:
-    out = os.path.join(
-            sys.argv[2], '{}turn_dock_helix.pdb'.format(
+    length = int(sys.argv[1])
+    if len(sys.argv) > 2:
+        out = os.path.join(
+                sys.argv[2], '{}turn_dock_helix.pdb'.format(
+                    round(int(length)/3.5))
+                )
+    else:
+        out = './{}turn_dock_helix.pdb'.format(
                 round(int(length)/3.5))
+
+    coords = build(length)
+    init()
+    pose = rosetta.core.pose.Pose()
+    typeset = pose.residue_type_set_for_pose()
+    new_rsd = rosetta.core.conformation.ResidueFactory.create_residue(
+            typeset.name_map("VAL")
             )
-else:
-    out = './{}turn_dock_helix.pdb'.format(
-            round(int(length)/3.5))
 
-coords = build(length)
-init()
-pose = rosetta.core.pose.Pose()
-typeset = pose.residue_type_set_for_pose()
-new_rsd = rosetta.core.conformation.ResidueFactory.create_residue(
-        typeset.name_map("VAL")
-        )
+    pose.append_residue_by_jump(new_rsd, 1)
+    for i in range(1, length):
+        pose.conformation().safely_append_polymer_residue_after_seqpos(new_rsd,
+                i, True)
 
-pose.append_residue_by_jump(new_rsd, 1)
-for i in range(1, length):
-    pose.conformation().safely_append_polymer_residue_after_seqpos(new_rsd,
-            i, True)
-
-make_helix(pose)
-print('Saving to {}'.format(out))
-pose.dump_pdb(out)
+    make_helix(pose)
+    print('Saving to {}'.format(out))
+    pose.dump_pdb(out)
