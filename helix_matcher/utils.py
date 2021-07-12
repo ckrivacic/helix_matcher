@@ -172,15 +172,16 @@ def max_subgraph(graph):
     return subgraphs
 
 
-def run_command(command):
-    import subprocess
-    print("Working directory:", os.getcwd())
-    print("Command:", ' '.join(command))
+def run_command(cmd, environment=None):
+    print("Working directory: {}".format(os.getcwd()))
+    print("Command: {}".format(' '.join(cmd)))
     sys.stdout.flush()
+    if not environment:
+        environment = os.environ.copy()
 
-    process = subprocess.Popen(command)
+    process = Popen(cmd, env=environment)
 
-    print("Process ID:", process.pid)
+    print("Process ID: {}".format(process.pid))
     print()
     sys.stdout.flush()
 

@@ -107,6 +107,8 @@ def run_command(cmd, environment=None):
     print("Working directory: {}".format(os.getcwd()))
     print("Command: {}".format(' '.join(cmd)))
     sys.stdout.flush()
+    if not environment:
+        environment = os.environ.copy()
 
     process = Popen(cmd, env=environment)
 
