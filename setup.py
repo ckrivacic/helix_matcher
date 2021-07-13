@@ -17,10 +17,10 @@ setuptools.setup(
     description="Helical elements interface explorer",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/ckrivacic/roseasy",
+    url="https://github.com/ckrivacic/helix_matcher",
     packages=setuptools.find_packages(),
     package_data={
-        'helix_matcher': [
+        'helix': [
             'standard_params/*.py',
             'standard_params/*.wts',
             'standard_params/*.yml',
@@ -57,9 +57,9 @@ setuptools.setup(
         },
     entry_points={
         'console_scripts':[
-            'roseasy=helix_matcher.main:main',
+            'helix=helix.main:main',
             ],
-        'roseasy.commands': [
+        'helix.commands': [
             define_command('fetch_data'),
             define_command('push_data'),
             # define_command('submit'),
