@@ -1,3 +1,10 @@
+'''
+Usage:
+    helix submit_build.py [options]
+
+options:
+    --
+'''
 import glob, re, gzip, os
 from klab import process
 

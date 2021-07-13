@@ -30,6 +30,10 @@ setuptools.setup(
             'rifdock/*.sh',
             'commands/*.py',
             'matching/*.py',
+            'utils/*.py',
+            'matching/*.py',
+            'matching/*.sh',
+            'analysis/*.py',
             ]
         },
     classifiers=[
@@ -53,20 +57,22 @@ setuptools.setup(
         },
     entry_points={
         'console_scripts':[
-            'roseasy=roseasy.main:main',
+            'roseasy=helix_matcher.main:main',
             ],
         'roseasy.commands': [
             define_command('fetch_data'),
             define_command('push_data'),
-            define_command('submit'),
-            define_command('plot_funnels'),
-            define_command('violin_plot'),
-            define_command('generate_fragments'),
+            # define_command('submit'),
+            # define_command('plot_funnels'),
+            # define_command('violin_plot'),
+            # define_command('generate_fragments'),
             define_command('setup_workspace'),
-            define_command('pick_designs_to_validate'),
-            define_command('add_residues'),
-            define_command('make_table'),
-            define_command('web_logo'),
+            define_command('review_matches'),
+            define_command('build_database'),
+            # define_command('pick_designs_to_validate'),
+            # define_command('add_residues'),
+            # define_command('make_table'),
+            # define_command('web_logo'),
             ],
         }
 )
