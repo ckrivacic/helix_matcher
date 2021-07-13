@@ -1,6 +1,6 @@
 '''
 Usage:
-    prep_rifgen.py <target_pdb> <output_folder> [options]
+    prep_rifgen.py <workspace> [options]
 
 options:
     --chain=LETTER, -c  
@@ -127,7 +127,8 @@ def test_3n2n():
 def main():
     init()
     args = docopt.docopt(__doc__)
-    posefile = os.path.abspath(args['<target_pdb>'])
+    workspace = workspace.workspace_from_dir(args['<workspace>'])
+    # posefile = os.path.abspath(args['<target_pdb>'])
     pose = pose_from_file(posefile)#.split_by_chain(1)
 
     if args['--chain']:
