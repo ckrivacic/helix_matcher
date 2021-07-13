@@ -115,7 +115,8 @@ Installing default scripts."""
         yaml = glob.glob(script_dir + '/*.yml')
         wts = glob.glob(script_dir + '/*.wts')
         sho = glob.glob(script_dir + '/*.sho')
-        for script in python + yaml + wts:
+        pickle = glob.glob(script_dir + '/*.pkl')
+        for script in python + yaml + wts + pickle:
             script_path = os.path.join(script_dir, script)
             workspace_path = os.path.join(workspace.standard_params_dir,
                     os.path.basename(script))
@@ -186,7 +187,7 @@ Design '{0}' already exists.  Use '-o' to overwrite.""", workspace.root_dir)
                 # RosettaDir,
                 InputPdb,
                 PythonPath,
-                # DefaultScripts,
+                DefaultScripts,
                 # LoopsFile,
                 # Resfile,
                 # ParamsFile,
