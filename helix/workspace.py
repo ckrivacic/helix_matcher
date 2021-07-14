@@ -49,6 +49,7 @@ class Workspace(object):
 
         return Workspace(directory)
 
+    @property
     def incompatible_with_fragments_script(self):
         return re.search('[^a-zA-Z0-9_/.]', self.abs_root_dir)
 
