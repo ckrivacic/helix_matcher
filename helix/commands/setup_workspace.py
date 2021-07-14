@@ -145,7 +145,7 @@ Installs helices to be docked to the target PDBs."""
                     )
                 )
         os.makedirs(workspace.helix_dir, exist_ok=True)
-        for f in glob.glob(helicepaths):
+        for f in helicepaths:
             f = ensure_path_exists(f)
             workspace_path = os.path.join(workspace.helix_dir,
                     os.path.basename(f))
