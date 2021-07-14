@@ -194,12 +194,12 @@ workspace "my_design" and set its rsync URL to "chef:path/to"."""
 
 from klab import scripting
 import docopt
-from roseasy import pipeline
+from helix import workspace
 
 @scripting.catch_and_print_errors()
 def main():
     arguments = docopt.docopt(__doc__)
-    workspace = pipeline.Workspace(arguments['<workspace>'])
+    workspace = workspace.Workspace(arguments['<workspace>'])
 
     # Make a new workspace directory.
 
