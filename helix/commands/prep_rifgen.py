@@ -1,6 +1,6 @@
 '''
 Usage:
-    prep_rifgen.py <workspace> [options]
+    helix prep_rifgen.py <workspace> [options]
 
 options:
     --chain=LETTER, -c  
