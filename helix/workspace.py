@@ -69,6 +69,10 @@ class Workspace(object):
         return os.path.basename(target)[:-len('.pdb.gz')]
 
     @property
+    def focus_name(self):
+        return ''
+
+    @property
     def rifdock_outdir(self):
         return os.path.join(self.root_dir, 'rifdock_outputs')
     
