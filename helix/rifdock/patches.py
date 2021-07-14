@@ -5,8 +5,8 @@ import numpy as np
 from pyrosetta import *
 sys.path.insert(1,
         os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)),'..')))
-from numeric import *
-from utils import *
+from helix.utils.numeric import *
+from helix.utils.utils import *
 
 class Patches(object):
     '''

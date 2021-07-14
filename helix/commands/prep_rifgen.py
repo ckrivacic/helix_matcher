@@ -1,6 +1,6 @@
 '''
 Usage:
-    helix prep_rifgen.py <workspace> [options]
+    helix prep_rifgen <workspace> [options]
 
 options:
     --chain=LETTER, -c  
@@ -15,7 +15,7 @@ TO DO:
     and split that chain
     Allow user to specify ranges
 '''
-from patches import Patches
+from helix.rifdock.patches import Patches
 import docopt
 from pyrosetta import pose_from_file
 from pyrosetta import init
@@ -23,6 +23,7 @@ from pyrosetta.rosetta.core.pose import append_pose_to_pose
 import numpy as np
 import sys, os
 import yaml
+import helix.workspace as ws
 
 
 def write_flags(folder, tarpath):
@@ -133,7 +134,7 @@ def test_3n2n():
 def main():
     init()
     args = docopt.docopt(__doc__)
-    root_workspace = workspace.workspace_from_dir(args['<workspace>'])
+    root_workspace = ws.workspace_from_dir(args['<workspace>'])
     # posefile = os.path.abspath(args['<target_pdb>'])
     if args['--target']:
         targets = args['--target']
@@ -144,7 +145,7 @@ def main():
         with open(args['--chainmap']) as file:
             chainmap = yaml.load(file)
     for target in targets:
-        workspace = workspace.RIFWorkspace(args['<workspace>'], target)
+        workspace = ws.RIFWorkspace(args['<workspace>'], target)
         pose = pose_from_file(workspace.initial_target_path)
         chain = None
         if chainmap:
@@ -182,11 +183,11 @@ def main():
         print(patches.reslist)
         patches.map_residues()
         print(patches.resmap)
-        parent_folder = os.path.abspath(os.path.join(args['<output_folder>']))
+        # parent_folder = os.path.abspath(os.path.join(args['<output_folder>']))
         target_pdb = workspace.target_path
         i = 1
         for res in patches.reslist:
-            patch_folder = os.path.join(parent_folder, 'patch_{}'.format(i))
+            patch_folder = os.path.join(workspace.focus_dir, 'patch_{}'.format(i))
             i += 1
             if not os.path.exists(patch_folder):
                 os.makedirs(patch_folder, exist_ok=True)
@@ -198,14 +199,14 @@ def main():
 
         pose.dump_pdb(target_pdb)
 
-        if not os.path.exists(workspace.rifgen):
-            os.symlink(os.environ['RIFGEN'], os.path.join(
-                workspace.root_dir, 'rifgen'
-                ))
-        if not os.path.exists(workspace.rifdock):
-            os.symlink(os.environ['RIFDOCK'], os.path.join(
-                workspace.root_dir, 'rifdock'
-                ))
+        # if not os.path.exists(workspace.rifgen):
+            # os.symlink(os.environ['RIFGEN'], os.path.join(
+                # workspace.root_dir, 'rifgen'
+                # ))
+        # if not os.path.exists(workspace.rifdock):
+            # os.symlink(os.environ['RIFDOCK'], os.path.join(
+                # workspace.root_dir, 'rifdock'
+                # ))
 
 
 if __name__=='__main__':

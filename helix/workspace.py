@@ -216,7 +216,7 @@ Expected to find a file matching '{0}'.  Did you forget to compile rosetta?
 
     @property
     def targets(self):
-        return sorted(glob.glob(os.path.join(self.target_dir, 'targets',
+        return sorted(glob.glob(os.path.join(self.target_dir,
             '*.pdb.gz')))
 
     @property

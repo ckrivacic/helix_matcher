@@ -46,11 +46,11 @@ variable to your environment.
 
         os.symlink(python_path, workspace.python_path)
 
-class RIFDOCK:
-    prompt = "Path to python binary where PyRosetta is installed: "
+class RIFDock:
+    prompt = "Path to python binary where RIFDock is installed: "
     description = """\
-Python path: Path to your python binary. Make sure PyRosetta package is
-installed. You can skip this step in the future by adding a ROSEASY_PYTHON
+Python path: Path to folder where RIFDock package is
+installed. You can skip this step in the future by adding a RIFDOCK 
 variable to your environment.
     """
 
@@ -239,6 +239,7 @@ Design '{0}' already exists.  Use '-o' to overwrite.""", workspace.root_dir)
                 PythonPath,
                 DefaultScripts,
                 Helices,
+                RIFDock,
                 # LoopsFile,
                 # Resfile,
                 # ParamsFile,
