@@ -49,6 +49,9 @@ class Workspace(object):
 
         return Workspace(directory)
 
+    def incompatible_with_fragments_script(self):
+        return re.search('[^a-zA-Z0-9_/.]', self.abs_root_dir)
+
     @property
     def parent_dir(self):
         return os.path.dirname(self.root_dir)
