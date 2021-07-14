@@ -58,12 +58,27 @@ class Workspace(object):
         return self._root_dir
 
     @property
-    def rifdock_dir(self):
-        return os.path.join(self.root_dir, 'rifdock')
-
-    @property
     def abs_root_dir(self):
         return os.path.abspath(self.root_dir)
+
+    def basename(self, target):
+        return os.path.basename(target)[:-len('.pdb.gz')]
+
+    @property
+    def rifdock_outdir(self):
+        return os.path.join(self.root_dir, 'rifdock_outputs')
+    
+    def target_rifdock_path(self, target):
+        dirname = self.basename(target)
+        return os.path.join(self.rifdock_dir, dirname)
+
+    @property
+    def match_outdir(self):
+        return os.path.join(self.root_dir, 'match_outputs')
+
+    def target_match_path(self, target):
+        out_folder = os.path.join(self.match_out_dir,
+                self.basename(target))
 
     @property
     def slurm_custom_jobno(self):
@@ -188,8 +203,13 @@ Expected to find a file matching '{0}'.  Did you forget to compile rosetta?
         return self.find_path('input.pdb.gz')
 
     @property
-    def target_pdb_path(self):
-        return os.path.join(self.rifdock_dir, 'target.pdb.gz')
+    def target_dir(self):
+        return os.path.join(self.root_dir, 'targets')
+
+    @property
+    def targets(self):
+        return sorted(glob.glob(os.path.join(self.target_dir, 'targets',
+            '*.pdb.gz')))
 
     @property
     def flags_path(self):
@@ -298,18 +318,6 @@ Expected to find a file matching '{0}'.  Did you forget to compile rosetta?
         for path in required_paths:
             if not os.path.exists(path):
                 raise PathNotFound(path)
-
-    def get_next_step(self):
-        latest = 0
-        dirs = [d for d in os.listdir(self.root_dir) if os.path.isdir(d)]
-        for d in dirs:
-            for d in dirs:
-                step = d.split('_')[0]
-                if re.match('[0-9]+', step):
-                    step = int(step)
-                    if step > latest:
-                        latest = step
-        return latest + 1
     
     def make_dirs(self):
         scripting.mkdir(self.focus_dir)
@@ -336,13 +344,20 @@ Expected to find a file matching '{0}'.  Did you forget to compile rosetta?
     def exists(self):
         return os.path.exists(self.focus_dir)
 
-    def patch_folder(self, patch):
-        return os.path.join(self.root_dir, 'rifdock',
-                'patch_{}'.format(self.patchno))
+    # def patch_folder(self, patch):
+        # return os.path.join(self.root_dir, 'rifdock',
+                # 'patch_{}'.format(self.patchno))
 
     def rifgen_flags_template(self):
         return self.find_path('rifgen_flags')
 
+    @property
+    def rifdock(self):
+        return os.path.join(self.root_dir, 'rifdock')
+
+    @property
+    def rifgen(self):
+        return os.path.join(self.root_dir, 'rifgen')
 
 class BigJobWorkspace(Workspace):
     """
@@ -455,6 +470,64 @@ class BigJobWorkspace(Workspace):
 
         for path in self.all_job_info_paths:
             os.remove(path)
+
+
+class RIFWorkspace(Workspace):
+    '''
+    Class for handling paths needed to run RIFDock on a given target
+    '''
+    def __init__(self, root, target_path):
+        Workspace.__init__(self, root)
+        self._initial_target_path = target_path
+
+    @property
+    def target_path(self):
+        return os.path.join(self.focus_dir, 'target.pdb')
+
+    @property
+    def initial_target_path(self):
+        return self._initial_target_path
+
+    @property
+    def focus_name(self):
+        return self.basename(self.target_path)
+
+    @property
+    def focus_dir(self):
+        return os.path.join(self.rifdock_outdir, self.focus_name)
+
+    @property
+    def patches(self):
+        return sorted(glob.glob('patch_*'))
+
+    def active_patch(self, job_info):
+        return self.patches[job_info['task_id'] % len(self.patches)]
+
+    def docking_directory(self, job_info):
+        return os.path.join(self.active_patch(job_info), 'docked_full')
+
+    def docking_directories(self):
+        dirs = []
+        for d in self.patches:
+            dirs.append(os.path.join(d, 'docked_full'))
+        return dirs
+
+    def make_dirs(self):
+        scripting.mkdir(self.focus_dir)
+        pickle_path = os.path.join(self.focus_dir, 'workspace.pkl')
+        with open(pickle_path, 'wb') as file:
+            pickle.dump(self.__class__, file)
+
+    def nstruct(self):
+        return len(self.patches)
+
+    @property
+    def log_dir(self):
+        return os.path.join(self.focus_dir, 'logs')
+
+    def clear_outputs(self):
+        for docking_dir in self.docking_directories:
+            scripting.clear_directory(docking_dir)
 
 
 def big_job_dir():

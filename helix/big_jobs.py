@@ -104,7 +104,7 @@ $LAUNCHER_DIR/paramrun    # will run the executions in the LAUNCHER_JOB_FILE fil
         json.dump(params, file)
 
 
-def submit(script, workspace, **params):
+def submit(cmd, workspace, **params):
     """Submit a job with the given parameters."""
     from klab import cluster, process
 
@@ -138,8 +138,8 @@ def submit(script, workspace, **params):
     qsub_command += '-b', 'y',
     qsub_command += '-N', params.get('job_name'),
     qsub_command += workspace.python_path,
-    qsub_command += script,
-    qsub_command += workspace.focus_dir,
+    for param in cmd:
+        qsub_command += param,
 
     status = process.check_output(qsub_command).decode('utf-8')
     status_pattern = re.compile(r'Your job-array (\d+).[0-9:-]+ \(".*"\) has been submitted')

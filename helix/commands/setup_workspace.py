@@ -46,6 +46,32 @@ variable to your environment.
 
         os.symlink(python_path, workspace.python_path)
 
+class RIFDOCK:
+    prompt = "Path to python binary where PyRosetta is installed: "
+    description = """\
+Python path: Path to your python binary. Make sure PyRosetta package is
+installed. You can skip this step in the future by adding a ROSEASY_PYTHON
+variable to your environment.
+    """
+
+    if 'RIFDOCK' in os.environ:
+        print("'rifdock' folder found in environment: {}".format(
+            os.environ.get('RIFDOCK')))
+        setting_env_var = os.environ.get('RIFDOCK')
+
+    @staticmethod
+    def install(workspace, rifdock_path):
+        rifdock_bin = os.path.join(rifdock_path, 'build', 'apps',
+                'rosetta', 'rif_dock_test')
+        rifgen_bin = os.path.join(rifdock_path, 'build', 'apps',
+                'rosetta', 'rifgen')
+        rifdock_bin = ensure_path_exists(rifdock_bin)
+        rifgen_bin = ensure_path_exists(rifgen_bin)
+
+        os.symlink(rifdock_bin, workspace.rifdock)
+        os.symlink(rifgen_bin, workspace.rifgen)
+
+
 class RosettaDir:
     prompt = "Path to rosetta: "
     description = """\

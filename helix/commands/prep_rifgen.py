@@ -5,6 +5,11 @@ Usage:
 options:
     --chain=LETTER, -c  
     Which chain of the protein to use
+    --target=PDB, -t  
+    Which target to do the prep for, if multiple exist and you only want
+    to focus on one
+    --chainmap, -m
+    YAML file that tells this script which chains go with which target.
 TO DO:
     Allow user to input a chain, figure out what Rosetta chain that is,
     and split that chain
@@ -17,6 +22,7 @@ from pyrosetta import init
 from pyrosetta.rosetta.core.pose import append_pose_to_pose
 import numpy as np
 import sys, os
+import yaml
 
 
 def write_flags(folder, tarpath):
@@ -127,66 +133,79 @@ def test_3n2n():
 def main():
     init()
     args = docopt.docopt(__doc__)
-    workspace = workspace.workspace_from_dir(args['<workspace>'])
+    root_workspace = workspace.workspace_from_dir(args['<workspace>'])
     # posefile = os.path.abspath(args['<target_pdb>'])
-    pose = pose_from_file(posefile)#.split_by_chain(1)
-
-    if args['--chain']:
-        print('MAKING PATCHES FOR CHAIN {}'.format(args['--chain']))
-        poses = []
-        for i in range(1, pose.num_chains()):
-            chain = pose.split_by_chain(i)
-            info = chain.pdb_info().pose2pdb(1)
-            if info.split(' ')[1] in args['--chain'] and chain.residue(1).is_protein():
-                chainpose = pose.split_by_chain(i)
-                print(chainpose.size())
-                if pose.size() < 5:
-                    raise('Error: chain {} too small.'.format(args['--chain']))
-                else:
-                    poses.append(chainpose)
-        pose = poses[0]
-        if len(poses) > 1:
-            for chainpose in poses[1:]:
-                append_pose_to_pose(pose, chainpose)
-
+    if args['--target']:
+        targets = args['--target']
     else:
-        pose = pose.split_by_chain(1)
-    reslist = []
-    for res in range(1, pose.size() + 1):
-        if pose.residue(res).is_protein():
-            reslist.append(res)
-    print('POSE SIZE')
-    print(pose.size())
-    patches = Patches(pose)
-    patches.set_reslist(reslist)
-    patches.determine_surface_residues()
-    print(patches.reslist)
-    patches.map_residues()
-    print(patches.resmap)
-    parent_folder = os.path.abspath(os.path.join(args['<output_folder>']))
-    target_pdb = os.path.join(parent_folder, 'target.pdb')
-    i = 1
-    for res in patches.reslist:
-        patch_folder = os.path.join(parent_folder, 'patch_{}'.format(i))
-        i += 1
-        if not os.path.exists(patch_folder):
-            os.makedirs(patch_folder, exist_ok=True)
-        print(patches.nearest_n_residues(res, 100, cutoff=10.5,
-            pymol=True))
-        write_to_file(patches.nearest_n_residues(res, 100, cutoff=10.5),
-                patch_folder)
-        write_flags(patch_folder, target_pdb)
+        targets = root_workspace.targets
+    chainmap = None
+    if args['--chainmap']:
+        with open(args['--chainmap']) as file:
+            chainmap = yaml.load(file)
+    for target in targets:
+        workspace = workspace.RIFWorkspace(args['<workspace>'], target)
+        pose = pose_from_file(workspace.initial_target_path)
+        chain = None
+        if chainmap:
+            chain = chainmap[workspace.basename(target)]
+        elif args['--chain']:
+            chain = args['--chain']
 
-    pose.dump_pdb(target_pdb)
+        if chain:
+            print('MAKING PATCHES FOR CHAIN {}'.format(args['--chain']))
+            poses = []
+            for i in range(1, pose.num_chains()):
+                chain = pose.split_by_chain(i)
+                info = chain.pdb_info().pose2pdb(1)
+                if info.split(' ')[1] in args['--chain'] and chain.residue(1).is_protein():
+                    if chain.size() < 5:
+                        raise('Error: chain {} too small.'.format(args['--chain']))
+                    else:
+                        poses.append(chain)
+            pose = poses[0]
+            if len(poses) > 1:
+                for chain in poses[1:]:
+                    append_pose_to_pose(pose, chain)
 
-    if not os.path.exists(os.path.join(parent_folder, 'rifgen')):
-        os.symlink(os.environ['RIFGEN'], os.path.join(
-            parent_folder, 'rifgen'
-            ))
-    if not os.path.exists(os.path.join(parent_folder, 'rifdock')):
-        os.symlink(os.environ['RIFDOCK'], os.path.join(
-            parent_folder, 'rifdock'
-            ))
+        else:
+            pose = pose.split_by_chain(1)
+        reslist = []
+        for res in range(1, pose.size() + 1):
+            if pose.residue(res).is_protein():
+                reslist.append(res)
+        print('POSE SIZE')
+        print(pose.size())
+        patches = Patches(pose)
+        patches.set_reslist(reslist)
+        patches.determine_surface_residues()
+        print(patches.reslist)
+        patches.map_residues()
+        print(patches.resmap)
+        parent_folder = os.path.abspath(os.path.join(args['<output_folder>']))
+        target_pdb = workspace.target_path
+        i = 1
+        for res in patches.reslist:
+            patch_folder = os.path.join(parent_folder, 'patch_{}'.format(i))
+            i += 1
+            if not os.path.exists(patch_folder):
+                os.makedirs(patch_folder, exist_ok=True)
+            print(patches.nearest_n_residues(res, 100, cutoff=10.5,
+                pymol=True))
+            write_to_file(patches.nearest_n_residues(res, 100, cutoff=10.5),
+                    patch_folder)
+            write_flags(patch_folder, target_pdb)
+
+        pose.dump_pdb(target_pdb)
+
+        if not os.path.exists(workspace.rifgen):
+            os.symlink(os.environ['RIFGEN'], os.path.join(
+                workspace.root_dir, 'rifgen'
+                ))
+        if not os.path.exists(workspace.rifdock):
+            os.symlink(os.environ['RIFDOCK'], os.path.join(
+                workspace.root_dir, 'rifdock'
+                ))
 
 
 if __name__=='__main__':
