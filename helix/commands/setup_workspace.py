@@ -117,11 +117,10 @@ stripped of waters and extraneous ligands."""
 
     @staticmethod
     def install(workspace, pdb_path):
+        os.makedirs(workspace.target_dir, exist_ok=True)
         for f in glob.glob(pdb_path):
             f = ensure_path_exists(f)
-            os.makedirs(os.path.join(
-                workspace.root_dir, 'targets'), exist_ok=True)
-            if pdb_path.endswith('.pdb.gz'):
+            if f.endswith('.pdb.gz'):
                 destination = os.path.join(workspace.root_dir, 'targets',
                         os.path.basename(f))
                 shutil.copyfile(pdb_path, destination)
@@ -132,6 +131,24 @@ stripped of waters and extraneous ligands."""
                         pdb_path, destination), shell=True)
             else:
                 raise ValueError("'{0}' is not a PDB file.".format(pdb_path))
+
+class Helices:
+    description = """\
+Installs helices to be docked to the target PDBs."""
+
+    @staticmethod
+    def install(workspace):
+        helicepaths = glob.glob(
+                os.path.join(
+                    os.path.dirname(__file__), '..', 'helices', '*.pdb'
+                    )
+                )
+        os.makedirs(workspace.helix_dir, exist_ok=True)
+        for f in glob.glob(helicepaths):
+            f = ensure_path_exists(f)
+            workspace_path = os.path.join(workspace.helix_dir,
+                    os.path.basename(f))
+            shutil.copyfile(f, workspace_path)
 
 
 class DefaultScripts:
@@ -220,6 +237,7 @@ Design '{0}' already exists.  Use '-o' to overwrite.""", workspace.root_dir)
                 InputPdb,
                 PythonPath,
                 DefaultScripts,
+                Helices,
                 # LoopsFile,
                 # Resfile,
                 # ParamsFile,

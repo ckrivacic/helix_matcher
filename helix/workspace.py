@@ -212,6 +212,10 @@ Expected to find a file matching '{0}'.  Did you forget to compile rosetta?
             '*.pdb.gz')))
 
     @property
+    def helix_dir(self):
+        return os.path.join(self.root_dir, 'helices')
+
+    @property
     def flags_path(self):
         return self.find_path('flags')
 
