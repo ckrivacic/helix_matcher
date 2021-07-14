@@ -133,6 +133,7 @@ stripped of waters and extraneous ligands."""
                 raise ValueError("'{0}' is not a PDB file.".format(pdb_path))
 
 class Helices:
+    prompt = None
     description = """\
 Installs helices to be docked to the target PDBs."""
 
