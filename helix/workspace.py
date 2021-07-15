@@ -87,6 +87,9 @@ class Workspace(object):
         dirname = self.basename(target)
         return os.path.join(self.rifdock_outdir, dirname)
 
+    def target_path_from_name(self, name):
+        return os.path.join(self.target_dir, '{}.pdb.gz'.format(name))
+
     @property
     def all_rifdock_targets(self):
         all_target_paths = []
@@ -514,6 +517,14 @@ class RIFWorkspace(Workspace):
     def __init__(self, root, target_path):
         Workspace.__init__(self, root)
         self._initial_target_path = target_path
+
+    @staticmethod
+    def from_directory(directory):
+        root = os.path.join(directory, '..', '..')
+        target_name = os.path.basename(directory)
+        target_path = os.path.join(root, 'targets',
+                '{}.pdb.gz'.format(target_name))
+        return RIFWorkspace(root, target_path)
 
     @property
     def scaffolds(self):
