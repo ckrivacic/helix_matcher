@@ -23,7 +23,7 @@ def main():
             '..', 'matching',
             'matcher.py')
     if not os.path.exists(script_path):
-        raise("Error: {} does not exist.".format(script_path))
+        except("Error: {} does not exist.".format(script_path))
     if args['--target']:
         targets = [workspace.target_rifdock_path(args['--target'])]
     else:
