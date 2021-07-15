@@ -142,6 +142,7 @@ def submit(workspace, cmd, distributor='local', clear=False,
     if clear or test_run:
         workspace.clear_outputs()
 
+    print(type(workspace))
     inputs = [
             x for x in workspace.unclaimed_inputs
             ]
