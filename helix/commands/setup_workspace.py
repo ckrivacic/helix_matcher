@@ -120,13 +120,13 @@ stripped of waters and extraneous ligands."""
         os.makedirs(workspace.target_dir, exist_ok=True)
         for f in glob.glob(pdb_path):
             f = ensure_path_exists(f)
+            destination = os.path.join(workspace.target_dir,
+                    os.path.basename(f))
             if f.endswith('.pdb.gz'):
-                destination = os.path.join(workspace.root_dir, 'targets',
-                        os.path.basename(f))
                 shutil.copyfile(f, destination)
             elif pdb_path.endswith('.pdb'):
-                destination = os.path.join(workspace.root_dir, 'targets',
-                        os.path.basename(f) + '.gz')
+                destination += '.gz'
+                print(destination)
                 subprocess.call('gzip -c {0} > {1}'.format(
                         f, destination), shell=True)
             else:
