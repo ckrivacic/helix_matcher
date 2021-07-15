@@ -98,7 +98,8 @@ def execute(cmd):
 
 @scripting.catch_and_print_errors()
 def submit(workspace, cmd, distributor='local', clear=False,
-        test_run=False, make_dirs=False, nstruct=1):
+        test_run=False, make_dirs=False, nstruct=1,
+        max_runtime=10:00:00, max_memory=5G):
     # args = docopt.docopt(__doc__)
     # if not args['--local'] and not args['--slurm'] and not args['--make-dirs']:
     if distributor=='sge':
