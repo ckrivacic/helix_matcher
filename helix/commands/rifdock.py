@@ -29,18 +29,12 @@ def main():
     else:
         targets = workspace.all_rifdock_targets
 
-    if args['--database']:
-        db = args['--database']
-    else:
-        db = workspace.database_path
-
     for target in targets:
 
         rif_workspace = ws.workspace_from_dir(workspace.target_rifdock_path(target))
 
         cmd = workspace.python_path, script_path
         cmd += target
-        cmd += '--database', db 
 
         if args['--task']:
             cmd += '--task', args['--task']
