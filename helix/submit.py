@@ -128,7 +128,7 @@ def submit(workspace, cmd, distributor='local', clear=False,
     # imp = importlib.import_module(script_name)
     script_name = os.path.basename(cmd[1]).split('.')[0]
 
-    workspace.check_paths()
+    # workspace.check_paths()
     # workspace.check_rosetta()
     workspace.make_dirs()
     if args['--make-dirs']:
