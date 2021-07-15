@@ -127,7 +127,7 @@ def main():
     # workspace = ws.workspace_from_dir(args['<rif_workspace>'])
     workspace, job_info = big_jobs.initiate()
     if not hasattr(workspace, 'docking_directory'):
-        except("Error: run_sge.py requires RIFWorkspaces as input. You "\
+        raise Exception("Error: run_sge.py requires RIFWorkspaces as input. You "\
                 "may have provided the root directory to this script "\
                 "somehow.")
     # folder = workspace.focus_dir
