@@ -294,7 +294,7 @@ Design '{0}' already exists.  Use '-o' to overwrite.""", workspace.root_dir)
     # print a success message.
 
     if arguments['--remote']:
-        pipeline.fetch_data(workspace.root_dir)
+        ws.fetch_data(workspace.root_dir)
     else:
         print("Setup successful for design '{0}'.".format(workspace.root_dir))
 

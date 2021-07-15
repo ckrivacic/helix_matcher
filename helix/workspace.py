@@ -502,7 +502,7 @@ class RIFWorkspace(Workspace):
 
     @property
     def focus_name(self):
-        return self.basename(self.target_path)
+        return self.basename(self.initial_target_path)
 
     @property
     def focus_dir(self):

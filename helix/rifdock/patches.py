@@ -46,16 +46,15 @@ class Patches(object):
             # chain = self.pose.chain(self.reslist.front())
             # chain_pose = self.pose.split_by_chain(chain)
         # else:
-        chain_pose = self.pose
-
+        # chain_pose = self.pose
 
         surface_selector = residue_selector.LayerSelector()
         # Set surface and boundary layers to True
         surface_selector.set_layers(False, True, True)
-        print(surface_selector.apply(chain_pose))
-        print(res_selector_to_size_list(surface_selector.apply(chain_pose)))
+        print(surface_selector.apply(self.pose))
+        print(res_selector_to_size_list(surface_selector.apply(self.pose)))
         reslist =\
-                res_selector_to_size_list(surface_selector.apply(chain_pose))
+                res_selector_to_size_list(surface_selector.apply(self.pose))
         #    reslist = []
         if self.reslist:
             # reslist = correct_resnums(chain_pose, reslist, self.pose)
@@ -101,18 +100,17 @@ class Patches(object):
             self.resmap = None
 
     def nearest_n_residues(self, resnum, n, cutoff=30.0, pymol=False):
-        print('------------------')
-        print(resnum)
+        # print('------------------')
+        # print(resnum)
         if np.any(self.resmap) and not self.resmap.empty:
             neighbors = self.resmap[(self.resmap['res1']==resnum) &
                     (self.resmap['dist'] <
                         cutoff)].sort_values(by='dist')
-            print(neighbors)
+            # print(neighbors)
             neighbors = neighbors['res2']
             if not pymol:
                 return set(neighbors[0:n].tolist())
             else:
-                print(self.pose.pdb_info().pose2pdb(resnum))
                 return reslist_to_pdb_numbers(set(neighbors[0:n].tolist()),
                             self.pose)
         else:

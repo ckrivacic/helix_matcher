@@ -10,6 +10,8 @@ Options:
     to focus on one  
     --chainmap=YAML, -m  
     YAML file that tells this script which chains go with which target.
+    --patchsize=NUM, -p  
+    How many angstroms across should a patch be?  [default: 10.5]
 
 TO DO:
     Allow user to specify ranges
@@ -148,25 +150,25 @@ def main():
         pose = pose_from_file(workspace.initial_target_path)
         chain = None
         if chainmap:
-            chain = chainmap[workspace.basename(target)]
+            chain = chainmap[workspace.focus_name]
         elif args['--chain']:
             chain = args['--chain']
 
         if chain:
             print('MAKING PATCHES FOR CHAIN {}'.format(args['--chain']))
             poses = []
-            for i in range(1, pose.num_chains()):
-                chain = pose.split_by_chain(i)
-                info = chain.pdb_info().pose2pdb(1)
-                if info.split(' ')[1] in args['--chain'] and chain.residue(1).is_protein():
-                    if chain.size() < 5:
-                        raise('Error: chain {} too small.'.format(args['--chain']))
+            for i in range(1, pose.num_chains() + 1):
+                chainpose = pose.split_by_chain(i)
+                info = chainpose.pdb_info().pose2pdb(1)
+                if info.split(' ')[1] in chain and chainpose.residue(1).is_protein():
+                    if chainpose.size() < 5:
+                        raise('Error: chain {} too small.'.format(chain))
                     else:
-                        poses.append(chain)
+                        poses.append(chainpose)
             pose = poses[0]
             if len(poses) > 1:
-                for chain in poses[1:]:
-                    append_pose_to_pose(pose, chain)
+                for chainpose in poses[1:]:
+                    append_pose_to_pose(pose, chainpose)
 
         else:
             pose = pose.split_by_chain(1)
@@ -190,9 +192,11 @@ def main():
             i += 1
             if not os.path.exists(patch_folder):
                 os.makedirs(patch_folder, exist_ok=True)
-            print(patches.nearest_n_residues(res, 100, cutoff=10.5,
-                pymol=True))
-            write_to_file(patches.nearest_n_residues(res, 100, cutoff=10.5),
+            # print(patches.nearest_n_residues(res, 100,
+                # cutoff=float(args['--patchsize']),
+                # pymol=True))
+            write_to_file(patches.nearest_n_residues(res, 100,
+                cutoff=float(args['--patchsize'])),
                     patch_folder)
             write_flags(patch_folder, target_pdb)
 
