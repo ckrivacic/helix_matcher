@@ -4,7 +4,7 @@ Usage:
 
 Options:
     --sge  Running on the cluster?
-    --tasks=NUM, -j  How many tasks to split the run into?
+    --task=NUM  For test runs, just run this task.
     --target=PDB, -t  Only run for a specific target
 
 Workspace should be the root workspace.
@@ -35,6 +35,14 @@ def main():
 
     for target in targets:
 
+        rif_workspace = ws.workspace_from_dir(workspace.target_rifdock_path(target))
+
         cmd = workspace.python_path, script_path
         cmd += target
         cmd += '--database', db 
+
+        if args['--task']:
+            cmd += '--task', args['--task']
+
+        print('Submitting jobs for {}'.format(target))
+        submit.submit(rif_workspace, cmd, distributor='sge')

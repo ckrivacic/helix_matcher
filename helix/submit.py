@@ -125,7 +125,7 @@ def submit(workspace, cmd, distributor='local', clear=False,
     # sys.path.insert(1, script_path)
     # script_name = os.path.basename(script)[:-3]
     # imp = importlib.import_module(script_name)
-    script_name = os.path.basename(cmd[0]).split('.')[0]
+    script_name = os.path.basename(cmd[1]).split('.')[0]
 
     workspace.check_paths()
     # workspace.check_rosetta()
@@ -134,7 +134,7 @@ def submit(workspace, cmd, distributor='local', clear=False,
         sys.exit()
     # Copying the script to the focus directory helps track exactly what
     # we did at each step.
-    shutil.copyfile(script, workspace.script_path)
+    # shutil.copyfile(script, workspace.script_path)
 
     if args['--clear'] or args['--test-run']:
         workspace.clear_outputs()

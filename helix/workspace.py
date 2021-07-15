@@ -385,6 +385,15 @@ Expected to find a file matching '{0}'.  Did you forget to compile rosetta?
     def rifgen(self):
         return os.path.join(self.root_dir, 'rifgen')
 
+    @property
+    def all_job_info_paths(self):
+        return glob.glob(os.path.join(self.focus_dir, '*.json'))
+
+    @property
+    def all_job_info(self):
+        from . import big_jobs
+        return [big_jobs.read_job_info(x) for x in self.all_job_info_paths]
+
 class BigJobWorkspace(Workspace):
     """
     Provide paths needed to run big jobs on the cluster.
@@ -561,6 +570,13 @@ class RIFWorkspace(Workspace):
     def clear_outputs(self):
         for docking_dir in self.docking_directories:
             scripting.clear_directory(docking_dir)
+
+    @property
+    def unclaimed_inputs(self):
+        inputs = set(self.patches)
+        for params in self.all_job_info:
+            inputs -= set(params['inputs'])
+        return sorted(inputs)
 
 
 def big_job_dir():
