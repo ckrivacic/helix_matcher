@@ -35,6 +35,8 @@ def main():
 
     for target in targets:
 
+        print('TARGET RIFDOCK PATH')
+        print(workspace.target_rifdock_path(target))
         rif_workspace = ws.workspace_from_dir(workspace.target_rifdock_path(target))
         print(type(rif_workspace))
 
