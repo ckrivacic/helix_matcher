@@ -153,9 +153,9 @@ def submit(workspace, cmd, distributor='local', clear=False,
 
     nstruct = num_inputs * nstruct
 
-    if workspace.subdirs:
-        for inp in inputs:
-            subdir = workspace.output_subdir(inp)
+    # if workspace.subdirs:
+        # for inp in inputs:
+            # subdir = workspace.output_subdir(inp)
             # scripting.clear_directory(subdir)
 
     # Submit the job
