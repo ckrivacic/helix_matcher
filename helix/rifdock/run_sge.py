@@ -20,6 +20,7 @@ from shutil import copytree
 from shutil import copyfile
 from distutils.dir_util import copy_tree
 from helix import workspace as ws
+from helix import big_jobs
 
 
 
