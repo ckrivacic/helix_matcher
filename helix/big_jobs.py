@@ -104,7 +104,7 @@ $LAUNCHER_DIR/paramrun    # will run the executions in the LAUNCHER_JOB_FILE fil
         json.dump(params, file)
 
 
-def submit(cmd, workspace, **params):
+def submit(workspace, cmd, **params):
     """Submit a job with the given parameters."""
     from klab import cluster, process
 

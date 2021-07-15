@@ -144,6 +144,7 @@ def submit(workspace, cmd, distributor='local', clear=False,
     inputs = [
             x for x in workspace.unclaimed_inputs
             ]
+    print('inputs are: {}'.format(inputs))
 
     if len(inputs)==0:
         num_inputs = 1
@@ -186,7 +187,7 @@ def submit(workspace, cmd, distributor='local', clear=False,
 
     else:
         big_jobs.submit(
-                workspace.script_path, workspace,
+                workspace, cmd,
                 nstruct=nstruct,
                 max_runtime=args['--max-runtime'],
                 max_memory=args['--max-memory'],
