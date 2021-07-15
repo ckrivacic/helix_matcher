@@ -24,8 +24,8 @@ def main():
     workspace = ws.workspace_from_dir(args['<workspace>'])
     script_path = os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
-            '..', 'matching',
-            'matcher.py')
+            '..', 'rifdock',
+            'run_sge.py')
     if not os.path.exists(script_path):
         raise Exception("Error: {} does not exist.".format(script_path))
     if args['--target']:
