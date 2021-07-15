@@ -142,18 +142,16 @@ def submit(workspace, cmd, distributor='local', clear=False,
     if clear or test_run:
         workspace.clear_outputs()
 
-    print(type(workspace))
     inputs = [
             x for x in workspace.unclaimed_inputs
             ]
-    print('inputs are: {}'.format(inputs))
 
     if len(inputs)==0:
         num_inputs = 1
     else:
         num_inputs = len(inputs)
 
-    if args['--test-run']:
+    if test_run:
         nstruct = num_inputs * 10
     else:
         nstruct = num_inputs * int(args['--nstruct'])
@@ -180,9 +178,9 @@ def submit(workspace, cmd, distributor='local', clear=False,
                 workspace, 
                 cmd,
                 nstruct=workspace.nstruct,
-                max_runtime=args['--max-runtime'],
-                max_memory=args['--max-memory'],
-                test_run=args['--test-run'],
+                max_runtime=max_runtime,
+                max_memory=max_memory,
+                test_run=test_run,
                 job_name=script_name,
                 inputs=inputs
                 )
@@ -191,9 +189,9 @@ def submit(workspace, cmd, distributor='local', clear=False,
         big_jobs.submit(
                 workspace, cmd,
                 nstruct=nstruct,
-                max_runtime=args['--max-runtime'],
-                max_memory=args['--max-memory'],
-                test_run=args['--test-run'],
+                max_runtime=max_runtime,
+                max_memory=max_memory,
+                test_run=test_run,
                 job_name=script_name,
                 inputs=inputs
                 )

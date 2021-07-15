@@ -35,12 +35,7 @@ def main():
 
     for target in targets:
 
-        print('RIFDOCK WORKSPACES')
-        print(targets)
-        print('TARGET')
-        print(target)
         rif_workspace = ws.workspace_from_dir(target)
-        print(type(rif_workspace))
 
         cmd = workspace.python_path, script_path
         cmd += target,
