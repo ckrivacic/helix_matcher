@@ -559,6 +559,7 @@ class RIFWorkspace(Workspace):
     def docking_directory(self, job_info):
         return os.path.join(self.active_patch(job_info), 'docked_full')
 
+    @property
     def docking_directories(self):
         dirs = []
         for d in self.patches:
