@@ -31,17 +31,15 @@ def main():
     if args['--target']:
         targets = [workspace.target_rifdock_path(args['--target'])]
     else:
-        targets = workspace.all_rifdock_targets
+        targets = workspace.all_rifdock_workspaces
 
     for target in targets:
 
-        print('TARGETS')
+        print('RIFDOCK WORKSPACES')
         print(targets)
         print('TARGET')
         print(target)
-        print('TARGET RIFDOCK PATH')
-        print(workspace.target_rifdock_path(target))
-        rif_workspace = ws.workspace_from_dir(workspace.target_rifdock_path(target))
+        rif_workspace = ws.workspace_from_dir(target)
         print(type(rif_workspace))
 
         cmd = workspace.python_path, script_path

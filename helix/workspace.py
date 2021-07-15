@@ -91,7 +91,7 @@ class Workspace(object):
         return os.path.join(self.target_dir, '{}.pdb.gz'.format(name))
 
     @property
-    def all_rifdock_targets(self):
+    def all_rifdock_workspaces(self):
         all_target_paths = []
         for target in self.targets:
             all_target_paths.append(self.target_rifdock_path(target))
