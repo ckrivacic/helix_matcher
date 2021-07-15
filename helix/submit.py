@@ -100,7 +100,8 @@ def execute(cmd):
 def submit(workspace, cmd, distributor='local', clear=False,
         test_run=False):
     # args = docopt.docopt(__doc__)
-    if not args['--local'] and not args['--slurm'] and not args['--make-dirs']:
+    # if not args['--local'] and not args['--slurm'] and not args['--make-dirs']:
+    if distributor=='sge':
         cluster.require_qsub()
 
     # if args['--step']:
@@ -136,7 +137,8 @@ def submit(workspace, cmd, distributor='local', clear=False,
     # we did at each step.
     # shutil.copyfile(script, workspace.script_path)
 
-    if args['--clear'] or args['--test-run']:
+    # if args['--clear'] or args['--test-run']:
+    if clear or test_run:
         workspace.clear_outputs()
 
     inputs = [
