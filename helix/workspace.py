@@ -582,6 +582,9 @@ class RIFWorkspace(Workspace):
     def clear_outputs(self):
         for docking_dir in self.docking_directories:
             scripting.clear_directory(docking_dir)
+        scripting.clear_directory(self.log_dir)
+        for f in self.all_job_info:
+            os.remove(f)
 
     @property
     def unclaimed_inputs(self):

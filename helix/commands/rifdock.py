@@ -10,6 +10,8 @@ Options:
     this option if you ran prep_rifgen.)
     --test-run  Mark as a test run. For this script this does nothing
     for now.
+    --clear, -o  Overwrite a previous run. Gets rid of docked outputs,
+    log files, and job info files.
 
 Workspace should be the root workspace.
 """
@@ -45,4 +47,5 @@ def main():
 
         print('Submitting jobs for {}'.format(target))
         submit.submit(rif_workspace, cmd, distributor='sge',
-                make_dirs=args['--make-dirs'], test_run=args['--test-run'])
+                make_dirs=args['--make-dirs'],
+                test_run=args['--test-run'], clear=args['--clear'])
