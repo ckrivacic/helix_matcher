@@ -41,6 +41,9 @@ class Workspace(object):
     def __init__(self, root):
         self._root_dir = os.path.abspath(root)
 
+    def job_info_path(self, job_id):
+        return os.path.join(self.focus_dir, '{0}.json'.format(job_id))
+
     @classmethod
     def from_directory(cls, directory):
         # Force subclasses to reimplement this method
@@ -52,6 +55,10 @@ class Workspace(object):
     @property
     def incompatible_with_fragments_script(self):
         return re.search('[^a-zA-Z0-9_/.]', self.abs_root_dir)
+
+    @property
+    def database_path(self):
+        return self.find_path('database')
 
     @property
     def parent_dir(self):
@@ -79,6 +86,13 @@ class Workspace(object):
     def target_rifdock_path(self, target):
         dirname = self.basename(target)
         return os.path.join(self.rifdock_dir, dirname)
+
+    @property
+    def all_rifdock_targets(self):
+        all_target_paths = []
+        for target in self.targets:
+            all_target_paths.append(self.target_rifdock_path(target))
+        return all_target_paths
 
     @property
     def match_outdir(self):
@@ -493,6 +507,11 @@ class RIFWorkspace(Workspace):
         self._initial_target_path = target_path
 
     @property
+    def scaffolds(self):
+        return [os.path.abspath(x) for x in sorted(glob.glob(workspace.helix_dir +
+            '/*.pdb'))]
+
+    @property
     def target_path(self):
         return os.path.join(self.focus_dir, 'target.pdb')
 
@@ -510,7 +529,9 @@ class RIFWorkspace(Workspace):
 
     @property
     def patches(self):
-        return sorted(glob.glob('patch_*'))
+        return sorted(glob.glob(os.path.join(
+            self.focus_dir,
+            'patch_*')))
 
     def active_patch(self, job_info):
         return self.patches[job_info['task_id'] % len(self.patches)]

@@ -147,6 +147,7 @@ def main():
             chainmap = yaml.load(file)
     for target in targets:
         workspace = ws.RIFWorkspace(args['<workspace>'], target)
+        workspace.make_dirs()
         pose = pose_from_file(workspace.initial_target_path)
         chain = None
         if chainmap:

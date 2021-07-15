@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 import sys, os, re, json, subprocess
-from roseasy import pipeline
+from helix import workspace as ws
 
 
 def submit_slurm(workspace, **params):
@@ -137,7 +137,7 @@ def submit(cmd, workspace, **params):
     qsub_command += '-l', 'mem_free={0}'.format(max_memory),
     qsub_command += '-b', 'y',
     qsub_command += '-N', params.get('job_name'),
-    qsub_command += workspace.python_path,
+    # qsub_command += workspace.python_path,
     for param in cmd:
         qsub_command += param,
 
@@ -164,7 +164,7 @@ def submit(cmd, workspace, **params):
 
 def initiate():
 
-    workspace = pipeline.workspace_from_dir(sys.argv[1])
+    workspace = ws.workspace_from_dir(sys.argv[1])
     workspace.cd_to_root()
 
     try:

@@ -4,7 +4,7 @@ Uses node scratch space to store RIF files created during RIFGen, then
 runs RIFDock before copying them back over to the user's patch folder.
 
 Usage:
-    cluster_run.py <folder> <scaffold> [options]
+    cluster_run.py <rif_workspace> [options]
 
 Options:
     --sge  Running on the cluster?
@@ -19,14 +19,16 @@ from io import StringIO
 from shutil import copytree
 from shutil import copyfile
 from distutils.dir_util import copy_tree
+from helix import workspace as ws
 
 
 
-def write_flags(folder, scaffold):
+def write_flags(workspace, scaffold):
 #-rif_dock:target_res            residue_numbers.txt
     
     tarpath, cache = get_flag_params(folder)
-    scaffold = os.path.abspath(scaffold)
+    # scaffold = os.path.abspath(scaffold)
+
     rosetta_path = '/wynton/home/kortemme/krivacic/software/rosetta_rifdock/'
     flags_rifdock = '''
 -rif_dock:target_pdb            ./{target}.rif.gz_target.pdb.gz
@@ -121,7 +123,14 @@ def run_command(cmd, environment=None):
 
 def main():
     args = docopt.docopt(__doc__)
-    folder = os.path.abspath(args['<folder>'])
+    # folder = os.path.abspath(args['<folder>'])
+    # workspace = ws.workspace_from_dir(args['<rif_workspace>'])
+    workspace, job_info = big_jobs.initiate()
+    if not hasattr(workspace, 'docking_directory'):
+        except("Error: run_sge.py requires RIFWorkspaces as input. You "\
+                "may have provided the root directory to this script "\
+                "somehow.")
+    # folder = workspace.focus_dir
 
     total_jobs = len(glob.glob(folder + '/patch_*'))
     print('TOTAL JOBS: {}'.format(total_jobs))
@@ -142,10 +151,10 @@ def main():
     print('START JOB: {}'.format(start_job))
     print('STOP JOB: {}'.format(stop_job))
 
-    folders = sorted(glob.glob(folder + '/patch_*'))
+    folders = sorted(glob.glob(workspace.focus_dir + '/patch_*'))
 
-    rifgen = os.path.join(folder, 'rifgen')
-    rifdock = os.path.join(folder, 'rifdock')
+    # rifgen = os.path.join(folder, 'rifgen')
+    # rifdock = os.path.join(folder, 'rifdock')
 
     if 'TMPDIR' in os.environ:
         os_tmp = os.environ['TMPDIR']
@@ -155,7 +164,8 @@ def main():
     if not os.path.exists(outdir_temp):
         os.makedirs(outdir_temp, exist_ok=True)
 
-    target = os.path.join(folder, 'target.pdb')
+    # target = os.path.join(folder, 'target.pdb')
+    target = workspace.target_path
     new_target = os.path.join(outdir_temp, 'target.pdb')
     copyfile(target, new_target)
 
@@ -168,30 +178,34 @@ def main():
         os.chdir(tempdir)
         flags = os.path.join(tempdir, 'flags')
         myenv = os.environ.copy()
+        # Need a better solution for adding this to env in the future,
+        # i.e. not hardcoding the path.
         myenv['LD_LIBRARY_PATH'] = '/wynton/home/kortemme/krivacic/software/anaconda3/lib/'
 
-        run_command([rifgen, '@', flags], environment=myenv)
+        run_command([workspace.rifgen, '@', flags], environment=myenv)
         # if exit_code != 0:
             # print(stdout)
             # print(stderr)
 
         # write_flags(fold)
         print('Prepping RIFDOCK for {}'.format(fold))
-        if not args['<scaffold>'].endswith('.pdb'):
-            f = open(args['<scaffold>'], 'r')
-            scaffold = ''
-            for line in f:
-                scaffold += line
-            f.close()
-            scaffold = scaffold.replace('\n', ' ')
-        else:
-            scaffold = args['<scaffold>']
+        # if not args['<scaffold>'].endswith('.pdb'):
+            # f = open(args['<scaffold>'], 'r')
+            # scaffold = ''
+            # for line in f:
+                # scaffold += line
+            # f.close()
+            # scaffold = scaffold.replace('\n', ' ')
+        # else:
+            # scaffold = args['<scaffold>']
+
+        scaffold = ' '.join(workspace.scaffolds)
         flags_rifdock = write_flags(tempdir, scaffold)
         print(flags_rifdock)
 
         flags = os.path.join(tempdir, 'dock_flags')
         print('Running RIFDOCK for {}'.format(fold))
-        run_command([rifdock, '@', flags], environment=myenv)
+        run_command([workspace.rifdock, '@', flags], environment=myenv)
         # if exit_code != 0:
             # print(stdout)
             # print(stderr)

@@ -135,6 +135,23 @@ stripped of waters and extraneous ligands."""
             else:
                 raise ValueError("'{0}' is not a PDB file.".format(pdb_path))
 
+class Database:
+    description="""\
+Symlinks to the default database. Users can run the bin command to
+create a new database directory in project_params. Database should be 
+downloaded from <url> and placed in the folder's install directory.
+(Will make this automatic during setup.py)"""
+    
+    @staticmethod
+    def install(workspace):
+        default_dbpath = os.path.join(
+                os.path.realpath(__file__),
+                '..', 'database'
+                )
+        os.symlink(default_dbpath, os.path.join(
+            workspace.standard_params_dir, 'database'
+            ))
+
 class Helices:
     prompt = None
     description = """\
@@ -243,6 +260,7 @@ Design '{0}' already exists.  Use '-o' to overwrite.""", workspace.root_dir)
                 DefaultScripts,
                 Helices,
                 RIFDock,
+                Database,
                 # LoopsFile,
                 # Resfile,
                 # ParamsFile,
