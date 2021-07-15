@@ -107,6 +107,7 @@ $LAUNCHER_DIR/paramrun    # will run the executions in the LAUNCHER_JOB_FILE fil
 def submit(workspace, cmd, **params):
     """Submit a job with the given parameters."""
     from klab import cluster, process
+    print(workspace)
 
     # Make sure the rosetta symlink has been created.
 
