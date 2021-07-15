@@ -2,17 +2,16 @@
 Usage:
     helix prep_rifgen <workspace> [options]
 
-options:
-    --chain=LETTER, -c  
-    Which chain of the protein to use
+Options:
+    --chain=LETTERS, -c   
+    Which chain of the protein to use  
     --target=PDB, -t  
     Which target to do the prep for, if multiple exist and you only want
-    to focus on one
-    --chainmap, -m
+    to focus on one  
+    --chainmap=YAML, -m  
     YAML file that tells this script which chains go with which target.
+
 TO DO:
-    Allow user to input a chain, figure out what Rosetta chain that is,
-    and split that chain
     Allow user to specify ranges
 '''
 from helix.rifdock.patches import Patches
