@@ -34,7 +34,7 @@ def main():
         rif_workspace = ws.workspace_from_dir(workspace.target_rifdock_path(target))
 
         cmd = workspace.python_path, script_path
-        cmd += target
+        cmd += target,
 
         if args['--task']:
             cmd += '--task', args['--task']
