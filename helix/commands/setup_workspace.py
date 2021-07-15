@@ -117,8 +117,12 @@ stripped of waters and extraneous ligands."""
 
     @staticmethod
     def install(workspace, pdb_path):
+        pdbs = pdb_path.split(' ')
+        globlist = []
+        for pdb in pdbs:
+            globlist.extend(glob.glob(pdb))
         os.makedirs(workspace.target_dir, exist_ok=True)
-        for f in glob.glob(pdb_path):
+        for f in globlist:
             f = ensure_path_exists(f)
             destination = os.path.join(workspace.target_dir,
                     os.path.basename(f))
@@ -126,7 +130,6 @@ stripped of waters and extraneous ligands."""
                 shutil.copyfile(f, destination)
             elif pdb_path.endswith('.pdb'):
                 destination += '.gz'
-                print(destination)
                 subprocess.call('gzip -c {0} > {1}'.format(
                         f, destination), shell=True)
             else:
