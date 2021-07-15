@@ -98,7 +98,7 @@ def execute(cmd):
 
 @scripting.catch_and_print_errors()
 def submit(workspace, cmd, distributor='local', clear=False,
-        test_run=False):
+        test_run=False, make_dirs=False):
     # args = docopt.docopt(__doc__)
     # if not args['--local'] and not args['--slurm'] and not args['--make-dirs']:
     if distributor=='sge':
@@ -131,7 +131,8 @@ def submit(workspace, cmd, distributor='local', clear=False,
     # workspace.check_paths()
     # workspace.check_rosetta()
     workspace.make_dirs()
-    if args['--make-dirs']:
+    # if args['--make-dirs']:
+    if make_dirs:
         sys.exit()
     # Copying the script to the focus directory helps track exactly what
     # we did at each step.

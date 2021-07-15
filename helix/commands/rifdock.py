@@ -6,6 +6,10 @@ Options:
     --sge  Running on the cluster?
     --task=NUM  For test runs, just run this task.
     --target=PDB, -t  Only run for a specific target
+    --make-dirs  Just make the directories and stop. (Should not need
+    this option if you ran prep_rifgen.)
+    --test-run  Mark as a test run. For this script this does nothing
+    for now.
 
 Workspace should be the root workspace.
 """
@@ -40,4 +44,5 @@ def main():
             cmd += '--task', args['--task']
 
         print('Submitting jobs for {}'.format(target))
-        submit.submit(rif_workspace, cmd, distributor='sge')
+        submit.submit(rif_workspace, cmd, distributor='sge',
+                make_dirs=args['--make-dirs'], test_run=args['--test-run'])
