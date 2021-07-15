@@ -51,8 +51,8 @@ class Patches(object):
         surface_selector = residue_selector.LayerSelector()
         # Set surface and boundary layers to True
         surface_selector.set_layers(False, True, True)
-        print(surface_selector.apply(self.pose))
-        print(res_selector_to_size_list(surface_selector.apply(self.pose)))
+        # print(surface_selector.apply(self.pose))
+        # print(res_selector_to_size_list(surface_selector.apply(self.pose)))
         reslist =\
                 res_selector_to_size_list(surface_selector.apply(self.pose))
         #    reslist = []
