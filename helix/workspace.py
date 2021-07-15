@@ -584,7 +584,7 @@ class RIFWorkspace(Workspace):
         for docking_dir in self.docking_directories:
             scripting.clear_directory(docking_dir)
         scripting.clear_directory(self.log_dir)
-        for f in self.all_job_info:
+        for f in self.all_job_info_paths:
             os.remove(f)
 
     @property
