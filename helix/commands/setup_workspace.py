@@ -123,12 +123,12 @@ stripped of waters and extraneous ligands."""
             if f.endswith('.pdb.gz'):
                 destination = os.path.join(workspace.root_dir, 'targets',
                         os.path.basename(f))
-                shutil.copyfile(pdb_path, destination)
+                shutil.copyfile(f, destination)
             elif pdb_path.endswith('.pdb'):
                 destination = os.path.join(workspace.root_dir, 'targets',
                         os.path.basename(f) + '.gz')
                 subprocess.call('gzip -c {0} > {1}'.format(
-                        pdb_path, destination), shell=True)
+                        f, destination), shell=True)
             else:
                 raise ValueError("'{0}' is not a PDB file.".format(pdb_path))
 
