@@ -41,8 +41,8 @@ Options:
 from klab import scripting, cluster
 import docopt
 import sys, os, importlib, shutil
-from roseasy import pipeline
-from roseasy import big_jobs
+# from roseasy import pipeline
+from helix import big_jobs
 
 import subprocess
 from io import StringIO
