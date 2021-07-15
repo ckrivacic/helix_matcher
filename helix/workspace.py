@@ -85,7 +85,7 @@ class Workspace(object):
     
     def target_rifdock_path(self, target):
         dirname = self.basename(target)
-        return os.path.join(self.rifdock_dir, dirname)
+        return os.path.join(self.rifdock_outdir, dirname)
 
     @property
     def all_rifdock_targets(self):
