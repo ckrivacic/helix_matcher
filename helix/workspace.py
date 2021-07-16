@@ -528,7 +528,7 @@ class RIFWorkspace(Workspace):
 
     @property
     def scaffolds(self):
-        return [os.path.abspath(x) for x in sorted(glob.glob(workspace.helix_dir +
+        return [os.path.abspath(x) for x in sorted(glob.glob(self.helix_dir +
             '/*.pdb'))]
 
     @property
