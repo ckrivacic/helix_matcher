@@ -133,7 +133,7 @@ def main():
                 "somehow.")
     # folder = workspace.focus_dir
 
-    total_jobs = len(glob.glob(folder + '/patch_*'))
+    total_jobs = len(glob.glob(workspace.focus_dir + '/patch_*'))
     print('TOTAL JOBS: {}'.format(total_jobs))
     num_tasks = total_jobs
 
