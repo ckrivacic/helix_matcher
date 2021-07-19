@@ -36,7 +36,7 @@ from itertools import product
 import os, psutil, sys
 import pickle
 import subprocess
-from scan_helices import final_vector
+from helix.matching.scan_helices import final_vector
 from pyrosetta import init, pose_from_file
 import networkx as nx
 # import graph_tool.all as gt
@@ -533,7 +533,8 @@ class HelixLookup(object):
 
 
 def test():
-    import scan_helices
+    # import scan_helices
+    from helix.matchign import scan_helices
 
     test_path = 'test_files/6r9d.cif'
     init()
@@ -557,7 +558,7 @@ def test():
     lookup.match()
 
 def test_rifdock():
-    import scan_helices
+    from helix.matching import scan_helices
 
     test_path = 'test_files/test_rifgen/cluster_representatives/matchme.pdb'
     init()
@@ -635,7 +636,8 @@ def main():
                 verbose=args['--verbose'])
         lookup.bin_db(outdir=dbpath, bin_length=args['--length'])
     if args['match']:
-        import scan_helices
+        # import scan_helices
+        from helix.matching import scan_helices
         # Import pdb
         pdbfolder = args['<pdb_folder>']
         init()

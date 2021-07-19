@@ -57,6 +57,10 @@ class Workspace(object):
         return re.search('[^a-zA-Z0-9_/.]', self.abs_root_dir)
 
     @property
+    def settings(self):
+        return self.find_path('settings.yml')
+
+    @property
     def database_path(self):
         return self.find_path('database')
 

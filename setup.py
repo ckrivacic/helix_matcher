@@ -71,6 +71,7 @@ setuptools.setup(
             define_command('prep_rifgen'),
             define_command('build_database'),
             define_command('rifdock'),
+            define_command('match_helices'),
             # define_command('pick_designs_to_validate'),
             # define_command('add_residues'),
             # define_command('make_table'),

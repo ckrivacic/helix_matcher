@@ -5,7 +5,7 @@ from pyrosetta import get_fa_scorefxn
 from pyrosetta import init
 from pyrosetta import pose_from_file
 import sys
-from roseasy.utils import numeric
+from helix.utils import numeric
 import numpy as np
 import pandas as pd
 from statistics import median

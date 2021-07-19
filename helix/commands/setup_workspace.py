@@ -145,7 +145,7 @@ downloaded from <url> and placed in the folder's install directory.
     @staticmethod
     def install(workspace):
         default_dbpath = os.path.join(
-                os.path.realpath(__file__),
+                os.path.dirname(os.path.realpath(__file__)),
                 '..', 'database'
                 )
         os.symlink(default_dbpath, os.path.join(
