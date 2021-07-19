@@ -24,7 +24,7 @@ from helix import big_jobs
 
 
 
-def write_flags(workspace, scaffold):
+def write_flags(folder, scaffold):
 #-rif_dock:target_res            residue_numbers.txt
     
     tarpath, cache = get_flag_params(folder)
