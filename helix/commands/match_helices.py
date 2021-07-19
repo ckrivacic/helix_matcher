@@ -122,20 +122,19 @@ def main():
             match = True
             break
 
+    if not match:
+        if args['--length']:
+            db_subdir = 'length'
         else:
-            if args['--length']:
-                db_subdir = 'length'
-            else:
-                db_subdir = 'standard'
-            database =\
-                    os.path.join(workspace.settings['match']['--database'],
-                            db_subdir)
+            db_subdir = 'standard'
+        database =\
+                os.path.join(workspace.settings['match']['--database'],
+                        db_subdir)
 
     if not os.path.exists(database):
         sys.exit("Could not find database at {}. Make sure your database "\
                 "path is correct. Database determined via "\
                 "{}.".format(database, db_origin))
-
 
 
     cmd = workspace.python_path, script_path
