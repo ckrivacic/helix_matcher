@@ -136,6 +136,7 @@ stripped of waters and extraneous ligands."""
                 raise ValueError("'{0}' is not a PDB file.".format(pdb_path))
 
 class Database:
+    prompt = None
     description="""\
 Symlinks to the default database. Users can run the bin command to
 create a new database directory in project_params. Database should be 
