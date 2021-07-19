@@ -39,6 +39,13 @@ import docopt
 import os
 import yaml
 
+
+def is_default_settings(workspace):
+    '''Checks if settings are default by looking at which settings.yml
+    file got loaded. Not used anymore, can probably delete.'''
+    return os.path.abspath(os.path.dirname(workspace.settings)) == \
+            os.path.abspath(workspace.standard_params_dir)
+
 def main():
     args = docopt.docopt(__doc__)
     workspace = ws.workspace_from_dir(args['<workspace>'])
@@ -66,6 +73,22 @@ def main():
     for setting in check_overwrite:
         if args[setting]:
             settings['match'][setting] = args[setting]
+
+    if not args['--database']:
+        # This is the default database path. If it has not been
+        # modified, make sure to append the subdirectory which
+        # corresponds to the actual database. This code may need to be
+        # modified in the future depending on what other database types
+        # end up in the default package.
+        if workspace.settings['match']['--database'] == 'database/':
+            if args['--length']:
+                db_subdir = 'length'
+            else:
+                db_subdir = 'standard'
+            database =\
+                    os.path.join(workspace.settings['match']['--database'],
+                            db_subdir)
+
 
     cmd = workspace.python_path, script_path
     for setting in settings['match']:
