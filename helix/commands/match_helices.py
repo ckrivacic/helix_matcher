@@ -16,6 +16,18 @@ file over and edit it from there.)
 Additionally, you can supply options to this submission script, and
 those will overwrite any settings from the yaml file(s).
 
+Database defaults are prioritized as follows:
+    1. A database passed to this command via --database option
+    2. A database OTHER THAN the default database path passed via
+    settings.yml
+    3. A database placed in project_params/
+    4. The default database
+
+If the database does not have a bins_.*A_.*D regex pattern in its
+subfolders, this script will try to look one level down for
+'standard' and 'length' subfolders. If not found, then you should fix
+your database path.
+
 Usage: 
     helix match_helices <workspace> [options]
 
@@ -40,11 +52,19 @@ import os
 import yaml
 
 
-def is_default_settings(workspace):
-    '''Checks if settings are default by looking at which settings.yml
-    file got loaded. Not used anymore, can probably delete.'''
-    return os.path.abspath(os.path.dirname(workspace.settings)) == \
+# def is_default_settings(workspace):
+    # '''Checks if settings are default by looking at which settings.yml
+    # file got loaded. Not used anymore, can probably delete.'''
+    # return os.path.abspath(os.path.dirname(workspace.settings)) == \
+            # os.path.abspath(workspace.standard_params_dir)
+
+
+def is_default_database(workspace):
+    '''Checks if database is default by looking at which folder it's
+    in'''
+    return os.path.abspath(os.path.dirname(workspace.database_path)) == \
             os.path.abspath(workspace.standard_params_dir)
+
 
 def main():
     args = docopt.docopt(__doc__)
@@ -74,13 +94,35 @@ def main():
         if args[setting]:
             settings['match'][setting] = args[setting]
 
+    db_origin = 'default'
     if not args['--database']:
         # This is the default database path. If it has not been
         # modified, make sure to append the subdirectory which
         # corresponds to the actual database. This code may need to be
         # modified in the future depending on what other database types
         # end up in the default package.
-        if workspace.settings['match']['--database'] == 'database/':
+        if workspace.settings['match']['--database'] != 'database/':
+            # Database is not default, therefore do not default to
+            # project-params.
+            database = workspace.settings['match']['--database']
+            db_origin = 'custom settings'
+        elif workspace.settings['match']['--database'] == 'database/':
+            if not is_default_database(workspace):
+                database = workspace.database_path
+                db_origin = 'project_params/database'
+
+    else:
+        database = args['--database']
+        db_origin = 'command argument'
+
+    dbexp = 'bins_.*A_.*D'
+    match = False
+    for subfolder in os.listdir(database):
+        if re.match(dbexp, subfolder):
+            match = True
+            break
+
+        else:
             if args['--length']:
                 db_subdir = 'length'
             else:
@@ -89,8 +131,17 @@ def main():
                     os.path.join(workspace.settings['match']['--database'],
                             db_subdir)
 
+    if not os.path.exists(database):
+        sys.exit("Could not find database at {}. Make sure your database "\
+                "path is correct. Database determined via "\
+                "{}.".format(database, db_origin))
+
+
 
     cmd = workspace.python_path, script_path
     for setting in settings['match']:
-        cmd += setting, settings['match'][setting]
+        if setting != '--database':
+            cmd += setting, settings['match'][setting]
+        else:
+            cmd += setting, database
     print(cmd)
