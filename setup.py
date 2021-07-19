@@ -1,4 +1,5 @@
 import setuptools
+import os
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -79,3 +80,24 @@ setuptools.setup(
             ],
         }
 )
+
+download = input("Install default database (22 MB)? (y/N) ")
+if download == 'y':
+    import wget, tarfile
+    url = 'https://ucsf.box.com/v/helixdefaultdb'
+    output_directory = os.path.join(
+            os.path.dirname(
+                os.path.realpath(__file__)
+                ),
+            'helix'
+            )
+    os.chdir(output_directory)
+    filename = wget.download(url, out=output_directory)
+    tar = tarfile.open(filename, 'r:gz')
+    tar.extractall()
+    tar.close()
+elif download == 'N':
+    pass
+else:
+    print("Input not recognized; if you wish to download the default "\
+    "database, run setup again and enter 'y' when prompted.")
