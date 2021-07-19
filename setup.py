@@ -84,7 +84,7 @@ setuptools.setup(
 download = input("Install default database (22 MB)? (y/N) ")
 if download == 'y':
     import wget, tarfile
-    url = 'https://ucsf.box.com/v/helixdefaultdb'
+    url = 'https://guybrush.ucsf.edu/HELIX_default_database_2021-07-19.tar.gz'
     output_directory = os.path.join(
             os.path.dirname(
                 os.path.realpath(__file__)
@@ -92,10 +92,14 @@ if download == 'y':
             'helix'
             )
     os.chdir(output_directory)
-    filename = wget.download(url, out=output_directory)
+    fname = url.split('/')[-1]
+    output_filename = os.path.join(output_directory,
+            fname)
+    filename = wget.download(url, out=output_filename)
     tar = tarfile.open(filename, 'r:gz')
     tar.extractall()
     tar.close()
+    os.remove(filename)
 elif download == 'N':
     pass
 else:
