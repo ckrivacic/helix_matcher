@@ -61,4 +61,4 @@ def main():
         submit.submit(rif_workspace, cmd, distributor='sge',
                 make_dirs=args['--make-dirs'],
                 test_run=args['--test-run'], clear=args['--clear'],
-                ntasks=ntasks)
+                )
