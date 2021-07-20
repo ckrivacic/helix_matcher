@@ -169,7 +169,7 @@ def main():
 
     # target = os.path.join(folder, 'target.pdb')
     new_target = os.path.join(outdir_temp, 'target.pdb')
-    copyfile(target, new_target)
+    copyfile(workspace.target_path, new_target)
 
     for fold in folders[start_job:stop_job]:
         print('Running RIFGEN for {}'.format(fold))
