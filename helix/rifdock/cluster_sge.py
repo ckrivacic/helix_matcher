@@ -1,8 +1,14 @@
+'''
+Aligns all RIFDock outputs to the input PDB, then clusters them based on
+structure similarity. Representatives of each cluster are picked based
+on their RIFDock score.
+'''
 import gzip
 import glob
 import sys, os
 import numpy as np
 from shutil import copyfile
+from helix import workspace as ws
 
 
 class Design(object):
@@ -198,10 +204,15 @@ class StructureCluster(object):
 
 
 if __name__=='__main__':
-    folders = sorted(glob.glob(sys.argv[1] + '/*_output'))
-    task = int(os.environ['SGE_TASK_ID'])
-    workspace = folders[task - 1]
-    # workspace = 'boundary'
+    # folders = sorted(glob.glob(sys.argv[1] + '/*_output'))
+    workspace = ws.workspace_from_dir(sys.argv[1])
+    if 'SGE_TASK_ID' in os.environ:
+        task = int(os.environ['SGE_TASK_ID']) - 1
+    else:
+        task = int(sys.argv[2]) - 1
+    targets = workspace.targets
+    # folders = workspace.patches
+    workspace = ws.RIFWorkspace(workspace.root_dir, targets[task])
 
     for helixlength in [3,4,6,8]:
         clust = StructureCluster(workspace, length=helixlength, threshold=10)

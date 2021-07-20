@@ -48,6 +48,7 @@ Options:
 from helix import submit
 import helix.workspace as ws
 import docopt
+import re
 import os
 import yaml
 
@@ -101,15 +102,17 @@ def main():
         # corresponds to the actual database. This code may need to be
         # modified in the future depending on what other database types
         # end up in the default package.
-        if workspace.settings['match']['--database'] != 'database/':
+        if settings['match']['--database'] != 'database/':
             # Database is not default, therefore do not default to
             # project-params.
-            database = workspace.settings['match']['--database']
+            database = settings['match']['--database']
             db_origin = 'custom settings'
-        elif workspace.settings['match']['--database'] == 'database/':
+        elif settings['match']['--database'] == 'database/':
             if not is_default_database(workspace):
                 database = workspace.database_path
                 db_origin = 'project_params/database'
+            else:
+                database = settings['match']['--database']
 
     else:
         database = args['--database']
@@ -127,9 +130,7 @@ def main():
             db_subdir = 'length'
         else:
             db_subdir = 'standard'
-        database =\
-                os.path.join(workspace.settings['match']['--database'],
-                        db_subdir)
+        database = os.path.join(database, db_subdir)
 
     if not os.path.exists(database):
         sys.exit("Could not find database at {}. Make sure your database "\
@@ -137,10 +138,12 @@ def main():
                 "{}.".format(database, db_origin))
 
 
-    cmd = workspace.python_path, script_path
-    for setting in settings['match']:
-        if setting != '--database':
-            cmd += setting, settings['match'][setting]
-        else:
-            cmd += setting, database
-    print(cmd)
+    for target in workspace.targets:
+        cmd = workspace.python_path, script_path
+        cmd += workspace.target_clusters(target),
+        for setting in settings['match']:
+            if setting != '--database':
+                cmd += setting, settings['match'][setting]
+            else:
+                cmd += setting, database
+        print(cmd)

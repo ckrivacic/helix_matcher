@@ -1,6 +1,6 @@
 """
 Usage: 
-    helix rifdock <workspace> [options]
+    helix 02_rifdock <workspace> [options]
 
 Options:
     --sge  Running on the cluster?
@@ -18,6 +18,7 @@ Workspace should be the root workspace.
 from helix import submit
 import helix.workspace as ws
 from helix import submit
+from helix.utils import utils
 import os
 import docopt
 
@@ -38,14 +39,22 @@ def main():
     for target in targets:
 
         rif_workspace = ws.workspace_from_dir(target)
+        inputs = rif_workspace.unclaimed_inputs
+        ntasks = len(inputs)
 
         cmd = workspace.python_path, script_path
         cmd += target,
 
         if args['--task']:
             cmd += '--task', args['--task']
+            ntasks = 1
 
+        if args['--local']:
+            for n in range(1, ntasks + 1):
+                cmd += '--task', n,
+                utils.run_command(cmd)
         print('Submitting jobs for {}'.format(target))
         submit.submit(rif_workspace, cmd, distributor='sge',
                 make_dirs=args['--make-dirs'],
-                test_run=args['--test-run'], clear=args['--clear'])
+                test_run=args['--test-run'], clear=args['--clear'],
+                ntasks=ntasks)

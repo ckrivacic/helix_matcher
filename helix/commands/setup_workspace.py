@@ -250,6 +250,7 @@ Design '{0}' already exists.  Use '-o' to overwrite.""", workspace.root_dir)
     if arguments['--remote']:
         installers = (
                 # RosettaDir,
+                Database,
                 RsyncUrl,
                 PythonPath,
         )

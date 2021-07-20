@@ -91,6 +91,11 @@ class Workspace(object):
         dirname = self.basename(target)
         return os.path.join(self.rifdock_outdir, dirname)
 
+    def target_clusters(self, target):
+        dirname = self.basename(target)
+        return os.path.join(self.rifdock_path(target),
+                'cluster_representatives')
+
     def target_path_from_name(self, name):
         return os.path.join(self.target_dir, '{}.pdb.gz'.format(name))
 
@@ -765,6 +770,7 @@ def fetch_data(directory, remote_url=None, recursive=True, include_logs=False, d
             '--exclude', 'core.*',
             '--exclude', 'sequence_profile*',
             '--exclude', 'python',
+            '--exclude', 'standard_params/database',
     ]
     if not include_logs:
         rsync_command += [

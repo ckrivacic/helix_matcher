@@ -1,6 +1,6 @@
 '''
 Usage:
-    helix prep_rifgen <workspace> [options]
+    helix 01_prep_rifdock <workspace> [options]
 
 Options:
     --chain=LETTERS, -c   
