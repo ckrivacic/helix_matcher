@@ -3,6 +3,7 @@ Usage:
     helix 02_rifdock <workspace> [options]
 
 Options:
+    --local, -l  Run locally, each patch/target in sequence
     --sge  Running on the cluster?
     --task=NUM  For test runs, just run this task.
     --target=PDB, -t  Only run for a specific target
