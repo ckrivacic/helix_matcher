@@ -42,8 +42,10 @@ def main():
         cmd = workspace.python_path, script_path
         cmd += target,
 
+        ntasks = None
         if args['--task']:
             cmd += '--task', args['--task']
+            ntasks = 1
 
         print('Submitting jobs for {}'.format(target))
         submit.submit(rif_workspace, cmd, distributor='sge',

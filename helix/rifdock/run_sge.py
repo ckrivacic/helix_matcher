@@ -147,12 +147,14 @@ def main():
 
     print('TASK: {}'.format(task))
 
-    start_job = task * math.ceil(total_jobs / num_tasks)
-    stop_job = start_job + math.ceil(total_jobs / num_tasks)
+    # start_job = task * math.ceil(total_jobs / num_tasks)
+    # stop_job = start_job + math.ceil(total_jobs / num_tasks)
+    start_job = task
+    stop_job = task + 1
     print('START JOB: {}'.format(start_job))
     print('STOP JOB: {}'.format(stop_job))
 
-    folders = sorted(glob.glob(workspace.focus_dir + '/patch_*'))
+    folders = sorted(glob.glob(workspace.patches))
 
     # rifgen = os.path.join(folder, 'rifgen')
     # rifdock = os.path.join(folder, 'rifdock')
@@ -166,7 +168,6 @@ def main():
         os.makedirs(outdir_temp, exist_ok=True)
 
     # target = os.path.join(folder, 'target.pdb')
-    target = workspace.target_path
     new_target = os.path.join(outdir_temp, 'target.pdb')
     copyfile(target, new_target)
 
@@ -184,21 +185,8 @@ def main():
         myenv['LD_LIBRARY_PATH'] = '/wynton/home/kortemme/krivacic/software/anaconda3/lib/'
 
         run_command([workspace.rifgen, '@', flags], environment=myenv)
-        # if exit_code != 0:
-            # print(stdout)
-            # print(stderr)
 
-        # write_flags(fold)
         print('Prepping RIFDOCK for {}'.format(fold))
-        # if not args['<scaffold>'].endswith('.pdb'):
-            # f = open(args['<scaffold>'], 'r')
-            # scaffold = ''
-            # for line in f:
-                # scaffold += line
-            # f.close()
-            # scaffold = scaffold.replace('\n', ' ')
-        # else:
-            # scaffold = args['<scaffold>']
 
         scaffold = ' '.join(workspace.scaffolds)
         flags_rifdock = write_flags(tempdir, scaffold)
@@ -207,11 +195,18 @@ def main():
         flags = os.path.join(tempdir, 'dock_flags')
         print('Running RIFDOCK for {}'.format(fold))
         run_command([workspace.rifdock, '@', flags], environment=myenv)
-        # if exit_code != 0:
-            # print(stdout)
-            # print(stderr)
 
-        # else:
+        # Align all outputs to target
+        pdbs = glob.glob(tempdir + '/docked_full/*.pdb.gz')
+        for pdb in pdbs:
+            print('Aligning {} to {}'.format(pdb, workspace.target_path))
+            pymol.cmd.reinitialize()
+            target = pymol.cmd.load(workspace.target_path, 'target')
+            mobile = pymol.cmd.load(pdb, 'mobile')
+            pymol.cmd.align('mobile and not chain A', 'target')
+            pymol.cmd.save(pdb, 'mobile')
+
+        # Copy back to permanent folder
         outputs = os.path.join(tempdir, 'docked_full')
         final_out = os.path.join(fold, 'docked_full')
         copy_tree(outputs, final_out)

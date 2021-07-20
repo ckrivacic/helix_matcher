@@ -4,7 +4,6 @@ Usage:
 
 Options:
     --local, -l  Run locally, each patch/target in sequence
-    --sge  Running on the cluster?
     --task=NUM  For test runs, just run this task.
     --target=PDB, -t  Only run for a specific target
     --make-dirs  Just make the directories and stop. (Should not need
@@ -57,6 +56,8 @@ def main():
                 if not args['--task']:
                     local_cmd += '--task', str(n),
                 utils.run_command(local_cmd)
+        else:
+            cmd += '--sge',
         print('Submitting jobs for {}'.format(target))
         submit.submit(rif_workspace, cmd, distributor='sge',
                 make_dirs=args['--make-dirs'],
