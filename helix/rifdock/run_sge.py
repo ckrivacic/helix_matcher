@@ -154,7 +154,7 @@ def main():
     print('START JOB: {}'.format(start_job))
     print('STOP JOB: {}'.format(stop_job))
 
-    folders = sorted(glob.glob(workspace.patches))
+    folders = workspace.patches
 
     # rifgen = os.path.join(folder, 'rifgen')
     # rifdock = os.path.join(folder, 'rifdock')
