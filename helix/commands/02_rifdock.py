@@ -52,7 +52,7 @@ def main():
 
         if args['--local']:
             for n in range(1, ntasks + 1):
-                cmd += '--task', n,
+                cmd += '--task', str(n),
                 utils.run_command(cmd)
         print('Submitting jobs for {}'.format(target))
         submit.submit(rif_workspace, cmd, distributor='sge',
