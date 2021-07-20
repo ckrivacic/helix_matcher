@@ -187,7 +187,7 @@ def submit(workspace, cmd, distributor='local', clear=False,
     else:
         big_jobs.submit(
                 workspace, cmd,
-                nstruct=nstruct,
+                nstruct=ntasks,
                 max_runtime=max_runtime,
                 max_memory=max_memory,
                 test_run=test_run,
