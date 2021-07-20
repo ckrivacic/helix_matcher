@@ -198,6 +198,8 @@ def main():
 
         # Align all outputs to target
         pdbs = glob.glob(tempdir + '/docked_full/*.pdb.gz')
+
+        import pymol
         for pdb in pdbs:
             print('Aligning {} to {}'.format(pdb, workspace.target_path))
             pymol.cmd.reinitialize()
