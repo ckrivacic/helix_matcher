@@ -190,7 +190,7 @@ def initiate():
                     'inputs': [x for x in workspace.unclaimed_inputs],
                     'nstruct': 1,
                     'test_run': False,
-                    'task_id': int(sys.argv[2])
+                    'task_id': None 
                     }
 
     return workspace, job_info

@@ -4,7 +4,7 @@ Uses node scratch space to store RIF files created during RIFGen, then
 runs RIFDock before copying them back over to the user's patch folder.
 
 Usage:
-    cluster_run.py <rif_workspace> [options]
+    run_sge.py <rif_workspace> [options]
 
 Options:
     --sge  Running on the cluster?

@@ -22,6 +22,7 @@ from helix import submit
 from helix.utils import utils
 import os
 import docopt
+from copy import deepcopy
 
 def main():
     args = docopt.docopt(__doc__)
@@ -51,9 +52,11 @@ def main():
             ntasks = 1
 
         if args['--local']:
+            local_cmd = deepcopy(cmd)
             for n in range(1, ntasks + 1):
-                cmd += '--task', str(n),
-                utils.run_command(cmd)
+                if not args['--task']:
+                    local_cmd += '--task', str(n),
+                utils.run_command(local_cmd)
         print('Submitting jobs for {}'.format(target))
         submit.submit(rif_workspace, cmd, distributor='sge',
                 make_dirs=args['--make-dirs'],
