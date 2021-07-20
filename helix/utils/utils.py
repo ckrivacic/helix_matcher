@@ -1,7 +1,7 @@
 from pyrosetta import *
 from pyrosetta.rosetta.core.select import residue_selector
 from helix.utils.numeric import intlist_to_vector1_size
-import os, wget
+import os, wget, sys
 import networkx as nx
 
 def three_to_one(restype):
@@ -173,6 +173,7 @@ def max_subgraph(graph):
 
 
 def run_command(cmd, environment=None):
+    from subprocess import Popen
     print("Working directory: {}".format(os.getcwd()))
     print("Command: {}".format(' '.join(cmd)))
     sys.stdout.flush()
