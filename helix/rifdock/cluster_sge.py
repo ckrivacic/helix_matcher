@@ -280,10 +280,12 @@ if __name__=='__main__':
         dokfile = sorted(glob.glob(rep_dir + '/*.dok*'))[-1]
         with open(dokfile, 'r') as f:
             for line in f:
-                filename = os.path.basename(line.split(' ')[-1]).strip('\n')
+                linesplit = line.split(' ')
+                filename = os.path.basename(linesplit[-1]).strip('\n')
                 if filename == os.path.basename(
                                 clusters[clst].rep.path):
+                    linesplit.insert(0, outfile)
                     # line.append(os.path.basename(out))
-                    scores.write(line)
+                    scores.write(' '.join(linesplit))
 
     scores.close()
