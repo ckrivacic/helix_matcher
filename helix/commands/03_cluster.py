@@ -7,6 +7,7 @@ Usage:
     helix 03_cluster <workspace> [options]
 
 Options:
+    --overwrite, -o  Clear cluster outputs prior to starting the job
     --local, -l  Run locally, each target/docked scaffold in sequence.
     Cluster runs should not be necessary.
     --task=NUM  For test runs, just run this task.
@@ -76,6 +77,8 @@ def main():
                     # test_run=args['--test-run'], clear=args['--clear'],
                     # ntasks=ntasks,
                     # )
+            if args['--overwrite']:
+                rif_workspace.clear_cluster_outputs()
             print('Submitting the following command to SGE:')
             print(' '.join(cmd))
             # Call big_jobs.submit directly, so that it doesn't care
@@ -87,4 +90,5 @@ def main():
                     max_memory=args['--max-memory'],
                     test_run=False,
                     job_name=script_name,
+                    create_job_info=False,
                     )

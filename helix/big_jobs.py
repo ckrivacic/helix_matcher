@@ -104,7 +104,7 @@ $LAUNCHER_DIR/paramrun    # will run the executions in the LAUNCHER_JOB_FILE fil
         json.dump(params, file)
 
 
-def submit(workspace, cmd, **params):
+def submit(workspace, cmd, **params, create_job_info=True):
     """Submit a job with the given parameters."""
     from klab import cluster, process
 
@@ -153,8 +153,9 @@ def submit(workspace, cmd, **params):
 
     job_id = status_match.group(1)
 
-    with open(workspace.job_info_path(job_id), 'w') as file:
-        json.dump(params, file)
+    if create_job_info:
+        with open(workspace.job_info_path(job_id), 'w') as file:
+            json.dump(params, file)
 
     # Release the hold on the job.
 

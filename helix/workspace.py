@@ -640,6 +640,18 @@ class RIFWorkspace(Workspace):
         for f in self.all_job_info_paths:
             os.remove(f)
 
+    def clear_cluster_outputs(self):
+        import shutil
+        cluster_logs = glob.glob(
+                os.path.join(
+                    self.log_dir,
+                    'cluster*'))
+        for log in cluster_logs:
+            os.remove(log)
+        clustered = glob.glob(os.path.join(self.target_clusters, '*'))
+        for clst in clustered:
+            shutil.rmtree(clst)
+
     @property
     def unclaimed_inputs(self):
         inputs = set(self.patches)
