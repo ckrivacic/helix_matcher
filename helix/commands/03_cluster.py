@@ -84,8 +84,8 @@ def main():
             big_jobs.submit(
                     workspace, cmd,
                     nstruct=ntasks,
-                    max_runtime=args['--max_runtime'],
-                    max_memory=args['--max_memory'],
+                    max_runtime=args['--max-runtime'],
+                    max_memory=args['--max-memory'],
                     test_run=False,
                     job_name=script_name,
                     )
