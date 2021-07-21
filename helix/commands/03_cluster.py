@@ -70,7 +70,6 @@ def main():
                 utils.run_command(local_cmd)
         else:
             script_name='cluster'
-            cmd += '--sge',
             print('Submitting jobs for {}'.format(target))
             # submit.submit(rif_workspace, cmd, distributor='sge',
                     # make_dirs=args['--make-dirs'],
