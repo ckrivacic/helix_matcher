@@ -17,6 +17,9 @@ Options:
     for now.
     --clear, -o  Overwrite a previous run. Gets rid of docked outputs,
     log files, and job info files.
+    --max-memory=4G  How much memory to allocate to the job?  [default: 4G]
+    --max-runtime=4:00:00  How much time to allocate to the job?
+    [default: 4:00:00]
 
 Workspace should be the root workspace.
 """
@@ -24,7 +27,7 @@ from helix import big_jobs
 import helix.workspace as ws
 from helix import submit
 from helix.utils import utils
-import os
+import os, sys
 import docopt
 from copy import deepcopy
 
@@ -55,6 +58,9 @@ def main():
         if args['--task']:
             cmd += '--task', args['--task']
             ntasks = 1
+            if args['--local']:
+                utils.run_command(cmd)
+                sys.exit()
 
         if args['--local']:
             for n in range(1, ntasks + 1):
@@ -63,6 +69,7 @@ def main():
                     local_cmd += '--task', str(n),
                 utils.run_command(local_cmd)
         else:
+            script_name='cluster'
             cmd += '--sge',
             print('Submitting jobs for {}'.format(target))
             # submit.submit(rif_workspace, cmd, distributor='sge',
@@ -76,10 +83,9 @@ def main():
             # about unclaimed inputs
             big_jobs.submit(
                     workspace, cmd,
-                    nstruct=nstruct,
-                    max_runtime=max_runtime,
-                    max_memory=max_memory,
-                    test_run=test_run,
+                    nstruct=ntasks,
+                    max_runtime=args['--max_runtime'],
+                    max_memory=args['--max_memory'],
+                    test_run=False,
                     job_name=script_name,
-                    inputs=inputs
                     )
