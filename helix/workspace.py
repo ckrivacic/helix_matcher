@@ -12,6 +12,7 @@ the design, each of which is related to a cluster job.
 import os, re, glob, json, pickle, sys
 from klab import scripting
 from pprint import pprint
+import yaml
 # from roseasy.standard_params import *
 
 class Workspace(object):
@@ -57,8 +58,40 @@ class Workspace(object):
         return re.search('[^a-zA-Z0-9_/.]', self.abs_root_dir)
 
     @property
+    def settings_filename(self):
+        return 'settings.yml'
+
+    @property
+    def settings_path(self):
+        return self.find_path(self.settings_filename)
+
+    @property
     def settings(self):
-        return self.find_path('settings.yml')
+        settings_paths =\
+                self.find_all_paths(self.settings_filename)
+        these_settings = None
+        settings = {}
+        for f in reversed(settings_paths):
+            # Open settings files in order from lowest to highest
+            # priority
+            with open(f, 'r') as stream:
+                try:
+                    these_settings = yaml.safe_load(stream)
+                except yaml.YAMLError as exec:
+                    print(exec)
+            # Update settings in reverse priority order
+            if these_settings:
+                for category in these_settings:
+                    # Some settings may be nested dictionaries, others
+                    # not. For nested dictionaries, update items
+                    # individually.
+                    if category not in settings:
+                        settings[category] = these_settings[category]
+                    if isinstance(these_settings[category], dict):
+                        for key in these_settings[category]:
+                            settings[category][key] =\
+                                    these_settings[category][key]
+        return settings
 
     @property
     def database_path(self):
@@ -335,8 +368,8 @@ Expected to find a file matching '{0}'.  Did you forget to compile rosetta?
 
         # Look for the file in standard folders
         hits = []
-        for dir in self.find_path_dirs:
-            paths = glob.glob(os.path.join(dir, basename))
+        for directory in self.find_path_dirs:
+            paths = glob.glob(os.path.join(directory, basename))
             hits.extend([os.path.abspath(path) for path in paths])
 
         return hits

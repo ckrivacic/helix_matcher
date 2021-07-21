@@ -83,12 +83,13 @@ def main():
     else:
         db = workspace.database_path
 
-    with open(workspace.settings, 'r') as stream:
-        try:
-            settings = yaml.safe_load(stream)
-        except yaml.YAMLError as exc:
-            print(exc)
+    # with open(workspace.settings, 'r') as stream:
+        # try:
+            # settings = yaml.safe_load(stream)
+        # except yaml.YAMLError as exc:
+            # print(exc)
 
+    settings = workspace.settings
     check_overwrite = ['--database', '--length', '--angstroms',
             '--degrees']
     for setting in check_overwrite:
