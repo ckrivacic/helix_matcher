@@ -20,7 +20,7 @@ Options:
 
 Workspace should be the root workspace.
 """
-from helix import submit
+from helix import big_jobs
 import helix.workspace as ws
 from helix import submit
 from helix.utils import utils
