@@ -65,8 +65,21 @@ def main():
         else:
             cmd += '--sge',
             print('Submitting jobs for {}'.format(target))
-            submit.submit(rif_workspace, cmd, distributor='sge',
-                    make_dirs=args['--make-dirs'],
-                    test_run=args['--test-run'], clear=args['--clear'],
-                    ntasks=ntasks,
+            # submit.submit(rif_workspace, cmd, distributor='sge',
+                    # make_dirs=args['--make-dirs'],
+                    # test_run=args['--test-run'], clear=args['--clear'],
+                    # ntasks=ntasks,
+                    # )
+            print('Submitting the following command to SGE:')
+            print(' '.join(cmd))
+            # Call big_jobs.submit directly, so that it doesn't care
+            # about unclaimed inputs
+            big_jobs.submit(
+                    workspace, cmd,
+                    nstruct=nstruct,
+                    max_runtime=max_runtime,
+                    max_memory=max_memory,
+                    test_run=test_run,
+                    job_name=script_name,
+                    inputs=inputs
                     )
