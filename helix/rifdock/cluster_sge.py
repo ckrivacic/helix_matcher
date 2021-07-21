@@ -280,7 +280,7 @@ if __name__=='__main__':
                 filename = os.path.basename(line.split(' ')[-1]).strip('\n')
                 if filename == os.path.basename(
                                 clusters[clst].rep.path):
-                    line.append(os.path.basename(out))
+                    # line.append(os.path.basename(out))
                     scores.write(line)
 
     scores.close()
