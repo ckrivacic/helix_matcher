@@ -188,6 +188,8 @@ def submit(workspace, cmd, distributor='local', clear=False,
                 )
 
     else:
+        print('Submitting the following command to SGE:')
+        print(' '.join(cmd))
         big_jobs.submit(
                 workspace, cmd,
                 nstruct=nstruct,
