@@ -3,6 +3,9 @@ Cluster RIFDock outputs. The lowest scoring docking output is chosen as
 the representative of each cluster and copied into the
 cluster_representatives directory.
 
+For SGE runs, each target will be submitted as its own job. Each docked 
+scaffold will be a task within that job.
+
 Usage: 
     helix 03_cluster <workspace> [options]
 

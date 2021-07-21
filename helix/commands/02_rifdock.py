@@ -1,4 +1,15 @@
 """
+Run RIFGen and RIFDock. Must be run after 01_prep_rifgen. By default,
+this attempts to submit these jobs to an SGE job distributor. You can
+run it locally using the -l command. For SGE runs, each target is given
+its own job, and each patch on the target surface has its own task
+within that job. 
+
+Due to the size of the rotamer interaction fields,
+RIFGen outputs are stored in a temp directory, which on Wynton is
+automatically deleted after job completion, and only the final
+RIFDock outputs are transferred back into the workspace.
+
 Usage: 
     helix 02_rifdock <workspace> [options]
 
