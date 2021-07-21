@@ -84,7 +84,9 @@ setuptools.setup(
 )
 
 download = input("Install default database (22 MB)? (y/N) ")
-if download == 'y':
+yes = ['y', 'yes', 'oui', 'si', 'yeppers', 'yessir']
+no = ['no', 'n', 'non', 'noway', 'forgetaboutit']
+if download.lower() in yes:
     import wget, tarfile
     url = 'https://guybrush.ucsf.edu/HELIX_default_database_2021-07-19.tar.gz'
     output_directory = os.path.join(
@@ -102,7 +104,7 @@ if download == 'y':
     tar.extractall()
     tar.close()
     os.remove(filename)
-elif download == 'N':
+elif download.lower() in no:
     pass
 else:
     print("Input not recognized; if you wish to download the default "\
