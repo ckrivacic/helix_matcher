@@ -131,7 +131,7 @@ class Workspace(object):
 
     def target_clusters(self, target):
         dirname = self.basename(target)
-        return os.path.join(self.rifdock_path(target),
+        return os.path.join(self.target_rifdock_path(target),
                 'cluster_representatives')
 
     def target_path_from_name(self, name):
@@ -648,7 +648,11 @@ class RIFWorkspace(Workspace):
                     'cluster*'))
         for log in cluster_logs:
             os.remove(log)
-        clustered = glob.glob(os.path.join(self.target_clusters, '*'))
+        clustered = glob.glob(
+                os.path.join(
+                    self.target_clusters(self.initial_target_path), '*'
+                    )
+                )
         for clst in clustered:
             shutil.rmtree(clst)
 

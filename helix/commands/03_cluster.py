@@ -7,7 +7,6 @@ Usage:
     helix 03_cluster <workspace> [options]
 
 Options:
-    --overwrite, -o  Clear cluster outputs prior to starting the job
     --local, -l  Run locally, each target/docked scaffold in sequence.
     Cluster runs should not be necessary.
     --task=NUM  For test runs, just run this task.
@@ -77,7 +76,7 @@ def main():
                     # test_run=args['--test-run'], clear=args['--clear'],
                     # ntasks=ntasks,
                     # )
-            if args['--overwrite']:
+            if args['--clear']:
                 rif_workspace.clear_cluster_outputs()
             print('Submitting the following command to SGE:')
             print(' '.join(cmd))
