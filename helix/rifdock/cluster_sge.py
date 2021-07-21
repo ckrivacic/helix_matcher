@@ -2,8 +2,16 @@
 Aligns all RIFDock outputs to the input PDB, then clusters them based on
 structure similarity. Representatives of each cluster are picked based
 on their RIFDock score.
+
+Usage:
+    cluster_sge.py <rif_workspace> [options]
+
+Options:
+    --task=NUM, -t  Provide a task number. Each task is a different
+    scaffold.
 '''
 import gzip
+import docopt
 import glob
 import sys, os
 import numpy as np
@@ -88,14 +96,14 @@ class Cluster(object):
 
 
 class StructureCluster(object):
-    def __init__(self, folder, length=None, threshold=None):
+    def __init__(self, workspace, basename=None, threshold=None):
         self.threshold=threshold
         self.designs = []
         # Path sould be to parent rifdock directory.
-        if length:
-            search = folder + '/*/docked_full/{}turn_*.pdb.gz'.format(length)
+        if basename:
+            search = workspace.focus_dir + '/*/docked_full/{}*.pdb.gz'.format(basename)
         else:
-            search = folder + '/*/docked_full/*.pdb.gz'
+            search = workspace.focus_dir + '/*/docked_full/*.pdb.gz'
         for path in glob.glob(
                 search
                 ):
@@ -205,68 +213,74 @@ class StructureCluster(object):
 
 if __name__=='__main__':
     # folders = sorted(glob.glob(sys.argv[1] + '/*_output'))
-    workspace = ws.workspace_from_dir(sys.argv[1])
+    args = docopt.docopt(__doc__)
+    workspace = ws.workspace_from_dir(args['<rif_workspace>'])
+    assert(type(workspace).__name__ == 'RIFWorkspace')
     if 'SGE_TASK_ID' in os.environ:
         task = int(os.environ['SGE_TASK_ID']) - 1
     else:
-        task = int(sys.argv[2]) - 1
-    targets = workspace.targets
+        task = int(args['--task']) - 1
+    # targets = workspace.targets
+    helices = workspace.helices
+    helix = helices[task]
     # folders = workspace.patches
-    workspace = ws.RIFWorkspace(workspace.root_dir, targets[task])
+    # workspace = ws.RIFWorkspace(workspace.root_dir, targets[task])
 
-    for helixlength in [3,4,6,8]:
-        clust = StructureCluster(workspace, length=helixlength, threshold=10)
-        print('Clustering...')
-        clust.cluster_coords(verbose=True)
-        clusters = clust.clusters
+    # for helixlength in [3,4,6,8]:
+    # for helix in workspace.helices:
+    basename = workspace.basename(helix)
+    clust = StructureCluster(workspace, basename=basename, threshold=10)
+    print('Clustering...')
+    clust.cluster_coords(verbose=True)
+    clusters = clust.clusters
 
-        outpath = os.path.join(workspace, 'cluster_representatives',
-                '{}_turn'.format(helixlength))
-        # if not os.path.exists(outpath):
-            # print('PATH NO EXIST')
-            # os.mkdir(outpath)
-        os.makedirs(outpath, exist_ok=True)
-        scores = open(os.path.join(
-            outpath,
-            '{}turn.scores'.format(helixlength)), 'w')
+    outpath = os.path.join(workspace.focus_dir, 'cluster_representatives',
+            basename)
+    # if not os.path.exists(outpath):
+        # print('PATH NO EXIST')
+        # os.mkdir(outpath)
+    os.makedirs(outpath, exist_ok=True)
+    scores = open(os.path.join(
+        outpath,
+        '{}.scores'.format(basename)), 'w')
 
-        overwrite = True
-        # overwrite = False
+    overwrite = True
+    # overwrite = False
 
 
-        for clst in clusters:
-            outfile = '{}turn_clst{}_rep.pdb.gz'.format(helixlength,
-                    clst)
-            out = os.path.join(outpath, outfile)
-            if overwrite:
-                if os.path.exists(out):
-                    os.remove(out)
-            print('CLUSTER {}'.format(clst))
-            print('REP:')
-            print(clusters[clst].rep.path)
-            rep_dir = os.path.dirname(
-                    os.path.abspath(
-                        clusters[clst].rep.path
-                        )
+    for clst in clusters:
+        outfile = '{}_clst{}_rep.pdb.gz'.format(basename,
+                clst)
+        out = os.path.join(outpath, outfile)
+        if overwrite:
+            if os.path.exists(out):
+                os.remove(out)
+        print('CLUSTER {}'.format(clst))
+        print('REP:')
+        print(clusters[clst].rep.path)
+        rep_dir = os.path.dirname(
+                os.path.abspath(
+                    clusters[clst].rep.path
                     )
-            relpath = os.path.relpath(
-                    rep_dir,
-                    outpath
-                    )
-            # copyfile(clusters[clst].rep.path, os.path.join(outpath,
-                # '{}turn_clst{}_rep.pdb.gz'.format(helixlength, clst)))
-            os.symlink(
-                    os.path.join(relpath,
-                        os.path.basename(clusters[clst].rep.path)),
-                    out
-                    )
-            dokfile = sorted(glob.glob(rep_dir + '/*.dok*'))[-1]
-            with open(dokfile, 'r') as f:
-                for line in f:
-                    filename = os.path.basename(line.split(' ')[-1]).strip('\n')
-                    if filename == os.path.basename(
-                                    clusters[clst].rep.path):
-                        line.append(os.path.basename(out))
-                        scores.write(line)
+                )
+        relpath = os.path.relpath(
+                rep_dir,
+                outpath
+                )
+        # copyfile(clusters[clst].rep.path, os.path.join(outpath,
+            # '{}turn_clst{}_rep.pdb.gz'.format(helixlength, clst)))
+        os.symlink(
+                os.path.join(relpath,
+                    os.path.basename(clusters[clst].rep.path)),
+                out
+                )
+        dokfile = sorted(glob.glob(rep_dir + '/*.dok*'))[-1]
+        with open(dokfile, 'r') as f:
+            for line in f:
+                filename = os.path.basename(line.split(' ')[-1]).strip('\n')
+                if filename == os.path.basename(
+                                clusters[clst].rep.path):
+                    line.append(os.path.basename(out))
+                    scores.write(line)
 
-        scores.close()
+    scores.close()

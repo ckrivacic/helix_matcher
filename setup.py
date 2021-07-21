@@ -74,6 +74,7 @@ setuptools.setup(
             define_command('02_rifdock'),
             define_command('match_helices'),
             define_command('03_align_rifdock_outputs'),
+            define_command('03_cluster'),
             # define_command('pick_designs_to_validate'),
             # define_command('add_residues'),
             # define_command('make_table'),

@@ -110,7 +110,12 @@ class Workspace(object):
         return os.path.abspath(self.root_dir)
 
     def basename(self, target):
-        return os.path.basename(target)[:-len('.pdb.gz')]
+        if target.endswith('.pdb.gz'):
+            return os.path.basename(target)[:-len('.pdb.gz')]
+        elif target.endswith('.pdb'):
+            return os.path.basename(target)[:-len('.pdb')]
+        else:
+            return os.path.basename(target).split('.')[0]
 
     @property
     def focus_name(self):
@@ -281,6 +286,12 @@ Expected to find a file matching '{0}'.  Did you forget to compile rosetta?
     @property
     def helix_dir(self):
         return os.path.join(self.root_dir, 'helices')
+
+    @property
+    def helices(self):
+        return sorted(glob.glob(os.path.join(self.helix_dir,
+            '*.pdb')) + glob.glob(os.path.join(self.helix_dir,
+                '*.pdb.gz')))
 
     @property
     def flags_path(self):
