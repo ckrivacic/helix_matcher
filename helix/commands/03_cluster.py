@@ -52,7 +52,7 @@ def main():
 
         rif_workspace = ws.workspace_from_dir(target)
         inputs = 1
-        scaffolds = workspace.helices
+        scaffolds = workspace.scaffolds
         ntasks = len(scaffolds)
 
         cmd = workspace.python_path, script_path

@@ -224,7 +224,7 @@ if __name__=='__main__':
     else:
         task = 0
     # targets = workspace.targets
-    helices = workspace.helices
+    helices = workspace.scaffolds
     helix = helices[task]
     # folders = workspace.patches
     # workspace = ws.RIFWorkspace(workspace.root_dir, targets[task])

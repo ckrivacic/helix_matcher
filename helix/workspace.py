@@ -288,7 +288,7 @@ Expected to find a file matching '{0}'.  Did you forget to compile rosetta?
         return os.path.join(self.root_dir, 'helices')
 
     @property
-    def helices(self):
+    def scaffolds(self):
         return sorted(glob.glob(os.path.join(self.helix_dir,
             '*.pdb')) + glob.glob(os.path.join(self.helix_dir,
                 '*.pdb.gz')))
@@ -450,118 +450,6 @@ Expected to find a file matching '{0}'.  Did you forget to compile rosetta?
         from . import big_jobs
         return [big_jobs.read_job_info(x) for x in self.all_job_info_paths]
 
-class BigJobWorkspace(Workspace):
-    """
-    Provide paths needed to run big jobs on the cluster.
-
-    This is a base class for all the workspaces meant to store results from
-    long simulations (which is presently all of them except for the root).
-    This class provides paths to input directories, output directories,
-    parameters files, and several other things like that.
-    """
-
-    @property
-    def protocol_basename(self):
-        return os.path.basename(self.protocol_path)
-
-    @property
-    def protocol_path(self):
-        raise NotImplementedError
-
-    @property
-    def final_protocol_path(self):
-        return os.path.join(self.focus_dir, self.protocol_basename + '.final')
-
-    @property
-    def input_dir(self):
-        return os.path.join(self.focus_dir, 'inputs')
-
-    @property
-    def input_paths(self):
-        return glob.glob(os.path.join(self.input_dir, '*.pdb.gz')) + glob.glob(os.path.join(self.input_dir, '*.pdb'))
-
-    def input_path(self, job_info):
-        raise NotImplementedError
-
-    def input_basename(self, job_info):
-        return os.path.basename(self.input_path(job_info))
-
-    @property
-    def input_names(self):
-        return [os.path.basename(x) for x in self.input_paths]
-
-    @property
-    def output_dir(self):
-        return os.path.join(self.focus_dir, 'outputs')
-
-    @property
-    def output_subdirs(self):
-        return [self.output_dir]
-
-    @property
-    def output_paths(self):
-        return glob.glob(os.path.join(self.input_dir, '*.pdb.gz'))
-
-    def output_path(self, job_info):
-        prefix = self.output_prefix(job_info)
-        basename = os.path.basename(self.input_path(job_info)[:-len('.pdb.gz')])
-        suffix = self.output_suffix(job_info)
-        return prefix + basename + suffix + '.pdb.gz'
-
-    def output_basename(self, job_info):
-        return os.path.basename(self.output_path(job_info))
-
-    def output_prefix(self, job_info):
-        return self.output_dir + '/'
-
-    def output_suffix(self, job_info):
-        return ''
-
-    @property
-    def io_dirs(self):
-        return [self.input_dir] + self.output_subdirs
-
-    @property
-    def log_dir(self):
-        return os.path.join(self.focus_dir, 'logs')
-
-    @property
-    def rsync_recursive_flag(self):
-        return True
-
-    @property
-    def rsync_exclude_patterns(self):
-        parent_patterns = super(BigJobWorkspace, self).rsync_exclude_patterns
-        return parent_patterns + ['logs/', '*.sc']
-
-    def job_info_path(self, job_id):
-        return os.path.join(self.focus_dir, '{0}.json'.format(job_id))
-
-    @property
-    def all_job_info_paths(self):
-        return glob.glob(os.path.join(self.focus_dir, '*.json'))
-
-    @property
-    def all_job_info(self):
-        from . import big_jobs
-        return [big_jobs.read_job_info(x) for x in self.all_job_info_paths]
-
-    def make_dirs(self):
-        Workspace.make_dirs(self)
-        scripting.mkdir(self.input_dir)
-        scripting.mkdir(self.output_dir)
-        scripting.mkdir(self.log_dir)
-
-    def clear_inputs(self):
-        scripting.clear_directory(self.input_dir)
-
-    def clear_outputs(self):
-        scripting.clear_directory(self.output_dir)
-        scripting.clear_directory(self.log_dir)
-
-        for path in self.all_job_info_paths:
-            os.remove(path)
-
 
 class RIFWorkspace(Workspace):
     '''
@@ -578,11 +466,6 @@ class RIFWorkspace(Workspace):
         target_path = os.path.join(root, 'targets',
                 '{}.pdb.gz'.format(target_name))
         return RIFWorkspace(root, target_path)
-
-    @property
-    def scaffolds(self):
-        return [os.path.abspath(x) for x in sorted(glob.glob(self.helix_dir +
-            '/*.pdb'))]
 
     @property
     def target_path(self):
@@ -662,6 +545,9 @@ class RIFWorkspace(Workspace):
         for params in self.all_job_info:
             inputs -= set(params['inputs'])
         return sorted(inputs)
+
+
+class MatchWorkspace(Workspace):
 
 
 def big_job_dir():

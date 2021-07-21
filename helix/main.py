@@ -164,9 +164,19 @@ Unknown command '{0}'.  Did you mean:
             scripting.print_error_and_die("""\
 The '{0}' command requires the '{1.req}' package.
 
-The analysis scripts have a number of dependencies that aren't installed by 
-default, because they would make PIP needlessly hard to install on clusters.  
-You can install all of these dependencies at once with the following command:
+Installation will be further streamlined in the future. In the meantime,
+the helix.yml conda environment should get you most of the packages
+(except PyRosetta and klab):
+
+conda env create --file helix.yml
+
+The latest version of klab can be installed via the following commands:
+
+git clone https://github.com/kortemme-lab/klab
+cd klab
+python setup.py install
+
+Any other dependencies should be available via conda or pip.
 """.format(command_name, error))
     #'$ pip install 'helix [analysis]'
 
