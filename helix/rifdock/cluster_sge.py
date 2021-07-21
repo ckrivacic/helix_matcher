@@ -216,10 +216,13 @@ if __name__=='__main__':
     args = docopt.docopt(__doc__)
     workspace = ws.workspace_from_dir(args['<rif_workspace>'])
     assert(type(workspace).__name__ == 'RIFWorkspace')
+
     if 'SGE_TASK_ID' in os.environ:
         task = int(os.environ['SGE_TASK_ID']) - 1
-    else:
+    elif args['--task']:
         task = int(args['--task']) - 1
+    else:
+        task = 0
     # targets = workspace.targets
     helices = workspace.helices
     helix = helices[task]
