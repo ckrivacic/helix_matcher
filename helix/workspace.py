@@ -607,8 +607,8 @@ class MatchWorkspace(Workspace):
     def clear_outputs(self):
         scripting.clear_directory(self.log_dir)
         scripting.clear_directory(self.output_dir)
-        if os.path.exists(self.all_scaffold_pickle):
-            os.remove(self.all_scaffold_pickle)
+        if os.path.exists(self.all_scaffold_dataframe):
+            os.remove(self.all_scaffold_dataframe)
         for fold in self.all_scaffold_clusters:
             if os.path.exists(self.scaffold_dataframe(scaffold)):
                 os.remove(self.scaffold_dataframe(scaffold))
