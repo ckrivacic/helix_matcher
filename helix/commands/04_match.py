@@ -33,38 +33,43 @@ Usage:
 
 Options:
     --local, -l  Run locally
-    --tasks=NUM, -j  How many tasks to split the run into?
+
     --verbose, -v  Verbose output
+
+    --clear, -o  Clear outputs (logs + dataframes) before starting run
+
+    --make-dirs  Make the necessary directories and then stop
+
     --database=PATH, -d  Database of relative helix orientations. If not
     provided, will search for database in project_params, then
     standard_params.
+
+    --tasks=NUM, -n  How many sub-tasks to break up each matching run
+    into. The total number of tasks will be (# targets)(# dataframes in
+    database)(tasks), but each job will have (# dataframes)*(tasks)
+    [default: 1]
+
     --length, -e  Bin by length (requires a length-binned database)
+
     --angstroms=NUM, -a  How fine to make the distance bins (requires a
     database with the same binning options). Default set by
     settings.yml.
+
     --degrees=NUM, -g  How fine to make the angle bins. Defaults set by
     settings.yml.
+
+    --target=PDBPATH, -t  Only run matcher on the given target.
+
+    --scaffold=SCAFFOLD  Only run matcher for a given docked scaffold
+    (meaning helix length for now).
 """
 from helix import submit
+from helix.utils import utils
 import helix.workspace as ws
 import docopt
 import re
 import os
 import yaml
-
-
-# def is_default_settings(workspace):
-    # '''Checks if settings are default by looking at which settings.yml
-    # file got loaded. Not used anymore, can probably delete.'''
-    # return os.path.abspath(os.path.dirname(workspace.settings)) == \
-            # os.path.abspath(workspace.standard_params_dir)
-
-
-def is_default_database(workspace):
-    '''Checks if database is default by looking at which folder it's
-    in'''
-    return os.path.abspath(os.path.dirname(workspace.database_path)) == \
-            os.path.abspath(workspace.standard_params_dir)
 
 
 def main():
@@ -90,8 +95,10 @@ def main():
             # print(exc)
 
     settings = workspace.settings
-    check_overwrite = ['--database', '--length', '--angstroms',
+    check_overwrite = ['--length', '--angstroms',
             '--degrees']
+    # For these settings, use command-line arguments over inputs from
+    # settings file.
     for setting in check_overwrite:
         if args[setting]:
             settings['match'][setting] = args[setting]
@@ -103,15 +110,19 @@ def main():
         # corresponds to the actual database. This code may need to be
         # modified in the future depending on what other database types
         # end up in the default package.
-        if settings['match']['--database'] != 'database/':
+        if not workspace.is_default_database(settings['match']['--database']):
             # Database is not default, therefore do not default to
             # project-params.
             database = settings['match']['--database']
             db_origin = 'custom settings'
-        elif settings['match']['--database'] == 'database/':
-            if not is_default_database(workspace):
+        else:
+            # If the settings database is default, see if there is a
+            # non-default database in the workspace (usually
+            # project_params)
+            if not workspace.is_default_database(workspace.database_path):
                 database = workspace.database_path
                 db_origin = 'project_params/database'
+            # Otherwise, use the default settings database.
             else:
                 database = settings['match']['--database']
 
@@ -138,13 +149,44 @@ def main():
                 "path is correct. Database determined via "\
                 "{}.".format(database, db_origin))
 
+    else:
+        print("Matching using database at {}, determined via "\
+                "{}".format(database, db_origin))
 
-    for target in workspace.targets:
-        cmd = workspace.python_path, script_path
-        cmd += workspace.target_clusters(target),
+    if args['--target']:
+        targets = [os.path.abspath(args['--target'])]
+    else:
+        targets = workspace.all_rifdock_workspaces
+
+    for target in targets:
+        match_workspace = ws.MatchWorkspace(workspace.root_dir, target)
+        match_workspace.make_dirs()
+
+        if args['--clear']:
+            match_workspace.clear_outputs()
+
+        if args['--make-dirs']:
+            continue
+
+        cmd = match_workspace.python_path, script_path
+        cmd += 'match', match_workspace.focus_dir
+        # cmd += match_workspace.target_clusters(target),
         for setting in settings['match']:
             if setting != '--database':
                 cmd += setting, settings['match'][setting]
             else:
                 cmd += setting, database
-        print(cmd)
+        if args['--tasks']:
+            cmd += '--tasks', args['--tasks']
+
+        if args['--scaffold']:
+            cmd += '--scaffold', args['--scaffold']
+
+        if args['--local']:
+            cmd += '--local',
+            utils.run_command(cmd)
+            continue
+        else:
+            script_name = 'matcher'
+            print('Submitting jobs for {}'.format(target))
+

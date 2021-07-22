@@ -3,13 +3,13 @@ Create bins or match a query protein.
 
 Usage:
     matcher.py bin <helix_dataframe> [options]
-    matcher.py match <pdb_folder> [options]
+    matcher.py match <match_workspace> [options]
 
 options:
     --local, -l  Run locally
 
     --tasks=NUM, -j  Run on the cluster using SGE. Argument should be # of
-    tasks in total.
+    tasks per dataframe.
 
     --length, -e  Bin by length
 
@@ -27,20 +27,24 @@ options:
     [default: 15]
 
     --settings=YML, -s  Provide a settings file.
+
+    --scaffold=PDB  Only run matching for a given helix length/RIFDock
+    scaffold.
 '''
-import docopt
-import pandas as pd
-import numpy as np
-import numeric
-from itertools import product
+import collections
 import os, psutil, sys
 import pickle
 import subprocess
-from helix.matching.scan_helices import final_vector
-from pyrosetta import init, pose_from_file
+import docopt
+import numpy as np
+import pandas as pd
 import networkx as nx
+from helix import workspace as ws
+from helix.matching.scan_helices import final_vector
+from helix.utils import numeric
+from itertools import product
+from pyrosetta import init, pose_from_file
 # import graph_tool.all as gt
-import collections
 
 
 def plot_vectors(vectors, color='darkgray'):
@@ -432,14 +436,16 @@ class HelixLookup(object):
             self.match(pd.read_pickle(lookup), out=out)
             i += 1
 
-    def submit_cluster(self, outdir, total_tasks):
+    def submit_cluster(self, outdir, tasks):
         import glob
         lookups = sorted(glob.glob(self.lookup_folder + '/*.pkl'))
+        total_tasks = tasks * len(lookups)
         task = int(os.environ['SGE_TASK_ID']) - 1
         os.makedirs(outdir, exist_ok=True)
         out = os.path.join(outdir, '{}_results_{:03d}.pkl'.format(self.name,
             task))
-        print('Saving to {}'.format(out))
+        print('Results will be saved to {}'.format(out))
+
         # Warning: total_tasks must be a multiple of len(lookups) for
         # now.
         increment = total_tasks // len(lookups)
@@ -613,6 +619,7 @@ def main():
     print(args)
 
     if args['--settings']:
+        # Deprecated; settings handled by submission command
         import yaml
         runtype = 'bin' if args['bin'] else 'match'
         settings = yaml.load(open(args['--settings'], 'r'))
@@ -632,40 +639,59 @@ def main():
         lookup = HelixBin(pd.read_pickle(args['<helix_dataframe>']),
                 exposed_cutoff=0.3, length_cutoff=10.8,
                 angstroms=float(args['--angstroms']),
-                degrees=float(args['--degrees']), 
+                degrees=float(args['--degrees']),
                 verbose=args['--verbose'])
         lookup.bin_db(outdir=dbpath, bin_length=args['--length'])
     if args['match']:
         # import scan_helices
         from helix.matching import scan_helices
+        workspace = ws.workspace_from_dir(args['<match_workspace>'])
         # Import pdb
-        pdbfolder = args['<pdb_folder>']
+        if args['--scaffold']:
+            pdbfolders = [workspace.scaffold_clusters(args['--scaffold'])]
+        else:
+            pdbfolders = workspace.all_scaffold_clusters
         init()
 
 
-        helicepath = os.path.join(pdbfolder, 'query_helices.pkl')
-        if os.path.exists(helicepath):
-            helices = pd.read_pickle(helicepath)
+        if not args['--scaffold'] and \
+                os.path.exists(workspace.all_scaffold_dataframe):
+            all_helices = pd.read_pickle(all_scaffold_pickle)
         else:
             all_helices = []
-            import glob
-            gz = glob.glob(pdbfolder + '/*.pdb.gz')
-            dotpdb = glob.glob(pdbfolder + '/*.pdb')
-            gz.extend(dotpdb)
-            pdbs = sorted(gz)
-            for path in pdbs:
-                pose = pose_from_file(path).split_by_chain(1)
+            for pdbfolder in pdbfolders:
+                # helicepath = os.path.join(pdbfolder, 'query_helices.pkl')
+                helicepath = workspace.scaffold_dataframe(pdbfolder)
+                if os.path.exists(helicepath):
+                    helices = pd.read_pickle(helicepath)
+                else:
+                    folder_helices = []
+                    import glob
+                    gz = glob.glob(pdbfolder + '/*.pdb.gz')
+                    dotpdb = glob.glob(pdbfolder + '/*.pdb')
+                    gz.extend(dotpdb)
+                    pdbs = sorted(gz)
+                    for path in pdbs:
+                        # First chain is the docked helix
+                        pose = pose_from_file(path).split_by_chain(1)
 
-                # Scan pdb helices
-                scanner = scan_helices.PoseScanner(pose)
-                helices = scanner.scan_pose_helices(name='query',
-                        split_chains=False, path=path)
-                all_helices.extend(helices)
-            helices = pd.DataFrame(all_helices)
-            helices.to_pickle(helicepath)
+                        # Scan pdb helices
+                        scanner = scan_helices.PoseScanner(pose)
+                        helices = scanner.scan_pose_helices(name='query',
+                                split_chains=False, path=path)
+                        folder_helices.extend(helices)
+                    helices = pd.DataFrame(folder_helices)
+                    helices.to_pickle(helicepath)
+                    all_helices.append(helices)
+            all_helices = pd.concat(all_helices, ignore_index=True)
+            if not args['--scaffold']:
+                # Don't save to the all_scaffold path if not using all
+                # scaffolds
+                all_helices.to_pickle(workspace.all_scaffold_dataframe)
+
         print("HELICES")
-        print(helices)
-        print(helices['vector'])
+        print(all_helices)
+        print(all_helices['vector'])
 
         # Bin pdb helices
         query = HelixBin(helices, exposed_cutoff=0.3,
@@ -686,8 +712,10 @@ def main():
                 verbose=args['--verbose'])
         if args['--tasks']:
             matcher.submit_cluster(args['--out'], int(args['--tasks']))
-        else:
+        elif args['--local']:
             matcher.submit_local(args['--out'])
+        else:
+            matcher.submit_cluster(args['--out'], 1)
 
 
 if __name__=='__main__':

@@ -71,9 +71,9 @@ class Workspace(object):
                 self.find_all_paths(self.settings_filename)
         these_settings = None
         settings = {}
+        # Open settings files in order from lowest to highest
+        # priority
         for f in reversed(settings_paths):
-            # Open settings files in order from lowest to highest
-            # priority
             with open(f, 'r') as stream:
                 try:
                     these_settings = yaml.safe_load(stream)
@@ -97,6 +97,12 @@ class Workspace(object):
     def database_path(self):
         return self.find_path('database')
 
+    def is_default_database(self, dbpath):
+        '''Checks if a database path is the default one by
+        checking whether it is in standard_params or not'''
+        return os.path.abspath(os.path.dirname(dbpath)) == \
+                os.path.abspath(self.standard_params_dir)
+
     @property
     def parent_dir(self):
         return os.path.dirname(self.root_dir)
@@ -110,12 +116,15 @@ class Workspace(object):
         return os.path.abspath(self.root_dir)
 
     def basename(self, target):
-        if target.endswith('.pdb.gz'):
-            return os.path.basename(target)[:-len('.pdb.gz')]
-        elif target.endswith('.pdb'):
-            return os.path.basename(target)[:-len('.pdb')]
-        else:
-            return os.path.basename(target).split('.')[0]
+        if os.path.isfile(target):
+            if target.endswith('.pdb.gz'):
+                return os.path.basename(target)[:-len('.pdb.gz')]
+            elif target.endswith('.pdb'):
+                return os.path.basename(target)[:-len('.pdb')]
+            else:
+                return os.path.basename(target).split('.')[0]
+        elif os.path.isdir(target):
+            return os.path.basename(target)
 
     @property
     def focus_name(self):
@@ -548,6 +557,99 @@ class RIFWorkspace(Workspace):
 
 
 class MatchWorkspace(Workspace):
+    '''
+    Class for handling paths needed to run the matcher on a given target
+    '''
+    def __init__(self, root, target_path):
+        Workspace.__init__(self, root)
+        self._initial_target_path = target_path
+
+    @staticmethod
+    def from_directory(directory):
+        root = os.path.join(directory, '..', '..')
+        target_name = os.path.basename(directory)
+        target_path = os.path.join(root, 'targets',
+                '{}.pdb.gz'.format(target_name))
+        return MatchWorkspace(root, target_path)
+
+    @property
+    def target_path(self):
+        return self.initial_target_path
+
+    @property
+    def initial_target_path(self):
+        return self._initial_target_path
+
+    @property
+    def focus_name(self):
+        return self.basename(self.initial_target_path)
+
+    @property
+    def focus_dir(self):
+        return os.path.join(self.match_outdir, self.focus_name)
+
+    @property
+    def log_dir(self):
+        return os.path.join(self.focus_dir, 'logs')
+
+    @property
+    def output_dir(self):
+        return os.path.join(self.focus_dir, 'outputs')
+
+    def make_dirs(self):
+        scripting.mkdir(self.focus_dir)
+        scripting.mkdir(self.log_dir)
+        pickle_path = os.path.join(self.focus_dir, 'workspace.pkl')
+        with open(pickle_path, 'wb') as file:
+            pickle.dump(self.__class__, file)
+
+    def clear_outputs(self):
+        scripting.clear_directory(self.log_dir)
+        scripting.clear_directory(self.output_dir)
+        if os.path.exists(self.all_scaffold_pickle):
+            os.remove(self.all_scaffold_pickle)
+        for fold in self.all_scaffold_clusters:
+            if os.path.exists(self.scaffold_dataframe(scaffold)):
+                os.remove(self.scaffold_dataframe(scaffold))
+        for f in self.all_job_info_paths:
+            os.remove(f)
+
+    @property
+    def unclaimed_inputs(self):
+        '''Unclaimed inputs = targets * dataframes'''
+        return
+
+    @property
+    def rifdock_workspace(self):
+        return os.path.join(self.rifdock_outdir, self.focus_name)
+
+    @property
+    def cluster_outputs(self):
+        return os.path.join(self.rifdock_workspace,
+                'cluster_representatives')
+
+    @property
+    def all_scaffold_clusters(self):
+        return sorted(glob.glob(os.path.join(
+            self.cluster_outputs, '*/'
+            )))
+
+    @property
+    def all_scaffold_dataframe(self):
+        return os.path.join(self.cluster_outputs, 'query_helices.pkl')
+
+    def scaffold_clusters(self, scaffold):
+        '''Returns the folder for clusters of a given scaffold. Should
+        be able to take either a directory or pdb file as the scaffold
+        argument.'''
+        scaffold_dir = os.path.join(self.cluster_outputs,
+                self.basename(scaffold))
+        return scaffold_dir
+
+    def scaffold_dataframe(self, scaffold):
+        return os.path.join(self.scaffold_clusters(scaffold),
+                'query_helices.pkl')
+
 
 
 def big_job_dir():

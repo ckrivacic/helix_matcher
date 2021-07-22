@@ -1,6 +1,6 @@
 import numpy as np
 
-import geometry
+from helix.utils import geometry
 
 
 def transform_residue(residue, M, t):

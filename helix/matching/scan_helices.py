@@ -1,5 +1,5 @@
-import geometry
-from alpha_helix import helix_direction
+from helix.utils import geometry
+from helix.utils.alpha_helix import helix_direction
 from pyrosetta import rosetta
 from pyrosetta import get_fa_scorefxn
 from pyrosetta import init
