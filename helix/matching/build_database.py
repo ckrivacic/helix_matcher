@@ -1,14 +1,19 @@
+'''
+Build a helix vector dataframe from the nonredundant pdb, or a file
+formated like the nonredundant pdb.
+'''
+from helix import workspace as ws
 import os, sys
 import pandas as pd
 from pyrosetta import init
 from pyrosetta import pose_from_file
-from scan_helices import PoseScanner
+from helix.matching.scan_helices import PoseScanner
 import gzip
 
 pdb_prefix = '/wynton/home/database/pdb/remediated/pdb/'
 idx = int(os.environ['SGE_TASK_ID']) - 1
 print('IDX = {}'.format(idx))
-num = int(sys.argv[1])
+num = int(sys.argv[2])
 
 
 def test_iterate():
@@ -48,6 +53,7 @@ def get_pose(line):
         return None
 
 def main():
+    workspace = ws.workspace_from_dir(sys.argv[1])
     init('-ignore_unrecognized_res')
     df = pd.DataFrame()
     start = idx * num

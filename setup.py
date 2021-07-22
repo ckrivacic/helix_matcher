@@ -83,15 +83,14 @@ setuptools.setup(
 )
 
 download = input("Install default database (22 MB)? (y/N) ")
-yes = ['y', 'yes', 'oui', 'si', 'yeppers', 'yessir']
-no = ['no', 'n', 'non', 'noway', 'forgetaboutit']
+yes = ['y', 'yes', 'oui', 'si', 'yeppers', 'yessir', 'heckyeah']
+no = ['no', 'n', 'non', 'noway', 'fohgetaboudit']
 if download.lower() in yes:
     import wget, tarfile
     url = 'https://guybrush.ucsf.edu/HELIX_default_database_2021-07-19.tar.gz'
+    this_directory = os.path.dirname(os.path.realpath(__file__))
     output_directory = os.path.join(
-            os.path.dirname(
-                os.path.realpath(__file__)
-                ),
+            this_directory,
             'helix'
             )
     os.chdir(output_directory)
@@ -103,8 +102,14 @@ if download.lower() in yes:
     tar.extractall()
     tar.close()
     os.remove(filename)
+    
+    helix_dataframe_url = 'https://guybrush.ucsf.edu/nrpdb_helices_2021-07-22.pkl'
+    output_directory = os.path.join(this_directory, 'helix', 'database')
+    outfile = wget.download(helix_dataframe_url, output_directory)
+
 elif download.lower() in no:
     pass
+
 else:
     print("Input not recognized; if you wish to download the default "\
     "database, run setup again and enter 'y' when prompted.")
