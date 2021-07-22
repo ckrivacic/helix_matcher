@@ -599,6 +599,7 @@ class MatchWorkspace(Workspace):
     def make_dirs(self):
         scripting.mkdir(self.focus_dir)
         scripting.mkdir(self.log_dir)
+        scripting.mkdir(self.output_dir)
         pickle_path = os.path.join(self.focus_dir, 'workspace.pkl')
         with open(pickle_path, 'wb') as file:
             pickle.dump(self.__class__, file)
