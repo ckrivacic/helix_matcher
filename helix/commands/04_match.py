@@ -29,7 +29,7 @@ subfolders, this script will try to look one level down for
 your database path.
 
 Usage: 
-    helix match_helices <workspace> [options]
+    helix 04_match <workspace> [options]
 
 Options:
     --local, -l  Run locally
