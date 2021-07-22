@@ -711,11 +711,11 @@ def main():
         matcher = HelixLookup(dbpath, query_bins, name=name,
                 verbose=args['--verbose'])
         if args['--tasks']:
-            matcher.submit_cluster(args['--out'], int(args['--tasks']))
+            matcher.submit_cluster(workspace.output_dir, int(args['--tasks']))
         elif args['--local']:
-            matcher.submit_local(args['--out'])
+            matcher.submit_local(workspace.output_dir)
         else:
-            matcher.submit_cluster(args['--out'], 1)
+            matcher.submit_cluster(workspace.output_dir, 1)
 
 
 if __name__=='__main__':
