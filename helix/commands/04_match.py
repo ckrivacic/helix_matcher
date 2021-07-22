@@ -62,6 +62,11 @@ Options:
 
     --scaffold=SCAFFOLD  Only run matcher for a given docked scaffold
     (meaning helix length for now).
+
+    --max-memory=6G  How much memory to allocate to the job?  [default: 4G]
+
+    --max-runtime=10:00:00  How much time to allocate to the job?
+    [default: 10:00:00]
 """
 from helix import submit
 from helix.utils import utils
@@ -189,4 +194,10 @@ def main():
         else:
             script_name = 'matcher'
             print('Submitting jobs for {}'.format(target))
-
+            big_jobs.submit(match_workspace, cmd,
+                    nstruct=args['--tasks'],
+                    max_memory=args['--max-memory'],
+                    max_runtime=args['--max-runtime'],
+                    test_run=False,
+                    job_name=script_name,
+                    create_job_info=False,)
