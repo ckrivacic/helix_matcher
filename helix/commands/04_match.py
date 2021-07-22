@@ -70,6 +70,7 @@ Options:
 """
 from helix import submit
 from helix.utils import utils
+from helix import big_jobs
 import helix.workspace as ws
 import docopt
 import re
