@@ -103,7 +103,7 @@ if download.lower() in yes:
     tar.close()
     os.remove(filename)
     
-    helix_dataframe_url = 'https://guybrush.ucsf.edu/nrpdb_helices_2021-07-22.pkl'
+    helix_dataframe_url = 'https://guybrush.ucsf.edu/helixdf_nrpdb_2021-07-22.pkl'
     output_directory = os.path.join(this_directory, 'helix', 'database')
     outfile = wget.download(helix_dataframe_url, output_directory)
 

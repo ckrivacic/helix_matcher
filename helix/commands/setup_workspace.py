@@ -136,15 +136,19 @@ stripped of waters and extraneous ligands."""
                 raise ValueError("'{0}' is not a PDB file.".format(pdb_path))
 
 class Database:
-    prompt = None
+    prompt = """If available, path to database folder containing binned
+    relative orientation folders and a single helix vector dataframe (if
+    not, default database based on the nonredundant PDB will be used):
+    """
     description="""\
-Symlinks to the default database. Users can run the bin command to
+Symlinks to the default database. Also symlinks any user-defined
+database into project_params. Users can run the bin command to
 create a new database directory in project_params. Database should be 
 downloaded from <url> and placed in the folder's install directory.
 (Will make this automatic during setup.py)"""
     
     @staticmethod
-    def install(workspace):
+    def install(workspace, database_path):
         default_dbpath = os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
                 '..', 'database'
@@ -152,6 +156,10 @@ downloaded from <url> and placed in the folder's install directory.
         os.symlink(default_dbpath, os.path.join(
             workspace.standard_params_dir, 'database'
             ))
+
+        if database_path:
+            os.symlink(database_path,
+                    os.path.join(workspace.project_params_dir, 'database'))
 
 class Helices:
     prompt = None
