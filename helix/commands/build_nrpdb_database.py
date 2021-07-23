@@ -1,6 +1,6 @@
 '''
 Usage:
-    helix submit_build.py [options]
+    helix build_nrpdb_database.py [options]
 
 options:
     --

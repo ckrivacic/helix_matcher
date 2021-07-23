@@ -109,7 +109,7 @@ class RosettaDir:
 
 
 class InputPdb:
-    prompt = "Path to the input PDB file: "
+    prompt = "Path to the target PDB file(s): "
     description = """\
 Input PDB file: A structure containing the functional groups to be positioned.  
 This file should already be parse-able by rosetta, which often means it must be 
@@ -137,9 +137,8 @@ stripped of waters and extraneous ligands."""
 
 class Database:
     prompt = """If available, path to database folder containing binned
-    relative orientation folders and a single helix vector dataframe (if
-    not, default database based on the nonredundant PDB will be used):
-    """
+relative orientation folders and a single helix vector dataframe (if
+not, default database based on the nonredundant PDB will be used):"""
     description="""\
 Symlinks to the default database. Also symlinks any user-defined
 database into project_params. Users can run the bin command to
@@ -158,8 +157,11 @@ downloaded from <url> and placed in the folder's install directory.
             ))
 
         if database_path:
-            os.symlink(database_path,
-                    os.path.join(workspace.project_params_dir, 'database'))
+            if os.path.exists(database_path):
+                os.symlink(database_path,
+                        os.path.join(workspace.project_params_dir, 'database'))
+            else:
+                raise ValueError("'{0}' does not exist.".format(database_path))
 
 class Helices:
     prompt = None
