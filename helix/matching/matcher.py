@@ -656,7 +656,7 @@ def main():
 
         if not args['--scaffold'] and \
                 os.path.exists(workspace.all_scaffold_dataframe):
-            all_helices = pd.read_pickle(all_scaffold_pickle)
+            all_helices = pd.read_pickle(workspace.all_scaffold_dataframe)
         else:
             all_helices = []
             for pdbfolder in pdbfolders:
@@ -694,7 +694,7 @@ def main():
         print(all_helices['vector'])
 
         # Bin pdb helices
-        query = HelixBin(helices, exposed_cutoff=0.3,
+        query = HelixBin(all_helices, exposed_cutoff=0.3,
                 length_cutoff=10.8, 
                 angstroms=float(args['--angstroms']), 
                 degrees=float(args['--degrees']),
@@ -710,10 +710,10 @@ def main():
         print(dbpath)
         matcher = HelixLookup(dbpath, query_bins, name=name,
                 verbose=args['--verbose'])
-        if args['--tasks']:
-            matcher.submit_cluster(workspace.output_dir, int(args['--tasks']))
-        elif args['--local']:
+        if args['--local']:
             matcher.submit_local(workspace.output_dir)
+        elif args['--tasks']:
+            matcher.submit_cluster(workspace.output_dir, int(args['--tasks']))
         else:
             matcher.submit_cluster(workspace.output_dir, 1)
 
