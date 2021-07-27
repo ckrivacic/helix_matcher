@@ -66,6 +66,10 @@ class Workspace(object):
         return self.find_path(self.settings_filename)
 
     @property
+    def log_dir(self):
+        return os.path.join(self.project_params_dir, 'logs')
+
+    @property
     def settings(self):
         settings_paths =\
                 self.find_all_paths(self.settings_filename)
@@ -96,6 +100,28 @@ class Workspace(object):
     @property
     def database_path(self):
         return self.find_path('database')
+
+    @property
+    def dataframe_path(self):
+        dbpath = self.settings['match']['--database']
+        picklepath = glob.glob(os.path.join(dbpath, 'helixdf*.pkl'))
+        if len(picklepath) > 1:
+            print("Multiple helix dataframes found in {0}! Please consolodate them "\
+                    "or remove extraneous pkl files beginning with "\
+                    "'helixdf'.".format(database))
+            sys.exit()
+        elif len(picklepath) == 0:
+            print("No helix dataframe ('helixdf*.pkl') found in provided "\
+                    "database path ({0}). Please runs 'helix scan' command "\
+                    "before binning.")
+        else:
+            helixdf = picklepath[0]
+        return helixdf
+
+    def clear_database(self):
+        scripting.clear_directory(os.path.join(
+            self.project_params_dir, 'database'
+            ))
 
     def is_default_database(self, dbpath):
         '''Checks if a database path is the default one by

@@ -13,11 +13,17 @@ Options:
     --split-chains, -s  Split the pose into separate chains?  [default: True]
     --local, -l  Run locally (recommended)  [default: True]
     --sge  Run on SGE (for very large folders)
+    --clear  Deletes the existing custom database
+    --max-memory=6G  How much memory to allocate to the job?  [default: 4G]
+
+    --max-runtime=10:00:00  How much time to allocate to the job?
+    [default: 10:00:00]
 '''
 import docopt
 from helix import workspace as ws
 from copy import deepcopy
 from helix.utils import utils
+import os
 from helix import big_jobs
 
 
@@ -36,20 +42,26 @@ def main():
     if args['--sge']:
         args['--local'] = False
     if args['--clear']:
-        workspace.clear_database
+        workspace.clear_database()
 
     cmd = workspace.python_path, script_path
-    argpass = ['--recursive', '--ntasks', '--split-chains']
+    cmd += workspace.root_dir, args['<pdbfolder>']
+    argpass = ['--ntasks']
+    for arg in argpass:
+        cmd += arg, str(args[arg])
+    if args['--recursive']:
+        cmd += '--recursive',
+    if args['--split-chains']:
+        cmd += '--split-chains'
+    ntasks = int(args['--ntasks'])
 
 
     if args['--local']:
         if args['--task']:
             local_cmd = deepcopy(cmd)
-            for arg in argpass:
-                local_cmd += arg, args[arg]
             utils.run_command(local_cmd)
         else:
-            for n in range(1, args['--ntasks'] + 1):
+            for n in range(1, ntasks + 1):
                 local_cmd= deepcopy(cmd)
                 local_cmd += '--task', str(n)
                 utils.run_command(local_cmd)
@@ -59,7 +71,7 @@ def main():
         print('Submitting the following command to SGE:')
         print(' '.join(cmd))
         big_jobs.submit(
-                workspace, cmd, nustruct=ntasks,
+                workspace, cmd, nstruct=ntasks,
                 max_runtime=args['--max-runtime'],
                 max_memory=args['--max-memory'],
                 test_run=False,

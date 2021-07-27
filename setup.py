@@ -70,6 +70,7 @@ setuptools.setup(
             define_command('setup_workspace'),
             define_command('review_matches'),
             define_command('build_database'),
+            define_command('scan_pdb_folder'),
             define_command('01_prep_rifdock'),
             define_command('02_rifdock'),
             define_command('03_cluster'),
