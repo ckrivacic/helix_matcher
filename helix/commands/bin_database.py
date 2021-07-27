@@ -73,6 +73,7 @@ def main():
         # modified in the future depending on what other database types
         # end up in the default package.
         if not workspace.is_default_database(settings['match']['--database']):
+            print(settings['match']['--database'])
             # Database is not default, therefore do not default to
             # project-params.
             database = settings['match']['--database']
@@ -92,6 +93,8 @@ def main():
         database = args['--database']
         db_origin = 'command argument'
 
+    print('Database at {} being used based on {}'.format(database, db_origin))
+
     if args['--length']:
         out = os.path.join(database, 'length')
     else:
@@ -107,9 +110,10 @@ def main():
     elif len(picklepath) == 0:
         print("No helix dataframe ('helixdf*.pkl') found in provided "\
                 "database path ({0}). Please runs 'helix scan' command "\
-                "before binning.")
-    else:
-        helixdf = picklepath[0]
+                "before binning.".format(database))
+        sys.exit()
+
+    helixdf = picklepath[0]
 
     if args['--clear']:
         workspace.clear_database()
@@ -122,15 +126,12 @@ def main():
         else:
             cmd += setting, database
 
-    if args['--tasks']:
+    if args['--ntasks']:
         cmd += '--tasks', args['--tasks']
-    if args['--scaffold']:
-        cmd += '--scaffold', args['--scaffold']
 
     if args['--local']:
-        cmd += '--local'
+        cmd += '--local',
         utils.run_command(cmd)
-        continue
     
     else:
         script_name='helixbin'

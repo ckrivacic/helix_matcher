@@ -126,7 +126,7 @@ class Workspace(object):
     def is_default_database(self, dbpath):
         '''Checks if a database path is the default one by
         checking whether it is in standard_params or not'''
-        return os.path.abspath(os.path.dirname(dbpath)) == \
+        return os.path.dirname(os.path.abspath(dbpath)) == \
                 os.path.abspath(self.standard_params_dir)
 
     @property
