@@ -12,8 +12,6 @@ Options:
 
     --verbose, -v  Verbose output
 
-    --clear  Clear the database before running
-
     --ntasks=NUM, -n  How many sub-tasks to break the binning process
     into?
 
@@ -115,16 +113,12 @@ def main():
 
     helixdf = picklepath[0]
 
-    if args['--clear']:
-        workspace.clear_database()
-
     cmd = workspace.python_path, script_path
     cmd += 'bin', helixdf
+    cmd += '--database', out
     for setting in settings['match']:
         if setting != '--database':
             cmd += setting, settings['match'][setting]
-        else:
-            cmd += setting, database
 
     if args['--ntasks']:
         cmd += '--tasks', args['--tasks']
