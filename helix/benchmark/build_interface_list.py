@@ -5,8 +5,8 @@ means the helix will be laying mostly flat along the protein, maximizing
 its contact surface area.
 
 Usage: 
-    create_benchmark_set.py <num> [options]
-    create_benchmark_set.py [options]
+    build_interface_list.py <num> [options]
+    build_interface_list.py [options]
 
 Options:
     --out=FOLDER, -o  Where to put the output  
