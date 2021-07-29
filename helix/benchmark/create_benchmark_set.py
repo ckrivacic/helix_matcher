@@ -230,8 +230,8 @@ def main():
                 print(e)
                 sys.stdout.flush()
                 errors.append(line)
-    df.to_csv('pdb_interfaces_{}.csv'.format(idx))
-    df.to_pickle('pdb_interfaces_{}.pkl'.format(idx))
+    df.to_csv('interface_finder/pdb_interfaces_{}.csv'.format(idx))
+    df.to_pickle('interface_finder/pdb_interfaces_{}.pkl'.format(idx))
 
 # Test of get_interface_residues(). Works, can delete.
 # init()
