@@ -219,7 +219,7 @@ def main():
             try:
                 print('Opening from line {}'.format(line))
                 sys.stdout.flush()
-                pdb = get_pose(str(line))
+                pdb = get_pdb_obj(str(line))
                 if pdb:
                     pdb.interface_all_chains()
                     df = df.concat([df, pdb.compile_helix_info()],
