@@ -13,6 +13,7 @@ from rosetta.protocols.scoring import Interface
 from pyrosetta.rosetta.core.scoring.dssp import Dssp
 import pandas as pd
 import os, sys
+import gzip
 
 
 class PDB(object):
