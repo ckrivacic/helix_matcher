@@ -248,7 +248,7 @@ def main():
 # Test of get_interface_residues(). Works, can delete.
 def test(pdb):
     init()
-    db = PDB(pdb)
+    db = PDB(pdb.lower())
     db.interface_all_chains()
     df = db.compile_helix_info()
     print(df)
