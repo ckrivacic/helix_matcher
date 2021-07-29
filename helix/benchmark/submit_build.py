@@ -25,7 +25,7 @@ qsub_command += '-l', 'mem_free={}'.format(max_memory)
 qsub_command += '-b', 'y'
 qsub_command += '-N', 'helix_scan'
 qsub_command += '/wynton/home/kortemme/krivacic/software/anaconda3/bin/python',
-qsub_command += 'create_benchmark_set.py', str(num)
+qsub_command += 'build_interface_list.py', str(num)
 
 status = process.check_output(qsub_command).decode('utf-8')
 status_pattern = re.compile(r'Your job-array (\d+).[0-9:-]+ \(".*"\) has been submitted')
