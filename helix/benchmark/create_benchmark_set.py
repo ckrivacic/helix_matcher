@@ -93,11 +93,13 @@ class PDB(object):
         pose_chains = []
         # Figure out what all the chains in the pose are
         for i in range(1, self.pose.num_chains() + 1):
-            pdbinfo = self.pose.pdb_info().pose2pdb(self.pose.chain_begin(i))
-            chain = pdbinfo.split(' ')[1]
-            pose_chains.append(chain)
-        
+            if self.pose.residue(self.pose.chain_begin(i)).is_protein():
+                pdbinfo = self.pose.pdb_info().pose2pdb(self.pose.chain_begin(i))
+                chain = pdbinfo.split(' ')[1]
+                pose_chains.append(chain)
+ 
         interfaces = []
+        pose_chains = set(pose_chains)
         # Now get interface residues using each chain as the query
         for i in range(0, len(pose_chains)):
             query_chain = pose_chains[i]
