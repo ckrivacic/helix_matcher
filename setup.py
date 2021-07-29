@@ -63,6 +63,7 @@ setuptools.setup(
         'helix.commands': [
             define_command('fetch_data'),
             define_command('push_data'),
+            define_command('combine_dataframes'),
             # define_command('submit'),
             # define_command('plot_funnels'),
             # define_command('violin_plot'),
