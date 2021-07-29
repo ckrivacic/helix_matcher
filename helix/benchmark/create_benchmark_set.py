@@ -106,7 +106,7 @@ class PDB(object):
                 pose_chains.append(chain)
  
         interfaces = []
-        pose_chains = set(pose_chains)
+        pose_chains = list(set(pose_chains))
         # Now get interface residues using each chain as the query
         for i in range(0, len(pose_chains)):
             query_chain = pose_chains[i]
