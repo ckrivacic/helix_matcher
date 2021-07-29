@@ -17,6 +17,7 @@ from pyrosetta.rosetta.utility import vector1_int
 from rosetta.protocols.scoring import Interface
 from pyrosetta.rosetta.core.scoring.dssp import Dssp
 import pandas as pd
+import docopt
 import os, sys
 import gzip
 
