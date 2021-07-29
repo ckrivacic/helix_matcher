@@ -4,7 +4,12 @@ majority of the helix is part of the interface, with the idea that this
 means the helix will be laying mostly flat along the protein, maximizing
 its contact surface area.
 
-Usage: python3 create_benchmark_set.py
+Usage: python3 create_benchmark_set.py [options]
+
+Options:
+    --out=FOLDER, -o  Where to put the output  
+    [default: interface_finder]
+    --test=PDB  Test on a certain PDB
 '''
 from pyrosetta.rosetta.protocols.docking import setup_foldtree
 from pyrosetta import *
@@ -234,17 +239,21 @@ def main():
                 print(e)
                 sys.stdout.flush()
                 errors.append(line)
-    df.to_csv('interface_finder/pdb_interfaces_{}.csv'.format(idx))
-    df.to_pickle('interface_finder/pdb_interfaces_{}.pkl'.format(idx))
+    outfolder = args['--out']
+    df.to_csv('{}/pdb_interfaces_{}.csv'.format(outfolder, idx))
+    df.to_pickle('{}/pdb_interfaces_{}.pkl'.format(outfolder, idx))
 
 # Test of get_interface_residues(). Works, can delete.
-# init()
-# db = PDB('6M17.clean.pdb')
-# db.interface_all_chains()
-# df = db.compile_helix_info()
-# print(df)
-# # df = get_interface_residues(pose, 'ABCF', 'ZD')
-# # print(df)
+def test(pdb):
+    init()
+    db = PDB(pdb)
+    db.interface_all_chains()
+    df = db.compile_helix_info()
+    print(df)
 
 if __name__=='__main__':
-    main()
+    args = docopt.docopt(__doc__)
+    if args['--test']:
+        test(args['--test'])
+    else:
+        main()
