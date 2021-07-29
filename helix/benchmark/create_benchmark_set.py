@@ -225,7 +225,7 @@ def main():
                 pdb = get_pdb_obj(str(line))
                 if pdb:
                     pdb.interface_all_chains()
-                    df = df.concat([df, pdb.compile_helix_info()],
+                    df = pd.concat([df, pdb.compile_helix_info()],
                             ignore_index=True)
 
             except Exception as e:
