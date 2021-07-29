@@ -5,6 +5,7 @@ means the helix will be laying mostly flat along the protein, maximizing
 its contact surface area.
 
 Usage: 
+    create_benchmark_set.py <num> [options]
     create_benchmark_set.py [options]
 
 Options:
@@ -212,7 +213,7 @@ def main():
     init()
     idx = int(os.environ['SGE_TASK_ID']) - 1
     print('IDX = {}'.format(idx))
-    num = int(sys.argv[1])
+    num = int(args['<num>'])
     df = pd.DataFrame()
     start = idx * num
     stop = idx * num + num - 1
