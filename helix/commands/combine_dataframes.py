@@ -27,4 +27,4 @@ for path in sorted(glob.glob(args['<folder>'] + '/*.pkl')):
 if args['--out']:
     out.to_pickle(args['--out'])
 else:
-    out.to_pickle(sys.argv[1] + '/final.pkl')
+    out.to_pickle(args['<folder>'] + '/final.pkl')
