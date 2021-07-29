@@ -201,7 +201,7 @@ def get_pdb_obj(line):
 def main():
     idx = int(os.environ['SGE_TASK_ID']) - 1
     print('IDX = {}'.format(idx))
-    num = int(sys.argv[2])
+    num = int(sys.argv[1])
     df = pd.DataFrame()
     start = idx * num
     stop = idx * num + num - 1
