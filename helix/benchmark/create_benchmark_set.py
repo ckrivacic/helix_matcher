@@ -4,7 +4,8 @@ majority of the helix is part of the interface, with the idea that this
 means the helix will be laying mostly flat along the protein, maximizing
 its contact surface area.
 
-Usage: python3 create_benchmark_set.py [options]
+Usage: 
+    create_benchmark_set.py [options]
 
 Options:
     --out=FOLDER, -o  Where to put the output  
