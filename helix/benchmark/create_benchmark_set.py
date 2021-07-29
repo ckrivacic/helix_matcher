@@ -21,11 +21,11 @@ class PDB(object):
         consider them as part of an interface"""
         self.dist = dist
         self.pdbid = pdbid
-        # pdb_prefix = '/wynton/home/database/pdb/remediated/pdb/'
-        # self.path = os.path.join(pdb_prefix, self.pdbid[1:3], 'pdb{}.ent.gz'.format(
-            # self.pdbid
-            # ))
-        self.path = pdbid
+        pdb_prefix = '/wynton/home/database/pdb/remediated/pdb/'
+        self.path = os.path.join(pdb_prefix, self.pdbid[1:3], 'pdb{}.ent.gz'.format(
+            self.pdbid
+            ))
+        # self.path = pdbid
         self.pose = pose_from_file(self.path)
         ss_str = Dssp(self.pose).get_dssp_secstruct()
         self.secstruct = contiguous_secstruct(ss_str)
@@ -207,7 +207,7 @@ def main():
     stop = idx * num + num - 1
     print('START: {}'.format(start))
     print('STOP: {}'.format(stop))
-    with gzip.open('test_files/nr_custom.gz', 'rb') as f:
+    with gzip.open('nrpdb.gz', 'rb') as f:
         lines = f.readlines()[start:stop]
 
     errors = []

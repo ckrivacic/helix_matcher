@@ -2,7 +2,7 @@ import glob, re, gzip, os
 from klab import process
 
 def find_nstruct(pdb_prefix):
-    f = gzip.open('test_files/nrpdb.gz', 'rb')
+    f = gzip.open('nrpdb.gz', 'rb')
     lines = list(f.readlines())
     # file_list = glob.glob(pdb_prefix + '*')
     return len(lines)
