@@ -60,7 +60,7 @@ This will create a sub-directory called `rifdock_outputs`, and within there anot
 Next, run RIFDock:
 
 ```bash
-helix 02 <workspace_path>```
+helix 02 <workspace_path>
 ```
 
 
