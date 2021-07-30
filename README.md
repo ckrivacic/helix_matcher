@@ -1,4 +1,30 @@
-# Helix Matcher
+# Helical ELements Interface eXplorer
+
+### Installation
+
+Currently, HELIX relies on the C++ version of RIFDock to generate potential binding geometries for helices.
+It also depends on PyRosetta.
+Other dependencies can be found in the `helix.yml` conda environment.
+
+Download the repo:
+```
+git clone https://github.com/ckrivacic/helix_matcher.git
+cd helix_matcher
+```
+
+Install the conda environment (optional if you want to install dependencies yourself):
+```
+conda env create -f helix.yml
+conda activate helix
+```
+
+Run setup.py:
+```
+python setup.py install
+```
+
+When prompted, you may want to download the default database. This consists of vectorized helix information for all proteins in the nonredundant PDB, as well as a database of their relative orientations. Otherwise, you will have to create a database yourself from a folder of PDBs using the `helix scan` and `helix bin` commands.
+
 
 ### Generating potential helix binding geometries
 
