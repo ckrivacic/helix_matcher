@@ -38,10 +38,12 @@ def main():
     df = df[df['interacting_chain'] == df['target']]
     groups = df.groupby(by=['name', 'target', 'chain'])
     final_df = pd.DataFrame()
+    total_groups = groups.ngroups
+    i = 0
     for name, group in groups:
-        print(name)
-        print(group)
-        # print(group.shape)
+        i += 1
+        print('Processing group {} of {}'.format(i, total_groups),
+                end='\r')
         group['n_helices'] = group.shape[0]
         final_df = pd.concat([final_df, group], ignore_index=True)
 
