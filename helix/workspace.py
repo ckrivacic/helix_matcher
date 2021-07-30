@@ -519,10 +519,18 @@ class RIFWorkspace(Workspace):
         return os.path.join(self.rifdock_outdir, self.focus_name)
 
     @property
+    def scaffold_prefix(self):
+        return 'scaffold_'
+
+    @property
     def patches(self):
         return sorted(glob.glob(os.path.join(
             self.focus_dir,
-            'patch_*', 'scaffold_*')))
+            'patch_*', '{}*'.format(self.scaffold_prefix))))
+
+    def scaffold_dir(self, patch, scaffold):
+        return os.path.join(self.focus_dir, 'patch_{}'.format(patch),
+                self.scaffold_prefix + scaffold)
 
     def active_patch(self, job_info):
         return self.patches[job_info['task_id'] % len(self.patches)]

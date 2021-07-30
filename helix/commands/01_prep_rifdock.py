@@ -146,6 +146,14 @@ def main():
     if args['--chainmap']:
         with open(args['--chainmap']) as file:
             chainmap = yaml.load(file)
+    cutoffs = {}
+    for scaffold in root_workspace.scaffolds:
+        scafpose = pose_from_file(scaffold)
+        scaffold = root_workspace.basename(scaffold)
+        xyz1 = scafpose.residue(1).xyz('CA')
+        xyz2 = scafpose.residue(scafpose.size()).xyz('CA')
+        cutoff = numeric.euclidean_distance(xyz1, xyz2) / 2
+        cutoffs[scaffold] = cutoff
     for target in targets:
         workspace = ws.RIFWorkspace(args['<workspace>'], target)
         workspace.make_dirs()
@@ -198,19 +206,15 @@ def main():
                 # cutoff=float(args['--patchsize']),
                 # pymol=True))
             for scaffold in workspace.scaffolds:
-                scafpose = pose_from_file(scaffold)
-                xyz1 = scafpose.residue(1).xyz('CA')
-                xyz2 = scafpose.residue(scafpose.size()).xyz('CA')
-                cutoff = numeric.euclidean_distance(xyz1, xyz2) / 2
                 name = workspace.basename(scaffold)
-                subfolder = os.path.join(patch_folder,
-                        'scaffold_{}'.format(name))
-                if not os.path.exists(subfolder):
-                    os.makedirs(subfolder, exist_ok=True)
+                cutoff = cutoffs[name]
+                scaffold_folder = workspace.scaffold_dir(i, name)
+                if not os.path.exists(scaffold_folder):
+                    os.makedirs(scaffold_folder, exist_ok=True)
                 write_to_file(patches.nearest_n_residues(res, 100,
                     cutoff=cutoff),
-                        subfolder)
-                write_flags(subfolder, target_pdb)
+                        scaffold_folder)
+                write_flags(scaffold_folder, target_pdb)
 
         pose.dump_pdb(target_pdb)
 
