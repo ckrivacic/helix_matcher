@@ -17,6 +17,7 @@ TO DO:
     Allow user to specify ranges
 '''
 from helix.rifdock.patches import Patches
+from helix.utils import numeric
 import docopt
 from pyrosetta import pose_from_file
 from pyrosetta import init
@@ -197,13 +198,17 @@ def main():
                 # cutoff=float(args['--patchsize']),
                 # pymol=True))
             for scaffold in workspace.scaffolds:
+                scafpose = pose_from_file(scaffold)
+                xyz1 = pose.residue(1).xyz('CA')
+                xyz2 = pose.residue(pose.size()).xyz('CA')
+                cutoff = numeric.euclidean_distance(xyz1, xyz2) / 2
                 name = workspace.basename(scaffold)
                 subfolder = os.path.join(patch_folder,
                         'scaffold_{}'.format(name))
                 if not os.path.exists(subfolder):
                     os.makedirs(subfolder, exist_ok=True)
                 write_to_file(patches.nearest_n_residues(res, 100,
-                    cutoff=float(args['--patchsize'])),
+                    cutoff=cutoff),
                         subfolder)
                 write_flags(subfolder, target_pdb)
 
