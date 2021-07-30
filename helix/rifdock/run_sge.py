@@ -188,7 +188,8 @@ def main():
 
         print('Prepping RIFDOCK for {}'.format(fold))
 
-        scaffold = ' '.join(workspace.scaffolds)
+        # scaffold = ' '.join(workspace.scaffolds)
+        scaffold = workspace.scaffold_from_dir(fold)
         flags_rifdock = write_flags(tempdir, scaffold)
         print(flags_rifdock)
 

@@ -535,6 +535,31 @@ class RIFWorkspace(Workspace):
     def active_patch(self, job_info):
         return self.patches[job_info['task_id'] % len(self.patches)]
 
+    def scaffold_name(self, scaffold_subfolder):
+        '''Get the scaffold name from the scaffold subfolder.
+        Useful when running RIFDock, where each task gets a folder and
+        must figure out what scaffold to use.'''
+        basename = os.path.basename(scaffold_subfolder)
+        folder_fields = basename.split('_')
+        scaffold_name = '_'.join(folder_fields[1:])
+        return scaffold_name
+
+    def scaffold_from_dir(self, scaffold_subfolder):
+        '''
+        Get the scaffold pdb file from the scaffold subfolder.
+        '''
+        pdb = os.path.abspath(os.path.join(self.helix_dir,
+                self.scaffold_name(scaffold_subfolder) + '.pdb'))
+        if os.path.exists(pdb):
+            return pdb
+        elif os.path.exists(pdb + '.gz'):
+            return pdb + '.gz'
+        else:
+            e = "WARNING! Could not find scaffold with the name {} or {} "\
+            "in the 'helices' folder.".format(
+                    pdb, pdb + '.gz')
+            raise PipelineError(e)
+
     def docking_directory(self, job_info):
         return os.path.join(self.active_patch(job_info), 'docked_full')
 

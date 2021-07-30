@@ -186,12 +186,9 @@ def main():
         for res in range(1, pose.size() + 1):
             if pose.residue(res).is_protein():
                 reslist.append(res)
-        print('POSE SIZE')
-        print(pose.size())
         patches = Patches(pose)
         patches.set_reslist(reslist)
         patches.determine_surface_residues()
-        print(patches.reslist)
         patches.map_residues()
         print(patches.resmap)
         # parent_folder = os.path.abspath(os.path.join(args['<output_folder>']))
