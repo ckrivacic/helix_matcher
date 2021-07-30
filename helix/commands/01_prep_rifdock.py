@@ -198,6 +198,7 @@ def main():
                 # cutoff=float(args['--patchsize']),
                 # pymol=True))
             for scaffold in workspace.scaffolds:
+                print('Making patches for scaffold {}'.format(scaffold))
                 scafpose = pose_from_file(scaffold)
                 xyz1 = scafpose.residue(1).xyz('CA')
                 xyz2 = scafpose.residue(pose.size() - 1).xyz('CA')
