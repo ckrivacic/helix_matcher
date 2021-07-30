@@ -199,8 +199,8 @@ def main():
                 # pymol=True))
             for scaffold in workspace.scaffolds:
                 scafpose = pose_from_file(scaffold)
-                xyz1 = pose.residue(1).xyz('CA')
-                xyz2 = pose.residue(pose.size()).xyz('CA')
+                xyz1 = scafpose.residue(1).xyz('CA')
+                xyz2 = scafpose.residue(pose.size()).xyz('CA')
                 cutoff = numeric.euclidean_distance(xyz1, xyz2) / 2
                 name = workspace.basename(scaffold)
                 subfolder = os.path.join(patch_folder,
