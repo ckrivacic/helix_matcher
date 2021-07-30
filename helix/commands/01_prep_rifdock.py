@@ -201,6 +201,7 @@ def main():
                 print('Making patches for scaffold {}'.format(scaffold))
                 scafpose = pose_from_file(scaffold)
                 xyz1 = scafpose.residue(1).xyz('CA')
+                print(pose.size())
                 xyz2 = scafpose.residue(pose.size() - 1).xyz('CA')
                 cutoff = numeric.euclidean_distance(xyz1, xyz2) / 2
                 name = workspace.basename(scaffold)
