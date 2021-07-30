@@ -196,10 +196,16 @@ def main():
             # print(patches.nearest_n_residues(res, 100,
                 # cutoff=float(args['--patchsize']),
                 # pymol=True))
-            write_to_file(patches.nearest_n_residues(res, 100,
-                cutoff=float(args['--patchsize'])),
-                    patch_folder)
-            write_flags(patch_folder, target_pdb)
+            for scaffold in workspace.scaffolds:
+                name = workspace.basename(scaffold)
+                subfolder = os.path.join(patch_folder,
+                        'scaffold_{}'.format(name))
+                if not os.path.exists(subfolder):
+                    os.makedirs(subfolder, exist_ok=True)
+                write_to_file(patches.nearest_n_residues(res, 100,
+                    cutoff=float(args['--patchsize'])),
+                        subfolder)
+                write_flags(subfolder, target_pdb)
 
         pose.dump_pdb(target_pdb)
 

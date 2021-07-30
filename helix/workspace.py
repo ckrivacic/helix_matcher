@@ -522,7 +522,7 @@ class RIFWorkspace(Workspace):
     def patches(self):
         return sorted(glob.glob(os.path.join(
             self.focus_dir,
-            'patch_*')))
+            'patch_*', 'scaffold_*')))
 
     def active_patch(self, job_info):
         return self.patches[job_info['task_id'] % len(self.patches)]
