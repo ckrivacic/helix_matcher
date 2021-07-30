@@ -101,9 +101,10 @@ class StructureCluster(object):
         self.designs = []
         # Path sould be to parent rifdock directory.
         if basename:
-            search = workspace.focus_dir + '/*/docked_full/{}*.pdb.gz'.format(basename)
+            search = workspace.focus_dir + \
+                    '/*/{}/docked_full/*.pdb.gz'.format(workspace.scaffold_folder)
         else:
-            search = workspace.focus_dir + '/*/docked_full/*.pdb.gz'
+            search = workspace.focus_dir + '/*/*/docked_full/*.pdb.gz'
         for path in glob.glob(
                 search
                 ):
