@@ -10,6 +10,10 @@ Usage:
 Options:
     --out=PATH, -o  Where to save final dataframe pickle  
     [default: interface_finder/benchmark_candidates.pkl]
+    --interface_residues=NUM, -n  How many residues must be in the interface
+    for a helix to be considered "flat"  [default: 5]
+    --percent_interface=FLOAT, -p  Percentage of helix residues that
+    must participate in interface for it to be considered "flat"
 '''
 import docopt
 import sys
@@ -33,7 +37,8 @@ def main():
     df = df[df['interacting_chain'].apply(lambda x: x is not None)]
     df['target'] = df['interface'].apply(lambda x: x.split('_')[0])
     print
-    df = df[df['interacting_length'].apply(lambda x: int(x) > 4)]
+    df = df[df['interacting_length'].apply(lambda x: int(x) >=
+        args['--interface_residues'])]
     df = df[df['chain'] != df['target']]
     df = df[df['interacting_chain'] == df['target']]
     groups = df.groupby(by=['name', 'target', 'chain'])
