@@ -523,7 +523,7 @@ class RIFWorkspace(Workspace):
         return 'scaffold_'
 
     def scaffold_folder(self, scaffold_basename):
-        return scaffold_prefix + scaffold_basename
+        return self.scaffold_prefix + scaffold_basename
 
     @property
     def patches(self):
