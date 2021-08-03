@@ -100,11 +100,14 @@ class StructureCluster(object):
         self.threshold=threshold
         self.designs = []
         # Path sould be to parent rifdock directory.
+        print('Basename: {}'.format(basename))
         if basename:
             search = workspace.focus_dir + \
                     '/*/{}/docked_full/*.pdb.gz'.format(workspace.scaffold_folder)
         else:
             search = workspace.focus_dir + '/*/*/docked_full/*.pdb.gz'
+        print('Search string:')
+        print(search)
         for path in glob.glob(
                 search
                 ):
