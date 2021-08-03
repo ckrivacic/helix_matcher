@@ -1,6 +1,6 @@
-import numeric
-from utils import max_subgraph
-from utils import download_and_clean_pdb
+from helix.utils import numeric
+from helix.utils.utils import max_subgraph
+from helix.utils.utils import download_and_clean_pdb
 import alphashape
 from copy import deepcopy
 import os

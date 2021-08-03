@@ -1,20 +1,22 @@
 '''
 Usage:
-    review_matches.py <results> [options]
+    review_matches.py <workspace> [options]
 
 options:
     --dataframe=PKL, -d
         Path to dataframe of helix vectors  [default: nr_dataframes/final.pkl]
 '''
-import clash
+from helix.analysis import clash
+from helix import workspace as ws
 import docopt
 import pandas as pd
+import pickle5 as pickle
 import pymol
-import scan_helices
+from helix.matching import scan_helices
 import networkx as nx
 from pyrosetta import pose_from_file
 from pyrosetta import init
-import numeric
+from helix.utils import numeric
 import subprocess
 import os
 
@@ -186,18 +188,34 @@ def score_matches(results, query_df, db_df):
 
 
 def test_scoring():
-    results = pd.read_pickle('matcher_outputs/query_results_000.pkl')
-    helixpath = os.path.join(
-                os.path.expanduser('~/intelligent_design/helix_matcher')
-                )
-    helices = pd.read_pickle(
-            os.path.join(helixpath,
-                'rifdock/boundary/cluster_representatives/4_turn/query_helices.pkl')
-            )
-    df = pd.read_pickle('dataframes_clash/final.pkl')
-    results = score_matches(results, helices, df)
-    
-    results.to_pickle('results_scored.pkl')
+    args = docopt.docopt(__doc__)
+    workspace = ws.workspace_from_dir(args['<workspace>'])
+    for target in workspace.targets:
+        match_workspace = \
+                ws.workspace_from_dir(workspace.target_match_path(target))
+        for result in match_workspace.outputs:
+            print(result)
+            try:
+                output = pd.read_pickle(result)
+            except:
+                with open(result, 'rb') as f:
+                    output = pickle.load(f)
+
+            suffix = result.split('.')[0].split('_')[-1]
+            # output = pd.read_pickle('matcher_outputs/query_results_000.pkl')
+            # helixpath = os.path.join(
+                        # os.path.expanduser('~/intelligent_design/helix_matcher')
+                        # )
+            # helices = pd.read_pickle(
+                    # os.path.join(helixpath,
+                        # 'rifdock/boundary/cluster_representatives/4_turn/query_helices.pkl')
+                    # )
+            helices = pd.read_pickle(match_workspace.all_scaffold_dataframe)
+            # df = pd.read_pickle('dataframes_clash/final.pkl')
+            df = pd.read_pickle(match_workspace.dataframe_path)
+            results = score_matches(results, helices, df)
+ 
+            results.to_pickle('results_scored_{}.pkl'.format(suffix))
 
 
 def test():

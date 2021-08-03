@@ -184,8 +184,9 @@ class Workspace(object):
         return os.path.join(self.root_dir, 'match_outputs')
 
     def target_match_path(self, target):
-        out_folder = os.path.join(self.match_out_dir,
+        out_folder = os.path.join(self.match_outdir,
                 self.basename(target))
+        return out_folder
 
     @property
     def slurm_custom_jobno(self):
@@ -658,6 +659,10 @@ class MatchWorkspace(Workspace):
     def output_dir(self):
         return os.path.join(self.focus_dir, 'outputs')
 
+    @property
+    def outputs(self):
+        return glob.glob(os.path.join(self.output_dir, '*.pkl'))
+
     def make_dirs(self):
         scripting.mkdir(self.focus_dir)
         scripting.mkdir(self.log_dir)
@@ -760,7 +765,6 @@ def workspace_from_dir(directory, recurse=True):
     if not os.path.exists(pickle_path):
         if recurse:
             parent_dir = os.path.dirname(directory)
-            print(parent_dir)
 
             # Keep looking for a workspace as long as we haven't hit the root
             # of the file system.  If an exception is raised, that means no
