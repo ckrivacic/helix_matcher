@@ -235,7 +235,7 @@ if __name__=='__main__':
 
     # for helixlength in [3,4,6,8]:
     # for helix in workspace.helices:
-    basename = workspace.scaffold_folder(workspace.basename(helix))
+    basename = workspace.basename(helix)
     clust = StructureCluster(workspace, basename=basename, threshold=10)
     print('Clustering...')
     clust.cluster_coords(verbose=True)
