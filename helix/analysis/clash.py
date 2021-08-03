@@ -20,6 +20,7 @@ class ClashScore(object):
         self.db_helices = database_helices
         self.query_helices = query_helices
         self.pdb_path = download_and_clean_pdb(self.name)
+        print('PDB PATH for CLASH FILTER {}'.format(self.pdb_path))
         self.subgraphs = max_subgraph(self.graph)
         self.chain = self.db_helices.loc[self.subgraphs[0][0][0]]['chain']
 
@@ -86,6 +87,7 @@ def get_alphashape(pdb, chain=None, plot=False):
     Returns an AlphaShape object of a pdb file, outlining its general
     shape for use in a clash filter.
     '''
+    print('ALPHASHAPE PDB: {}'.format(pdb))
     if chain:
         atoms = prody.parsePDB(pdb, chain=chain)
     else:
