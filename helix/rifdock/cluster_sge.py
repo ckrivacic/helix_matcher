@@ -103,7 +103,7 @@ class StructureCluster(object):
         print('Basename: {}'.format(basename))
         if basename:
             search = workspace.focus_dir + \
-                    '/*/{}/docked_full/*.pdb.gz'.format(workspace.scaffold_folder)
+                    '/*/{}/docked_full/*.pdb.gz'.format(workspace.scaffold_folder(basename))
         else:
             search = workspace.focus_dir + '/*/*/docked_full/*.pdb.gz'
         print('Search string:')
