@@ -194,7 +194,6 @@ def test_scoring():
         match_workspace = \
                 ws.workspace_from_dir(workspace.target_match_path(target))
         for result in match_workspace.outputs:
-            print(result)
             try:
                 output = pd.read_pickle(result)
             except:
@@ -210,10 +209,14 @@ def test_scoring():
                     # os.path.join(helixpath,
                         # 'rifdock/boundary/cluster_representatives/4_turn/query_helices.pkl')
                     # )
-            helices = pd.read_pickle(match_workspace.all_scaffold_dataframe)
+            try:
+                helices = pd.read_pickle(match_workspace.all_scaffold_dataframe)
+            except:
+                with open(match_workspace.all_scaffold_dataframe, 'rb') as f:
+                    helices = pickle.load(f)
             # df = pd.read_pickle('dataframes_clash/final.pkl')
             df = pd.read_pickle(match_workspace.dataframe_path)
-            results = score_matches(results, helices, df)
+            results = score_matches(output, helices, df)
  
             results.to_pickle('results_scored_{}.pkl'.format(suffix))
 

@@ -103,20 +103,21 @@ class Workspace(object):
 
     @property
     def dataframe_path(self):
-        dbpath = self.settings['match']['--database']
+        dbpath = os.path.join(self.root_dir,
+                self.settings['match']['--database'])
         picklepath = glob.glob(os.path.join(dbpath, 'helixdf*.pkl'))
         if len(picklepath) > 1:
             print("Multiple helix dataframes found in {0}! Please consolodate them "\
                     "or remove extraneous pkl files beginning with "\
-                    "'helixdf'.".format(database))
+                    "'helixdf'.".format(dbpath))
             sys.exit()
         elif len(picklepath) == 0:
             print("No helix dataframe ('helixdf*.pkl') found in provided "\
                     "database path ({0}). Please runs 'helix scan' command "\
-                    "before binning.")
+                    "before binning.".format(dbpath))
         else:
             helixdf = picklepath[0]
-        return helixdf
+            return helixdf
 
     def clear_database(self):
         scripting.clear_directory(os.path.join(
