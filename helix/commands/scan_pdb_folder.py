@@ -55,6 +55,8 @@ def main():
         cmd += '--split-chains'
     ntasks = int(args['--ntasks'])
 
+    if not os.path.exists(workspace.log_dir):
+        os.makedirs(workspace.log_dir, exist_ok=True)
 
     if args['--local']:
         if args['--task']:
