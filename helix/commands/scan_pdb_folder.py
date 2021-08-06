@@ -76,7 +76,7 @@ def main():
                 workspace, cmd, nstruct=ntasks,
                 max_runtime=args['--max-runtime'],
                 max_memory=args['--max-memory'],
-                job_name='scan_helices',
+                job_name=script_name,
                 test_run=False,
                 create_job_info=False
                 )
