@@ -533,6 +533,13 @@ class RIFWorkspace(Workspace):
             self.focus_dir,
             'patch_*', '{}*'.format(self.scaffold_prefix))))
 
+    @property
+    def docked_helices(self):
+        return sorted(glob.glob(os.path.join(
+            self.focus_dir, 'patch_*',
+            '{}*'.format(self.scaffold_prefix), 'docked_full', '*.pdb.gz'
+            )))
+
     def scaffold_dir(self, patch, scaffold):
         return os.path.join(self.focus_dir, 'patch_{}'.format(patch),
                 self.scaffold_prefix + scaffold)
@@ -635,6 +642,28 @@ class MatchWorkspace(Workspace):
         target_path = os.path.join(root, 'targets',
                 '{}.pdb.gz'.format(target_name))
         return MatchWorkspace(root, target_path)
+
+    @property
+    def query_CA_path(self):
+        return os.path.join(self.target_clusters(self.target_path),
+                'query_CAs.pkl')
+
+    @property
+    def query_CAs(self):
+        if not os.path.exists(self.query_CA_path):
+            print("Query CA dictionary not found. Loading atoms.")
+            import prody
+            rif_workspace = RIFWorkspace(self.root, self.target_path)
+            atoms_dict = {}
+            for helix in rif_workspace.docked_helices:
+                atoms = prody.parsePDB(helix, chain='A').select('name CA')
+                atoms_dict[helix] = atoms.getCoords()
+            with open(self.query_CA_path, 'wb') as f:
+                pickle.dump(atoms_dict, f)
+            return atoms_dict
+        else:
+            with load(self.query_CA_path, 'wb') as f:
+                return pickle.load(f)
 
     @property
     def target_path(self):

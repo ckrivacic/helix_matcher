@@ -3,7 +3,7 @@
 Create a helix dataframe from a folder containing PDBs.
 
 Usage:
-    scan_pdb_folder.py <workspace> <pdbfolder> [options]
+    helix scan_pdb_folder <workspace> <pdbfolder> [options]
 
 Options:
     --recursive, -r  Scan subfolders as well

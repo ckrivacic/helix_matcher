@@ -46,14 +46,14 @@ def get_pymol_transform(transformation):
     
     return pymol_transform
 
-def session_from_graph(results_row, query_df, db_df, alpha):
+def session_from_graph(workspace, results_row, query_df, db_df, alpha):
 
     def chain_from_name(string):
         chainno = int(string.split('_')[-1])
         chain = chr(ord('@')+chainno)
         return chain
 
-    clash_score = clash.ClashScore(results_row, db_df, query_df,
+    clash_score = clash.ClashScore(workspace, results_row, db_df, query_df,
             alpha=alpha)
     clash_score.apply()
     print('SCORE IS {}'.format(clash_score.score))
@@ -139,25 +139,24 @@ def collect_scores(results_row, query_df):
     query_path = os.readlink(query_df.loc[0]['path'])
 
 
-def get_relative_path(path, workspace):
-    '''Take a path from the results dataframe (which is an absolute
-    path) and get the path relative to the workspace root directory.
-    This is a bit of a hack, and in the future, the paths should 
-    probably be relative to begin with.'''
-    # This should be everything after the root dir for a cluster
-    # representative
-    pathlist = path.split('/')[-5:]
-    pathlist.insert(0, workspace.root_dir)
-    return os.path.join(*pathlist)
+def match_scaffold(workspace, filepath):
+    '''Take a filename and find out which helix scaffold it belongs to'''
+    filename = os.path.basename(filepath)
+    for helix in workspace.scaffolds:
+        basename = workspace.basename(helix)
+        if filename.startswith(basename):
+            return basename
+    return None
 
 
-def score_matches(results, query_df, db_df, workspace):
+def score_matches(workspace, results, query_df, db_df):
     '''Go through results dataframe and score the matches'''
     # for i in range(0, 100): # Review top 100 matches for now.
         # testrow = results.iloc[i]
     alphapath = query_df.iloc[0]['path']
-    alphapath = get_relative_path(alphapath, workspace)
-    alpha = clash.get_alphashape(alphapath)
+    alphapath = clash.get_relative_path(workspace, alphapath)
+    alpha = clash.get_alphashape(alphapath, plot=True)
+    query_xyz = workspace.query_CAs
     results['clash_score'] = None
     results['rifdock_score'] = None
     numrows = results.shape[0]
@@ -166,7 +165,7 @@ def score_matches(results, query_df, db_df, workspace):
     for idx, row in results.iterrows():
         curr += 1
         print('Row {} out of {}'.format(curr, numrows))
-        clash_score = clash.ClashScore(row, db_df, query_df,
+        clash_score = clash.ClashScore(workspace, row, db_df, query_df,
                 alpha=alpha)
         clash_score.apply()
         print('CLASH SCORE IS {}'.format(clash_score.score))
@@ -176,24 +175,33 @@ def score_matches(results, query_df, db_df, workspace):
             for node in clash_score.subgraph:
                 query_idx = node[1]
                 query_row = query_df.loc[query_idx]
+                print(query_row)
                 helixpath = os.path.realpath(query_row['path'])
-                turnno = os.path.basename(helixpath).split('_')[0][0]
+                helixpath = clash.get_relative_path(workspace, helixpath)
+                print('-----------------')
+                # turnno = os.path.basename(helixpath).split('_')[0][0]
+                score_file = \
+                        match_scaffold(workspace, helixpath)\
+                        + '.scores'
                 scorepath = os.path.join(
                         os.path.dirname(query_row['path']),
-                            '{}turn.scores'.format(turnno)
+                        score_file
                         )
-                scorepath = get_relative_path(scorepath, workspace)
+                scorepath = clash.get_relative_path(workspace, scorepath)
+                print(scorepath)
                 # In the future, would be more efficient to just open all
                 # the score files once and save them to a dataframe.
                 with open(scorepath, 'r') as f:
                     for line in f:
                         line = line.strip('\n')
-                        if line.endswith(os.path.basename(helixpath)):
+                        if line.startswith(os.path.basename(helixpath)):
+                            print(line)
                             score_line = line
                             break
-                score = float(score_line.split()[10])
+                score = float(score_line.split()[11])
                 rifdock_score += score
             print('RIFDOCK SCORE IS {}'.format(rifdock_score))
+            print('====================================')
             results.at[idx,'rifdock_score'] = rifdock_score
         # print(row)
         # print(results.iloc[idx])
@@ -230,15 +238,16 @@ def test_scoring():
                     helices = pickle.load(f)
             # df = pd.read_pickle('dataframes_clash/final.pkl')
             df = pd.read_pickle(match_workspace.dataframe_path)
-            results = score_matches(output, helices, df, match_workspace)
+            results = score_matches(match_workspace, output, helices, df)
  
             results.to_pickle('results_scored_{}.pkl'.format(suffix))
 
 
 def test():
     args = docopt.docopt(__doc__)
-    results = pd.read_pickle(args['<results>'])
-    df = pd.read_pickle(args['--dataframe'])
+    workspace = ws.workspace_from_dir(args['<workspace>'])
+    # results = pd.read_pickle(args['<results>'])
+    # df = pd.read_pickle(args['--dataframe'])
     # Re-build query dataframe
     init()
     helixpath = os.path.expanduser('~/intelligent_design/helix_matcher')
@@ -252,7 +261,7 @@ def test():
         testrow = results.iloc[i]
         # testgraph = testrow['graph']
 
-        session_from_graph(testrow, helices, df, alpha)
+        session_from_graph(workspace, testrow, helices, df, alpha)
 
 def main():
     test_scoring()

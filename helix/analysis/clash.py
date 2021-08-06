@@ -12,14 +12,30 @@ from mpl_toolkits.mplot3d import axes3d, Axes3D
 # from descartes import PolygonPatch
 
 
+def get_relative_path(workspace, path, depth=5):
+    '''Take a path from the results dataframe (which is an absolute
+    path) and get the path relative to the workspace root directory.
+    This is a bit of a hack, and in the future, the paths should 
+    probably be relative to begin with.'''
+    # This should be everything after the root dir for a cluster
+    # representative
+    pathlist = path.split('/')[-depth:]
+    pathlist.insert(0, workspace.root_dir)
+    return os.path.join(*pathlist)
+
+
 class ClashScore(object):
-    def __init__(self, results_row, database_helices, query_helices,
-            alpha=None):
+    def __init__(self, workspace, results_row, database_helices, query_helices,
+            alpha=None, pdb=None):
+        self.workspace = workspace
         self.graph = results_row['graph']
         self.name = results_row['name'].split('_')[0]
         self.db_helices = database_helices
         self.query_helices = query_helices
-        self.pdb_path = download_and_clean_pdb(self.name)
+        if not pdb:
+            self.pdb_path = download_and_clean_pdb(self.name)
+        else:
+            self.pdb_path = pdb
         print('PDB PATH for CLASH FILTER {}'.format(self.pdb_path))
         self.subgraphs = max_subgraph(self.graph)
         self.chain = self.db_helices.loc[self.subgraphs[0][0][0]]['chain']
@@ -28,6 +44,25 @@ class ClashScore(object):
             self.alpha = get_alphashape(self.pdb_path)
         else:
             self.alpha = alpha
+
+    def interweave_score(self, atoms, df_rows, query_rows):
+        '''
+        Get indices of helices from df_rows to find which residues to
+        look at.
+        Load atoms for query helices form query_rows. (Maybe this should
+        be in memory? Yeah. Load up query helices and pass them to this
+        object.)
+        Create a matrix of CA positions for scaffold atoms and query
+        atoms. Or make a dataframe similar to patches, so we can sort?
+        '''
+        for i in range(0, len(df_rows)):
+            row = df_rows[i]
+            subselection = atoms.select('resnum {}:{} and name '\
+                    'CA'.format(row['start'], row['stop']))
+            query_path = get_relative_path(self.workspace,
+                    query_rows[i]['path'], depth=6)
+        return
+
 
     def apply(self):
         '''
@@ -40,7 +75,10 @@ class ClashScore(object):
                 chain=self.chain).select('backbone')
         for subgraph in self.subgraphs:
             atoms = deepcopy(original_atoms)
-            df_vectors, query_vectors = self.get_vectors(subgraph)
+            # df_vectors, query_vectors = self.get_vectors(subgraph)
+            df_rows, query_rows = self.get_helix_rows(subgraph)
+            df_vectors = self.get_vectors(df_rows)
+            query_vectors = self.get_vectors(query_rows)
             transform = numeric.Transformation(df_vectors, query_vectors)
             prody_transform =\
                     prody.measure.transform.Transformation(transform.rotation,
@@ -66,20 +104,32 @@ class ClashScore(object):
 
         return clashes
 
-    def get_vectors(self, subgraph):
+    def get_vectors(self, list_of_rows):
+        vectors = []
+        for row in list_of_rows:
+            vectors.append(row['vector'])
+        return vectors
+
+
+    def get_helix_rows(self, subgraph):
         '''Return the vectors for the helices in a subgraph'''
-        df_vectors = []
-        query_vectors = []
+        # df_vectors = []
+        # query_vectors = []
+        df_rows = []
+        query_rows = []
         for node in subgraph:
             df_idx = node[0]
             query_idx = node[1]
-            df_row = self.db_helices.loc[df_idx]
-            query_row = self.query_helices.loc[query_idx]
+            df_rows.append(self.db_helices.loc[df_ix])
+            query_rows.append(self.query_helices.loc[query_idx])
+            # df_row = self.db_helices.loc[df_idx]
+            # query_row = self.query_helices.loc[query_idx]
 
-            df_vectors.extend(df_row['vector'])
-            query_vectors.extend(query_row['vector'])    
+            # df_vectors.extend(df_row['vector'])
+            # query_vectors.extend(query_row['vector'])    
 
-        return df_vectors, query_vectors
+        # return df_vectors, query_vectors
+        return df_rows, query_rows
 
 
 def get_alphashape(pdb, chain=None, plot=False):
@@ -102,7 +152,7 @@ def get_alphashape(pdb, chain=None, plot=False):
 
     # coords = [(0., 0.), (0., 1.), (1., 1.), (1., 0.), (0.5, 0.5)]
 
-    alpha_shape = alphashape.alphashape(coords, 0.18)
+    alpha_shape = alphashape.alphashape(coords, 0.25)
 
     if plot:
         helix = prody.parsePDB(pdb, chain='A')
