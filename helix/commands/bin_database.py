@@ -121,7 +121,7 @@ def main():
             cmd += setting, settings['match'][setting]
 
     if args['--ntasks']:
-        cmd += '--tasks', args['--tasks']
+        cmd += '--tasks', args['--ntasks']
 
     if args['--local']:
         cmd += '--local',
