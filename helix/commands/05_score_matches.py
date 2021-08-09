@@ -5,6 +5,8 @@ Usage:
 options:
     --dataframe=PKL, -d
         Path to dataframe of helix vectors  [default: nr_dataframes/final.pkl]
+    --plot-alphashape, -p
+        Show a plot that displays the alphashape of the target protein
 '''
 from helix.analysis import clash
 from helix import workspace as ws
@@ -149,13 +151,13 @@ def match_scaffold(workspace, filepath):
     return None
 
 
-def score_matches(workspace, results, query_df, db_df):
+def score_matches(workspace, results, query_df, db_df, plot=False):
     '''Go through results dataframe and score the matches'''
     # for i in range(0, 100): # Review top 100 matches for now.
         # testrow = results.iloc[i]
     alphapath = query_df.iloc[0]['path']
     alphapath = clash.get_relative_path(workspace, alphapath)
-    alpha = clash.get_alphashape(alphapath, plot=True)
+    alpha = clash.get_alphashape(alphapath, plot=plot)
     query_xyz = workspace.query_CAs
     results['clash_score'] = None
     results['rifdock_score'] = None
@@ -238,7 +240,8 @@ def test_scoring():
                     helices = pickle.load(f)
             # df = pd.read_pickle('dataframes_clash/final.pkl')
             df = pd.read_pickle(match_workspace.dataframe_path)
-            results = score_matches(match_workspace, output, helices, df)
+            results = score_matches(match_workspace, output, helices,
+                    df, plot=args['--plot-alphashape'])
  
             results.to_pickle('results_scored_{}.pkl'.format(suffix))
 

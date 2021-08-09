@@ -107,7 +107,7 @@ class ClashScore(object):
     def get_vectors(self, list_of_rows):
         vectors = []
         for row in list_of_rows:
-            vectors.append(row['vector'])
+            vectors.extend(row['vector'])
         return vectors
 
 
@@ -120,7 +120,7 @@ class ClashScore(object):
         for node in subgraph:
             df_idx = node[0]
             query_idx = node[1]
-            df_rows.append(self.db_helices.loc[df_ix])
+            df_rows.append(self.db_helices.loc[df_idx])
             query_rows.append(self.query_helices.loc[query_idx])
             # df_row = self.db_helices.loc[df_idx]
             # query_row = self.query_helices.loc[query_idx]
@@ -152,7 +152,7 @@ def get_alphashape(pdb, chain=None, plot=False):
 
     # coords = [(0., 0.), (0., 1.), (1., 1.), (1., 0.), (0.5, 0.5)]
 
-    alpha_shape = alphashape.alphashape(coords, 0.25)
+    alpha_shape = alphashape.alphashape(coords, 0.1)
 
     if plot:
         helix = prody.parsePDB(pdb, chain='A')

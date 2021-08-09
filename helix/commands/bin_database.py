@@ -13,7 +13,7 @@ Options:
     --verbose, -v  Verbose output
 
     --ntasks=NUM, -n  How many sub-tasks to break the binning process
-    into?
+    into?  [default: 10]
 
     --length, -e  Bin by length
 

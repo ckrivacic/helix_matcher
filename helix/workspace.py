@@ -119,6 +119,21 @@ class Workspace(object):
             helixdf = picklepath[0]
             return helixdf
 
+    @property
+    def bin_pickles(self):
+        dbpath = os.path.join(self.root_dir,
+                self.settings['match']['--database'])
+        dbpath = os.path.join(dbpath, 
+                "bins_{}A_{}D".format(
+                self.settings['match']['--angstroms'],
+                self.settings['match']['--degrees'])
+                )
+        return sorted(glob.glob(os.path.join(dbpath, '*.pkl')))
+    
+    @property
+    def n_bin_pickles(self):
+        return len(self.bin_pickles)
+
     def clear_database(self):
         scripting.clear_directory(os.path.join(
             self.project_params_dir, 'database'
@@ -653,16 +668,18 @@ class MatchWorkspace(Workspace):
         if not os.path.exists(self.query_CA_path):
             print("Query CA dictionary not found. Loading atoms.")
             import prody
-            rif_workspace = RIFWorkspace(self.root, self.target_path)
+            # rif_workspace = RIFWorkspace(self.root_dir, self.target_path)
             atoms_dict = {}
-            for helix in rif_workspace.docked_helices:
+            # for helix in rif_workspace.docked_helices:
+            for helix in glob.glob(os.path.join(self.cluster_outputs,
+                "*/", '*.pdb.gz')):
                 atoms = prody.parsePDB(helix, chain='A').select('name CA')
                 atoms_dict[helix] = atoms.getCoords()
             with open(self.query_CA_path, 'wb') as f:
                 pickle.dump(atoms_dict, f)
             return atoms_dict
         else:
-            with load(self.query_CA_path, 'wb') as f:
+            with open(self.query_CA_path, 'rb') as f:
                 return pickle.load(f)
 
     @property

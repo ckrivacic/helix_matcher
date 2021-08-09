@@ -44,7 +44,7 @@ Options:
     provided, will search for database in project_params, then
     standard_params.
 
-    --tasks=NUM, -n  How many sub-tasks to break up each matching run
+    --ntasks=NUM, -n  How many sub-tasks to break up each matching run
     into. The total number of tasks will be (# targets)(# dataframes in
     database)(tasks), but each job will have (# dataframes)*(tasks)
     [default: 1]
@@ -182,8 +182,9 @@ def main():
                 cmd += setting, settings['match'][setting]
             else:
                 cmd += setting, database
-        if args['--tasks']:
-            cmd += '--tasks', args['--tasks']
+        if args['--ntasks']:
+            ntasks = int(args['--ntasks']) * workspace.n_bin_pickles
+            cmd += '--ntasks', ntasks
 
         if args['--scaffold']:
             cmd += '--scaffold', args['--scaffold']
@@ -196,7 +197,7 @@ def main():
             script_name = 'matcher'
             print('Submitting jobs for {}'.format(target))
             big_jobs.submit(match_workspace, cmd,
-                    nstruct=args['--tasks'],
+                    nstruct=ntasks,
                     max_memory=args['--max-memory'],
                     max_runtime=args['--max-runtime'],
                     test_run=False,
