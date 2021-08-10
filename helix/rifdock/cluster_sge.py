@@ -66,9 +66,10 @@ class Design(object):
         # scorefile = os.path.join(os.path.dirname(self.path), 'all.dok')
         # scorefile = scorefiles[-1]
         score_df = pd.read_pickle(scorefile)
-        design = score_df[score_df['name'] == os.path.basename(self.path)].iloc[0]
-        self.score = design['score']
-        self.length = design['length']
+        design_row = score_df[score_df['name'] == os.path.basename(self.path)].iloc[0]
+        self.score = design_row['score']
+        self.length = design_row['length']
+        self.info = design_row
         # with open(scorefile, 'r') as f:
             # for line in f:
                 # score = line[76:82]
@@ -257,6 +258,7 @@ if __name__=='__main__':
     scores = open(os.path.join(
         outpath,
         '{}.scores'.format(basename)), 'w')
+    out_df = []
 
     overwrite = True
     # overwrite = False
@@ -289,6 +291,7 @@ if __name__=='__main__':
                 out
                 )
         dokfile = sorted(glob.glob(rep_dir + '/*.dok*'))[-1]
+        out_df.append(clusters[clst].rep.info)
         with open(dokfile, 'r') as f:
             for line in f:
                 linesplit = line.split(' ')
@@ -300,3 +303,5 @@ if __name__=='__main__':
                     scores.write(' '.join(linesplit))
 
     scores.close()
+    out_df = pd.DataFrame(out_df)
+    out_df.to_pickle(os.path.join(outpath, 'scores.pkl'))
