@@ -16,6 +16,7 @@ import glob
 import math
 import pickle
 from subprocess import Popen, PIPE, STDOUT
+from pyrosetta.toolbox import *
 from io import StringIO
 from shutil import copytree
 from shutil import copyfile
@@ -206,7 +207,6 @@ def main():
         from pyrosetta.rosetta.core.pack.task import operation
         from pyrosetta.rosetta.core.select import residue_selector
         import pyrosetta
-        from pyrosetta.toolbox import *
         pyrosetta.init()
         score_table = {}
         for pdb in pdbs:
