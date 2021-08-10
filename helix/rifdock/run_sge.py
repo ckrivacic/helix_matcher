@@ -252,8 +252,8 @@ def main():
         outputs = os.path.join(tempdir, 'docked_full')
         final_out = os.path.join(fold, 'docked_full')
         copy_tree(outputs, final_out)
-        score_table = os.path.join(final_out, 'scores.pkl')
-        with open(score_table, 'wb')  as f:
+        score_table_path = os.path.join(final_out, 'scores.pkl')
+        with open(score_table_path, 'wb')  as f:
             pickle.dump(score_table, f)
 
 if __name__ == '__main__':
