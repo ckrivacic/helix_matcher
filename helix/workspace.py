@@ -121,8 +121,13 @@ class Workspace(object):
 
     @property
     def bin_pickles(self):
+        length = self.settings['match'].get('--length', False)
         dbpath = os.path.join(self.root_dir,
                 self.settings['match']['--database'])
+        if length:
+            dbpath = os.path.join(dbpath, 'length')
+        else:
+            dbpath = os.path.join(dbpath, 'standard')
         dbpath = os.path.join(dbpath, 
                 "bins_{}A_{}D".format(
                 self.settings['match']['--angstroms'],

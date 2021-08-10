@@ -184,7 +184,7 @@ def main():
                 cmd += setting, database
         if args['--ntasks']:
             ntasks = int(args['--ntasks']) * workspace.n_bin_pickles
-            cmd += '--ntasks', ntasks
+            cmd += '--ntasks', str(ntasks)
 
         if args['--scaffold']:
             cmd += '--scaffold', args['--scaffold']
