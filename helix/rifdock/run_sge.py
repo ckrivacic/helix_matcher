@@ -14,6 +14,7 @@ Options:
 import sys, os, docopt
 import glob
 import math
+import pickle
 from subprocess import Popen, PIPE, STDOUT
 from io import StringIO
 from shutil import copytree
@@ -201,7 +202,15 @@ def main():
         pdbs = glob.glob(tempdir + '/docked_full/*.pdb.gz')
 
         import pymol
+        from pyrosetta.rosetta.core.pack.task import TaskFactory
+        from pyrosetta.rosetta.core.pack.task import operation
+        from pyrosetta.rosetta.core.select import residue_selector
+        import pyrosetta
+        from pyrosetta.toolbox import *
+        pyrosetta.init()
+        score_table = {}
         for pdb in pdbs:
+            # First align everything to the target
             print('Aligning {} to {}'.format(pdb, workspace.target_path))
             pymol.cmd.reinitialize()
             target = pymol.cmd.load(workspace.target_path, 'target')
@@ -209,11 +218,41 @@ def main():
             pymol.cmd.align('mobile and not chain A', 'target')
             pymol.cmd.save(pdb, 'mobile')
 
+            # Now perform a quick fixbb on the helix
+            fixbb = pyrosetta.rosetta.protocols.denovo_design.movers.FastDesign(1)
+            movemap = MoveMap()
+            movemap.set_bb(False)
+            movemap.set_chi(True)
+
+            selector = residue_selector.ChainSelector('A')
+            not_selector = residue_selector.NotResidueSelector(selector)
+            static_residues = not_selector.apply(pose)
+
+            tf = TaskFactory()
+            no_packing = operation.PreventRepackingRLT()
+            static = operation.OperateOnResidueSubset(no_packing,
+                    static_residues, False)
+            packertask = tf.create_task_and_apply_taskoperations(pose)
+            print('REPACK')
+            print(packertask.repacking_residues())
+            print('DESIGN')
+            print(packertask.designing_residues())
+            ref = create_score_function('ref2015')
+            fixbb.set_task_factory(tf)
+            fixbb.set_movemap(movemap)
+            fixbb.set_scorefxn(ref)
+            fixbb.apply(pose)
+            score = ref(pose)
+            pose.dump_pdb(pdb)
+            score_table[os.path.basename(pdb)] = score
+
         # Copy back to permanent folder
         outputs = os.path.join(tempdir, 'docked_full')
         final_out = os.path.join(fold, 'docked_full')
         copy_tree(outputs, final_out)
-        
+        score_table = os.path.join(final_out, 'scores.pkl')
+        with open(score_table, 'wb')  as f:
+            pickle.dump(score_table, f)
 
 if __name__ == '__main__':
     main()
