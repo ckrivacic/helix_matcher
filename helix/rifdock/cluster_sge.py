@@ -25,7 +25,6 @@ class Design(object):
         self.path = path
         self.backbone_coords = []
         self.score = None
-        self.length = None
         self.get_score()
 
     def read_coords(self, chain=None):
@@ -68,7 +67,6 @@ class Design(object):
         score_df = pd.read_pickle(scorefile)
         design_row = score_df[score_df['name'] == os.path.basename(self.path)].iloc[0]
         self.score = design_row['score']
-        self.length = design_row['length']
         self.info = design_row
         # with open(scorefile, 'r') as f:
             # for line in f:
