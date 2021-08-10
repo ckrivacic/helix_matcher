@@ -209,6 +209,7 @@ def main():
         import pyrosetta
         pyrosetta.init()
         score_table = {}
+        rows = []
         for pdb in pdbs:
             # First align everything to the target
             print('Aligning {} to {}'.format(pdb, workspace.target_path))
@@ -246,15 +247,18 @@ def main():
             fixbb.apply(pose)
             score = ref(pose)
             pose.dump_pdb(pdb)
-            score_table[os.path.basename(pdb)] = score
+            row = {'name:' os.path.basename(pdb),
+                    'size': pose.size(),
+                    'score': score}
+            rows.append(row)
 
         # Copy back to permanent folder
         outputs = os.path.join(tempdir, 'docked_full')
         final_out = os.path.join(fold, 'docked_full')
         copy_tree(outputs, final_out)
+        score_table = pd.DataFrame(rows)
         score_table_path = os.path.join(final_out, 'scores.pkl')
-        with open(score_table_path, 'wb')  as f:
-            pickle.dump(score_table, f)
+        score_table.to_pickle(score_table_path)
 
 if __name__ == '__main__':
     main()
