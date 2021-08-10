@@ -15,6 +15,7 @@ import docopt
 import glob
 import sys, os
 import numpy as np
+import pandas as pd
 from shutil import copyfile
 from helix import workspace as ws
 
@@ -24,6 +25,7 @@ class Design(object):
         self.path = path
         self.backbone_coords = []
         self.score = None
+        self.length = None
         self.get_score()
 
     def read_coords(self, chain=None):
@@ -57,19 +59,24 @@ class Design(object):
         # if len(glob.glob(os.path.dirname(self.path) + '/all.d*')) > 1:
             # print('WARNING: Multiple docking scorefiles detected.')
             # print('This may result in the wrong score being used.')
-        scorefiles = sorted(glob.glob(os.path.join(
-            os.path.dirname(self.path), 'all.dok*'
-            )))
+        scorefile = os.path.join(os.path.dirname(self.path), 'scores.pkl')
+        # scorefiles = sorted(glob.glob(os.path.join(
+            # os.path.dirname(self.path), 'all.dok*'
+            # )))
         # scorefile = os.path.join(os.path.dirname(self.path), 'all.dok')
-        scorefile = scorefiles[-1]
-        with open(scorefile, 'r') as f:
-            for line in f:
-                score = line[76:82]
-                path = line[141:-1]
+        # scorefile = scorefiles[-1]
+        score_df = pd.read_pickle(scorefile)
+        design = score_df[score_df['name'] == os.path.basename(self.path)].iloc[0]
+        self.score = design['score']
+        self.length = design['length']
+        # with open(scorefile, 'r') as f:
+            # for line in f:
+                # score = line[76:82]
+                # path = line[141:-1]
 
-                if os.path.basename(path) == os.path.basename(self.path):
-                    self.score = float(score)
-                    return
+                # if os.path.basename(path) == os.path.basename(self.path):
+                    # self.score = float(score)
+                    # return
 
 
 class Cluster(object):
