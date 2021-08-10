@@ -16,7 +16,7 @@ import glob
 import math
 import pickle
 from subprocess import Popen, PIPE, STDOUT
-from pyrosetta.toolbox import *
+from pyrosetta import *
 from io import StringIO
 from shutil import copytree
 from shutil import copyfile
