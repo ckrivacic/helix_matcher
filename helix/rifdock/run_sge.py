@@ -228,12 +228,13 @@ def main():
 
             selector = residue_selector.ChainSelector('A')
             not_selector = residue_selector.NotResidueSelector(selector)
-            static_residues = not_selector.apply(pose)
+            # static_residues = not_selector.apply(pose)
 
             tf = TaskFactory()
             no_packing = operation.PreventRepackingRLT()
             static = operation.OperateOnResidueSubset(no_packing,
-                    static_residues, False)
+                    not_selector)
+            tf.push_back(static)
             packertask = tf.create_task_and_apply_taskoperations(pose)
             print('REPACK')
             print(packertask.repacking_residues())
