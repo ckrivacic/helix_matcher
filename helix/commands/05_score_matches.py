@@ -50,6 +50,7 @@ def get_pymol_transform(transformation):
 
 def session_from_graph(workspace, results_row, query_df, db_df, alpha):
 
+    init()
     def chain_from_name(string):
         chainno = int(string.split('_')[-1])
         chain = chr(ord('@')+chainno)
@@ -122,7 +123,10 @@ def session_from_graph(workspace, results_row, query_df, db_df, alpha):
     print(query_selstr)
     print(db_selstr)
 
-    cmd = ['./launch_pymol.sho']
+    script_path = os.path.dirname(os.path.realpath(__file__))
+    script_path = os.path.join(script_path, '..', 'analysis',
+            'launch_pymol.sho')
+    cmd = [script_path]
     cmd.append(query_path + '/')
     cmd.append(pdb)
     cmd.append(query_selstr)
@@ -172,6 +176,7 @@ def score_matches(workspace, results, query_df, db_df, plot=False):
         clash_score.apply()
         print('CLASH SCORE IS {}'.format(clash_score.score))
         results.at[idx,'clash_score'] = clash_score.score
+        session_from_graph(workspace, row, query_df, db_df, alpha)
         rifdock_score = 0
         if clash_score.subgraph:
             for node in clash_score.subgraph:

@@ -674,6 +674,8 @@ def main():
                     for path in pdbs:
                         # First chain is the docked helix
                         pose = pose_from_file(path).split_by_chain(1)
+                        path = os.path.relpath(path,
+                                start=workspace.root_dir)
 
                         # Scan pdb helices
                         scanner = scan_helices.PoseScanner(pose)

@@ -673,8 +673,9 @@ class MatchWorkspace(Workspace):
             # for helix in rif_workspace.docked_helices:
             for helix in glob.glob(os.path.join(self.cluster_outputs,
                 "*/", '*.pdb.gz')):
+                path = os.path.relpath(helix, start=self.root_dir)
                 atoms = prody.parsePDB(helix, chain='A').select('name CA')
-                atoms_dict[helix] = atoms.getCoords()
+                atoms_dict[path] = atoms.getCoords()
             with open(self.query_CA_path, 'wb') as f:
                 pickle.dump(atoms_dict, f)
             return atoms_dict

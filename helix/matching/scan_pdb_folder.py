@@ -57,9 +57,10 @@ def main():
         pose = pose_from_file(f)
         scanner = PoseScanner(pose)
         posename = os.path.basename(f).split('.')[0]
+        path = os.path.relpath(f, start=workspace.root_dir)
         helices = pd.DataFrame(
                 scanner.scan_pose_helices(name=posename,
-                    split_chains=args['--split-chains'])
+                    split_chains=args['--split-chains'], path=path)
                 )
         df = pd.concat([df, helices], ignore_index=True)
 

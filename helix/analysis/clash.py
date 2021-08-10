@@ -3,6 +3,7 @@ from helix.utils.utils import max_subgraph
 from helix.utils.utils import download_and_clean_pdb
 import alphashape
 from copy import deepcopy
+import math
 import os
 import numpy as np
 import pandas as pd
@@ -26,7 +27,7 @@ def get_relative_path(workspace, path, depth=5):
 
 class ClashScore(object):
     def __init__(self, workspace, results_row, database_helices, query_helices,
-            alpha=None, pdb=None):
+            alpha=None, pdb=None, query_CAs=None):
         self.workspace = workspace
         self.graph = results_row['graph']
         self.name = results_row['name'].split('_')[0]
@@ -44,8 +45,10 @@ class ClashScore(object):
             self.alpha = get_alphashape(self.pdb_path)
         else:
             self.alpha = alpha
+        if not query_CAs:
+            self.query_CAs = self.workspace.query_CAs
 
-    def interweave_score(self, atoms, df_rows, query_rows):
+    def calc_interweave_score(self, atoms, df_rows, query_rows):
         '''
         Get indices of helices from df_rows to find which residues to
         look at.
@@ -55,13 +58,39 @@ class ClashScore(object):
         Create a matrix of CA positions for scaffold atoms and query
         atoms. Or make a dataframe similar to patches, so we can sort?
         '''
+        # tar_CAs = atoms.select('name CA').getCoords()
+
+        def func(dist, w=20.0):
+            return -w * math.cos(2 * dist * math.pi / 5.4) + w
+
+        atoms = atoms.select("name CA")
+        # score = 0
+        scores = []
         for i in range(0, len(df_rows)):
             row = df_rows[i]
-            subselection = atoms.select('resnum {}:{} and name '\
-                    'CA'.format(row['start'], row['stop']))
+            target_helix_CAs = deepcopy(atoms)
+            subselection = target_helix_CAs.select('resindex {}:{} and name '\
+                    'CA'.format(row['start'] - 1, row['stop']))
+            tar_CAs = subselection.getCoords()
             query_path = get_relative_path(self.workspace,
-                    query_rows[i]['path'], depth=6)
-        return
+                    query_rows[i]['path'], depth=5)
+            query_path = os.path.relpath(query_path,
+                    start=self.workspace.root_dir)
+            query_CAs = self.query_CAs[query_path]
+            distance_matrix = pd.DataFrame()
+            for i in range(0, len(query_CAs)):
+                for j in range(0, len(tar_CAs)):
+                    distance_matrix.at[i, j] = numeric.euclidean_distance(query_CAs[i], tar_CAs[j])
+            helix_scores = []
+            for j in range(0, len(tar_CAs)):
+                nearest = distance_matrix[j].sort_values()
+                nearest = nearest.iloc[0]
+                if nearest < 5.4:
+                    helix_scores.append(func(nearest))
+            helix_score = sum(helix_scores) / len(helix_scores)
+            scores.append(helix_score)
+
+        return sum(scores)
 
 
     def apply(self):
@@ -88,6 +117,9 @@ class ClashScore(object):
             if score < best_score:
                 best_score = score
                 best_subgraph = subgraph
+            # self.interweave_score = self.calc_interweave_score(atoms, df_rows, query_rows)
+            # assert(self.interweave_score is not None)
+            # print(self.interweave_score)
 
         self.score = best_score
         self.subgraph = best_subgraph
