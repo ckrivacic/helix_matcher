@@ -219,6 +219,7 @@ def main():
             pymol.cmd.save(pdb, 'mobile')
 
             # Now perform a quick fixbb on the helix
+            pose = pose_from_pdb(pdb)
             ref = create_score_function('ref2015')
             fixbb = pyrosetta.rosetta.protocols.denovo_design.movers.FastDesign(ref, 1)
             movemap = MoveMap()
