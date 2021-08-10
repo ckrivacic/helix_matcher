@@ -12,6 +12,7 @@ Options:
 '''
 
 import sys, os, docopt
+import pandas as pd
 import glob
 import math
 import pickle
