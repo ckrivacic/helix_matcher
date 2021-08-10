@@ -219,7 +219,8 @@ def main():
             pymol.cmd.save(pdb, 'mobile')
 
             # Now perform a quick fixbb on the helix
-            fixbb = pyrosetta.rosetta.protocols.denovo_design.movers.FastDesign(1)
+            ref = create_score_function('ref2015')
+            fixbb = pyrosetta.rosetta.protocols.denovo_design.movers.FastDesign(ref, 1)
             movemap = MoveMap()
             movemap.set_bb(False)
             movemap.set_chi(True)
@@ -237,7 +238,6 @@ def main():
             print(packertask.repacking_residues())
             print('DESIGN')
             print(packertask.designing_residues())
-            ref = create_score_function('ref2015')
             fixbb.set_task_factory(tf)
             fixbb.set_movemap(movemap)
             fixbb.set_scorefxn(ref)
