@@ -123,10 +123,6 @@ class Workspace(object):
     def bin_pickles(self):
         length = self.settings['match'].get('--length', False)
         dbpath = self.database_path
-        print('LENGTH')
-        print(length)
-        # dbpath = os.path.join(self.root_dir,
-                # self.settings['match']['--database'])
         if length:
             dbpath = os.path.join(dbpath, 'length')
         else:
@@ -136,7 +132,6 @@ class Workspace(object):
                 float(self.settings['match']['--angstroms']),
                 float(self.settings['match']['--degrees']))
                 )
-        print(dbpath)
         return sorted(glob.glob(os.path.join(dbpath, '*.pkl')))
     
     @property
