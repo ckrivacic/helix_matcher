@@ -297,7 +297,9 @@ if __name__=='__main__':
                 out
                 )
         dokfile = sorted(glob.glob(rep_dir + '/*.dok*'))[-1]
-        out_df.append(clusters[clst].rep.info)
+        info = clusters[clst].rep.info
+        info['rep_name'] = outfile
+        out_df.append(info)
         with open(dokfile, 'r') as f:
             for line in f:
                 linesplit = line.split(' ')
