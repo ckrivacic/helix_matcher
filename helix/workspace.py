@@ -122,10 +122,11 @@ class Workspace(object):
     @property
     def bin_pickles(self):
         length = self.settings['match'].get('--length', False)
+        dbpath = self.database_path
         print('LENGTH')
         print(length)
-        dbpath = os.path.join(self.root_dir,
-                self.settings['match']['--database'])
+        # dbpath = os.path.join(self.root_dir,
+                # self.settings['match']['--database'])
         if length:
             dbpath = os.path.join(dbpath, 'length')
         else:
