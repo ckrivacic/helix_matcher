@@ -103,8 +103,7 @@ class Workspace(object):
 
     @property
     def dataframe_path(self):
-        dbpath = os.path.join(self.root_dir,
-                self.settings['match']['--database'])
+        dbpath = self.database_path
         picklepath = glob.glob(os.path.join(dbpath, 'helixdf*.pkl'))
         if len(picklepath) > 1:
             print("Multiple helix dataframes found in {0}! Please consolodate them "\

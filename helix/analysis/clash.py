@@ -25,24 +25,32 @@ def get_relative_path(workspace, path, depth=5):
     return os.path.join(*pathlist)
 
 
-class ClashScore(object):
+class Score(object):
     def __init__(self, workspace, results_row, database_helices, query_helices,
-            alpha=None, pdb=None, query_CAs=None):
+            alpha=None, pdb=None, query_CAs=None, target_path=None):
         self.workspace = workspace
         self.graph = results_row['graph']
         self.name = results_row['name'].split('_')[0]
         self.db_helices = database_helices
+        self.subgraphs = max_subgraph(self.graph)
         self.query_helices = query_helices
-        if not pdb:
+        if 'path' not in database_helices.columns:
+            print(database_helices.columns)
             self.pdb_path = download_and_clean_pdb(self.name)
         else:
-            self.pdb_path = pdb
+            self.pdb_path = os.path.join(
+                    self.workspace.root_dir,
+                    self.db_helices.loc[self.subgraphs[0][0][0]]['path']
+                    )
         print('PDB PATH for CLASH FILTER {}'.format(self.pdb_path))
-        self.subgraphs = max_subgraph(self.graph)
         self.chain = self.db_helices.loc[self.subgraphs[0][0][0]]['chain']
 
         if not alpha:
-            self.alpha = get_alphashape(self.pdb_path)
+            if not target_path:
+                print('No alphashape or target provided. Do not attempt to '\
+                        'calculate clash score.')
+            else:
+                self.alpha = get_alphashape(self.target_path)
         else:
             self.alpha = alpha
         if not query_CAs:
@@ -68,7 +76,7 @@ class ClashScore(object):
         scores = []
         for i in range(0, len(df_rows)):
             row = df_rows[i]
-            target_helix_CAs = deepcopy(atoms)
+            target_helix_CAs = atoms.copy()
             subselection = target_helix_CAs.select('resindex {}:{} and name '\
                     'CA'.format(row['start'] - 1, row['stop']))
             tar_CAs = subselection.getCoords()
@@ -103,7 +111,7 @@ class ClashScore(object):
         original_atoms = prody.parsePDB(self.pdb_path,
                 chain=self.chain).select('backbone')
         for subgraph in self.subgraphs:
-            atoms = deepcopy(original_atoms)
+            atoms = original_atoms.copy()
             # df_vectors, query_vectors = self.get_vectors(subgraph)
             df_rows, query_rows = self.get_helix_rows(subgraph)
             df_vectors = self.get_vectors(df_rows)
@@ -219,7 +227,7 @@ def test():
     alpha_shape = get_alphashape(pdb, chain=None, plot=True)
 
     for idx, row in results.iterrows():
-        clash_score = ClashScore(row, df_helices, query_helices,
+        clash_score = Score(row, df_helices, query_helices,
                 alpha=alpha_shape)
         clash_score.apply()
         print(row['name'])

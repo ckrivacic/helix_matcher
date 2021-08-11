@@ -56,7 +56,7 @@ def session_from_graph(workspace, results_row, query_df, db_df, alpha):
         chain = chr(ord('@')+chainno)
         return chain
 
-    clash_score = clash.ClashScore(workspace, results_row, db_df, query_df,
+    clash_score = clash.Score(workspace, results_row, db_df, query_df,
             alpha=alpha)
     clash_score.apply()
     print('SCORE IS {}'.format(clash_score.score))
@@ -71,9 +71,16 @@ def session_from_graph(workspace, results_row, query_df, db_df, alpha):
 
     db_sels = []
     df_row = db_df.loc[subgraph[0][0]]
-    pdb = df_row['name'].split('_')[0]
-    pymol.cmd.fetch(pdb)
-    dfpose = pose_from_file(pdb + '.cif')
+    if 'path' in df_row:
+        pdb = df_row['path']
+        pdb_name = os.path.basename(pdb)
+        # pymol.cmd.load(pdb, pdb_name)
+        dfpose = pose_from_file(pdb)
+    else:
+        pdb = df_row['name'].split('_')[0]
+        pdb_name = pdb
+        # pymol.cmd.fetch(pdb, pdb_name)
+        dfpose = pose_from_file(pdb + '.cif')
     query_vectors = []
     df_vectors = []
     qobjs = '('
@@ -84,11 +91,13 @@ def session_from_graph(workspace, results_row, query_df, db_df, alpha):
         df_row = db_df.loc[df_idx]
         query_row = query_df.loc[query_idx]
 
-        start = dfpose.pdb_info().pose2pdb(df_row['start']).split(' ')[0]
-        stop = dfpose.pdb_info().pose2pdb(df_row['stop']).split(' ')[0]
-        # start = df_row['start']
-        # stop = df_row['stop']
-        
+        try:
+            start = dfpose.pdb_info().pose2pdb(df_row['start']).split(' ')[0]
+            stop = dfpose.pdb_info().pose2pdb(df_row['stop']).split(' ')[0]
+        except:
+            start = df_row['start']
+            stop = df_row['stop']
+
         query_vectors.extend(query_row['vector'])
         df_vectors.extend(df_row['vector'])
 
@@ -171,21 +180,21 @@ def score_matches(workspace, results, query_df, db_df, plot=False):
     for idx, row in results.iterrows():
         curr += 1
         print('Row {} out of {}'.format(curr, numrows))
-        clash_score = clash.ClashScore(workspace, row, db_df, query_df,
+        clash_score = clash.Score(workspace, row, db_df, query_df,
                 alpha=alpha)
         clash_score.apply()
         print('CLASH SCORE IS {}'.format(clash_score.score))
         results.at[idx,'clash_score'] = clash_score.score
-        session_from_graph(workspace, row, query_df, db_df, alpha)
+        length = 0
         rifdock_score = 0
+        rosetta_score = 0
         if clash_score.subgraph:
             for node in clash_score.subgraph:
                 query_idx = node[1]
                 query_row = query_df.loc[query_idx]
-                print(query_row)
+                # Helixpath will follow symlink.
                 helixpath = os.path.realpath(query_row['path'])
-                helixpath = clash.get_relative_path(workspace, helixpath)
-                print('-----------------')
+                # helixpath = clash.get_relative_path(workspace, helixpath)
                 # turnno = os.path.basename(helixpath).split('_')[0][0]
                 score_file = \
                         match_scaffold(workspace, helixpath)\
@@ -195,19 +204,37 @@ def score_matches(workspace, results, query_df, db_df, plot=False):
                         score_file
                         )
                 scorepath = clash.get_relative_path(workspace, scorepath)
-                print(scorepath)
+                rosetta_scorepath = os.path.join(
+                        os.path.dirname(query_row['path']),
+                        'scores.pkl'
+                        )
+                try:
+                    rosetta_scores = pd.read_pickle(rosetta_scorepath)
+                except:
+                    with open(rosetta_scorepath, 'rb') as f:
+                        rosetta_scores = pickle.load(f)
                 # In the future, would be more efficient to just open all
                 # the score files once and save them to a dataframe.
                 with open(scorepath, 'r') as f:
                     for line in f:
                         line = line.strip('\n')
-                        if line.startswith(os.path.basename(helixpath)):
+                        if line.startswith(os.path.basename(query_row['path'])):
                             print(line)
                             score_line = line
                             break
                 score = float(score_line.split()[11])
+                score_row =\
+                        rosetta_scores[rosetta_scores['original_path']==os.path.relpath(helixpath,
+                        workspace.root_dir)]
+                rosetta_score += float(score_row['score'])
+                print(score_row['size'])
+                length += float(score_row['size'])
                 rifdock_score += score
             print('RIFDOCK SCORE IS {}'.format(rifdock_score))
+            print('ROSETTA SCORE IS {}'.format(rosetta_score))
+            print('ROSETTA NORMALIZED SCORE IS {}'.format(rosetta_score
+                / length))
+            # session_from_graph(workspace, row, query_df, db_df, alpha)
             print('====================================')
             results.at[idx,'rifdock_score'] = rifdock_score
         # print(row)
@@ -239,12 +266,15 @@ def test_scoring():
                         # 'rifdock/boundary/cluster_representatives/4_turn/query_helices.pkl')
                     # )
             try:
+                df = pd.read_pickle(match_workspace.dataframe_path)
                 helices = pd.read_pickle(match_workspace.all_scaffold_dataframe)
             except:
                 with open(match_workspace.all_scaffold_dataframe, 'rb') as f:
                     helices = pickle.load(f)
+                with open(match_workspace.dataframe_path, 'rb') as f:
+                    df = pickle.load(f)
             # df = pd.read_pickle('dataframes_clash/final.pkl')
-            df = pd.read_pickle(match_workspace.dataframe_path)
+            print(match_workspace.dataframe_path)
             results = score_matches(match_workspace, output, helices,
                     df, plot=args['--plot-alphashape'])
  
