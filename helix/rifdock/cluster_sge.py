@@ -298,7 +298,10 @@ if __name__=='__main__':
                 )
         dokfile = sorted(glob.glob(rep_dir + '/*.dok*'))[-1]
         info = clusters[clst].rep.info
+        original_path = os.path.relpath(clusters[clst].rep.path,
+                workspace.root_dir)
         info['rep_name'] = outfile
+        info['original_path'] = original_path
         out_df.append(info)
         with open(dokfile, 'r') as f:
             for line in f:
