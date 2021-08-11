@@ -16,6 +16,7 @@ import glob
 import sys, os
 import numpy as np
 import pandas as pd
+import pickle5
 from shutil import copyfile
 from helix import workspace as ws
 
@@ -64,7 +65,11 @@ class Design(object):
             # )))
         # scorefile = os.path.join(os.path.dirname(self.path), 'all.dok')
         # scorefile = scorefiles[-1]
-        score_df = pd.read_pickle(scorefile)
+        try:
+            score_df = pd.read_pickle(scorefile)
+        except:
+            with open(scorefile, 'rb') as f:
+                score_df = pickle5.load(f)
         design_row = score_df[score_df['name'] == os.path.basename(self.path)].iloc[0]
         self.score = design_row['score']
         self.info = design_row
@@ -92,7 +97,7 @@ class Cluster(object):
         self.designs.append(design)
 
     def find_rep(self):
-        lowest_score = 9999
+        lowest_score = np.inf
         for design in self.designs:
             if design.score < lowest_score:
                 lowest_score = design.score
@@ -270,8 +275,11 @@ if __name__=='__main__':
             if os.path.exists(out):
                 os.remove(out)
         print('CLUSTER {}'.format(clst))
-        print('REP:')
-        print(clusters[clst].rep.path)
+        if len(clusters[clst].designs) > 0:
+            print('REP:')
+            print(clusters[clst].rep.path)
+        else:
+            print('No designs in cluster (?)')
         rep_dir = os.path.dirname(
                 os.path.abspath(
                     clusters[clst].rep.path
