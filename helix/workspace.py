@@ -133,8 +133,8 @@ class Workspace(object):
             dbpath = os.path.join(dbpath, 'standard')
         dbpath = os.path.join(dbpath, 
                 "bins_{}A_{}D".format(
-                self.settings['match']['--angstroms'],
-                self.settings['match']['--degrees'])
+                float(self.settings['match']['--angstroms']),
+                float(self.settings['match']['--degrees']))
                 )
         print(dbpath)
         return sorted(glob.glob(os.path.join(dbpath, '*.pkl')))
