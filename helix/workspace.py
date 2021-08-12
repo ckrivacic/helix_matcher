@@ -154,6 +154,7 @@ class Workspace(object):
             scored = glob.glob(
                     os.path.join(
                         self.target_match_path(target),
+                        'outputs',
                         'results_scored_*.pkl'
                         )
                     )
