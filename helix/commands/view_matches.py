@@ -48,7 +48,7 @@ def session_from_graph(workspace, results_row, query_df, db_df):
     else:
         pdb = df_row['name'].split('_')[0]
         pdb_name = pdb
-        # pymol.cmd.fetch(pdb, pdb_name)
+        pymol.cmd.fetch(pdb, pdb_name)
         dfpose = pose_from_file(pdb + '.cif')
     query_vectors = []
     df_vectors = []
