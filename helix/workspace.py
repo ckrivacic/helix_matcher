@@ -505,6 +505,12 @@ Expected to find a file matching '{0}'.  Did you forget to compile rosetta?
         from . import big_jobs
         return [big_jobs.read_job_info(x) for x in self.all_job_info_paths]
 
+    @property
+    def all_match_outputs(self):
+        look = os.path.join(self.root_dir, self.match_outdir, '*/',
+                'outputs/', '*.pkl')
+        return sorted(glob.glob(look))
+
 
 class RIFWorkspace(Workspace):
     '''
