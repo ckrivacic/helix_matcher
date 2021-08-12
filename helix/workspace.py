@@ -142,6 +142,24 @@ class Workspace(object):
             self.project_params_dir, 'database'
             ))
 
+    def clear_scores(self):
+        import shutil
+        score_logs = glob.glob(
+                os.path.join(
+                    self.log_dir,
+                    'score_matches*'))
+        for log in score_logs:
+            os.remove(log)
+        for target in self.targets:
+            scored = glob.glob(
+                    os.path.join(
+                        self.target_match_path(target),
+                        'results_scored_*.pkl'
+                        )
+                    )
+        for sc in scored:
+            shutil.rmtree(sc)
+
     def is_default_database(self, dbpath):
         '''Checks if a database path is the default one by
         checking whether it is in standard_params or not'''

@@ -5,6 +5,8 @@ Usage:
 options:
     --local, -l  Run locally
 
+    --clear, -o  Clear scored outputs (for ALL targets)
+
     --dataframe=PKL, -d  Path to dataframe of helix vectors  [default: nr_dataframes/final.pkl]
 
     --plot-alphashape, -p  Show a plot that displays the alphashape of the target protein
@@ -43,8 +45,10 @@ def main():
     else:
         dataframes = workspace.all_match_outputs
 
+    if args['--clear']:
+        workspace.clear_scores()
+
     ntasks = int(args['--ntasks']) * len(dataframes)
-    print(args)
 
     cmd = workspace.python_path, script_path
     cmd += workspace.root_dir,

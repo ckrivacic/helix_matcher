@@ -464,7 +464,8 @@ def main():
 
     results = score_matches(match_workspace, output, helices, df,
             plot=args['--plot-alphashape'])
-    results.to_pickle('results_scored_{}_{}.pkl'.format(suffix, subjob))
+    out = os.path.join(match_workspace.output_dir,'results_scored_{}_{}.pkl'.format(suffix, subjob))
+    results.to_pickle(out)
 
 
 if __name__=='__main__':
