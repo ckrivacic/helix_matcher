@@ -447,6 +447,8 @@ def main():
     interval = output_size // ntasks
     start = subjob * interval
     stop = start + interval
+    print("START ROW: {}".format(start))
+    print("STOP ROW: {}".format(stop))
     output = output.iloc[start:stop]
 
     suffix = result.split('.')[0].split('_')[-1]
