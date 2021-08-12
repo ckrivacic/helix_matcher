@@ -94,7 +94,6 @@ def session_from_graph(workspace, results_row, query_df, db_df):
         db_selstr += ' or '
         db_selstr += db_sels[i]
     db_selstr += ')'
-    print(db_selstr)
 
     query_selstr = query_selstr[:-4]
     query_selstr += ' and chain A'
