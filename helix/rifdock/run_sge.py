@@ -24,6 +24,7 @@ from shutil import copyfile
 from distutils.dir_util import copy_tree
 from helix import workspace as ws
 from helix import big_jobs
+from helix.rifdock import interface
 
 
 
@@ -261,10 +262,12 @@ def main():
             fixbb.apply(pose)
             score = ref(pose)
             pose.dump_pdb(pdb)
+            interface_scorer = interface.InterfaceScore(pdb)
             # chain = pose.split_by_chain(1)
             row = {'name': os.path.basename(pdb),
                     'size': pose.size(),
-                    'score': score}
+                    'pose_score': score,
+                    'interface_score': interface_scorer.apply(),}
             rows.append(row)
 
         # Copy back to permanent folder
