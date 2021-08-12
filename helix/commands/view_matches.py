@@ -6,7 +6,7 @@ Usage:
     helix view_matches <workspace> [options]
 
 Options:
-    --target, -t  Only view matches for the given target
+    --target=STR, -t  Only view matches for the given target
 '''
 from helix.analysis import clash
 from helix import workspace as ws
@@ -22,6 +22,19 @@ from pyrosetta import init
 from helix.utils import numeric
 import subprocess
 import os
+
+
+def get_pymol_transform(transformation):
+    pymol_transform = []
+
+    for i in range(0, 3):
+        for item in transformation.rotation[i]:
+            pymol_transform.append(str(item))
+        pymol_transform.append(str(transformation.translation[i]))
+    # pymol_transform.extend([0,0,0,0])
+    
+    return pymol_transform
+
 
 def session_from_graph(workspace, results_row, query_df, db_df):
 
@@ -126,15 +139,23 @@ def main():
 
     try:
         df = pd.read_pickle(workspace.dataframe_path)
-        helices = pd.read_pickle(workspace.all_scaffold_dataframe)
     except:
         with open(workspace.dataframe_path, 'rb') as f:
             df = pickle.load(f)
-        with open(workspace.all_scaffold_dataframe, 'rb') as f:
-            helices = pickle.load(f)
 
-    for target in workspace.targets:
-        scored_outputs = workspace.match_outputs(target)
+    if args['--target']:
+        targets = [args['--target']]
+    else:
+        targets = workspace.targets
+    for target in targets:
+        match_workspace = \
+                ws.workspace_from_dir(workspace.target_match_path(target))
+        try:
+            helices = pd.read_pickle(match_workspace.all_scaffold_dataframe)
+        except:
+            with open(match_workspace.all_scaffold_dataframe, 'rb') as f:
+                helices = pickle.load(f)
+        scored_outputs = match_workspace.scored_outputs
         results = pd.DataFrame()
         for outfile in scored_outputs:
             try:
@@ -142,10 +163,10 @@ def main():
             except:
                 with open(outfile, 'rb') as f:
                     scores = pickle.load(f)
-            results = results.concat([results, scores],
+            results = pd.concat([results, scores],
                     ignore_index=True)
         results = results.sort_values(by='total_match_score',
                 ascending=True)
         for i in range(0, 100):
             testrow = results.iloc[i]
-            session_from_graph(workspace, testrow, helices, df, alpha)
+            session_from_graph(match_workspace, testrow, helices, df)
