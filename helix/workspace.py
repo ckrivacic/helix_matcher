@@ -220,10 +220,22 @@ class Workspace(object):
     def match_outdir(self):
         return os.path.join(self.root_dir, 'match_outputs')
 
+    @property
+    def all_match_outputs(self):
+        look = os.path.join(self.match_outdir, '*/',
+                'outputs/', '*.pkl')
+        return sorted(glob.glob(look))
+
     def target_match_path(self, target):
         out_folder = os.path.join(self.match_outdir,
                 self.basename(target))
         return out_folder
+
+    @property
+    def scored_match_outputs(self, target):
+        look = os.path.join(self.target_match_folder(target), 'outputs',
+                'results_scored_*.pkl')
+        return sorted(glob.glob(look))
 
     @property
     def slurm_custom_jobno(self):
@@ -522,12 +534,6 @@ Expected to find a file matching '{0}'.  Did you forget to compile rosetta?
     def all_job_info(self):
         from . import big_jobs
         return [big_jobs.read_job_info(x) for x in self.all_job_info_paths]
-
-    @property
-    def all_match_outputs(self):
-        look = os.path.join(self.root_dir, self.match_outdir, '*/',
-                'outputs/', '*.pkl')
-        return sorted(glob.glob(look))
 
 
 class RIFWorkspace(Workspace):
