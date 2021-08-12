@@ -210,7 +210,7 @@ def apply(scorer, cutoff=50):
                     'interweave_score': interweave_score,
                     'total_match_score': score + interweave_score,
                     'subgraph': subgraph,
-                    'n_matched_helices': df_rows.shape[0],
+                    'n_matched_helices': len(df_rows),
                     }
             rosetta_score = 0
             length = 0
