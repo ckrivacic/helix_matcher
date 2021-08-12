@@ -133,14 +133,17 @@ def main():
 
     for target in workspace.targets:
         scored_outputs = workspace.match_outputs(target)
+        results = pd.DataFrame()
         for outfile in scored_outputs:
             try:
                 scores = pd.read_pickle(outfile)
             except:
                 with open(outfile, 'rb') as f:
                     scores = pickle.load(f)
-            scores = scores.sort_values(by='total_match_score',
-                    ascending=True)
-            for i in range(0, 100):
-                testrow = resulst.iloc[i]
-                session_from_graph(testrow, helices, df, alpha)
+            results = results.concat([results, scores],
+                    ignore_index=True)
+        results = results.sort_values(by='total_match_score',
+                ascending=True)
+        for i in range(0, 100):
+            testrow = results.iloc[i]
+            session_from_graph(testrow, helices, df, alpha)
