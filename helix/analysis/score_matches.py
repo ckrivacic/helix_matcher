@@ -1,16 +1,16 @@
 '''
 Usage:
-    helix 05_score_matches <workspace> [options]
+    score_matches <workspace> [options]
 
 options:
     --dataframe=PKL, -d
         Path to dataframe of helix vectors  [default: nr_dataframes/final.pkl]
     --plot-alphashape, -p
         Show a plot that displays the alphashape of the target protein
-    --task, -t
+    --task=INT, -t
         Specify a task number if running locally  [default: 0]
-    --ntasks, -n
-        How many tasks to split each result dataframe into
+    --ntasks=INT, -n
+        How many tasks to split each result dataframe into  [default: 1]
 '''
 from helix.analysis import clash
 from helix import workspace as ws
@@ -420,20 +420,34 @@ def main():
     workspace = ws.workspace_from_dir(args['<workspace>'])
     targets = workspace.targets
     if 'SGE_TASK_ID' in os.environ:
-        task = int(os.environ['SGE_TASK_ID'])
+        task = int(os.environ['SGE_TASK_ID']) - 1
     else:
-        task = int(args['--task'])
+        task = int(args['--task']) - 1
     ntasks = int(args['--ntasks'])
-    num_dataframes = len(workspace.all_match_outputs)
+    if args['--target']:
+        match_workspace = \
+                ws.workspace_from_dir(workspace.target_match_patch(args['--target']))
+        dataframes = match_workspace.outputs
+    else:
+        dataframes = workspace.all_match_outputs
+    num_dataframes = len(dataframes)
     this_job = task % num_dataframes
     subjob = task // num_dataframes
-    match_workspace = ws.workspace_from_dir(os.path.dirname(workspace.all_match_outputs[this_job]))
+
+    match_workspace = ws.workspace_from_dir(os.path.dirname(dataframes[this_job]))
     result = workspace.all_match_outputs[this_job]
+
     try:
         output = pd.read_pickle(result)
     except:
         with open(result, 'rb') as f:
             output = pickle.load(f)
+
+    output_size = output.shape[0]
+    interval = output_size // ntasks
+    start = subjob * interval
+    stop = start + interval
+    output = output.iloc[start:stop]
 
     suffix = result.split('.')[0].split('_')[-1]
 
