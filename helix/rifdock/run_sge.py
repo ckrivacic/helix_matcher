@@ -246,8 +246,8 @@ def main():
             static = operation.OperateOnResidueSubset(no_packing,
                     not_selector)
             notaa = operation.ProhibitSpecifiedBaseResidueTypes(strlist_to_vector1_str(
-                ['G'], selector
-                ))
+                ['G']), selector
+                )
             tf.push_back(static)
             tf.push_back(notaa)
             packertask = tf.create_task_and_apply_taskoperations(pose)
