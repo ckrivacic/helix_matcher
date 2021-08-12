@@ -159,7 +159,7 @@ class Workspace(object):
                         )
                     )
         for sc in scored:
-            shutil.rmtree(sc)
+            os.remove(sc)
 
     def is_default_database(self, dbpath):
         '''Checks if a database path is the default one by
