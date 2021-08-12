@@ -429,7 +429,7 @@ def main():
     ntasks = int(args['--ntasks'])
     if args['--target']:
         match_workspace = \
-                ws.workspace_from_dir(workspace.target_match_patch(args['--target']))
+                ws.workspace_from_dir(workspace.target_match_path(args['--target']))
         dataframes = match_workspace.outputs
     else:
         dataframes = workspace.all_match_outputs
