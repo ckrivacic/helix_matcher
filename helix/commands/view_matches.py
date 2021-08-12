@@ -36,7 +36,7 @@ def session_from_graph(results_row, query_df, db_df):
     query_selstr = ""
     db_selstr = "db and "
 
-    query_path = os.path.dirname(query_df.loc[0]['path'])
+    # query_path = os.path.dirname(query_df.loc[0]['path'])
 
     db_sels = []
     df_row = db_df.loc[subgraph[0][0]]
@@ -54,11 +54,13 @@ def session_from_graph(results_row, query_df, db_df):
     df_vectors = []
     qobjs = '('
 
+    query_paths = []
     for node in subgraph:
         df_idx = node[0]
         query_idx = node[1]
         df_row = db_df.loc[df_idx]
         query_row = query_df.loc[query_idx]
+        query_paths.append(query_row['path'])
 
         try:
             start = dfpose.pdb_info().pose2pdb(df_row['start']).split(' ')[0]
@@ -105,7 +107,7 @@ def session_from_graph(results_row, query_df, db_df):
     script_path = os.path.join(script_path, '..', 'analysis',
             'launch_pymol.sho')
     cmd = [script_path]
-    cmd.append(query_path + '/')
+    cmd.append(';'.join(query_paths))
     cmd.append(pdb)
     cmd.append(query_selstr)
     cmd.append(db_selstr)
