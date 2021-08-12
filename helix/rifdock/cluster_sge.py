@@ -71,7 +71,7 @@ class Design(object):
             with open(scorefile, 'rb') as f:
                 score_df = pickle5.load(f)
         design_row = score_df[score_df['name'] == os.path.basename(self.path)].iloc[0]
-        self.score = design_row['score']
+        self.score = design_row['interface_score']
         self.info = design_row
         # with open(scorefile, 'r') as f:
             # for line in f:
