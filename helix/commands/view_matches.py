@@ -23,7 +23,7 @@ from helix.utils import numeric
 import subprocess
 import os
 
-def session_from_graph(results_row, query_df, db_df):
+def session_from_graph(workspace, results_row, query_df, db_df):
 
     init()
     def chain_from_name(string):
@@ -60,7 +60,8 @@ def session_from_graph(results_row, query_df, db_df):
         query_idx = node[1]
         df_row = db_df.loc[df_idx]
         query_row = query_df.loc[query_idx]
-        query_paths.append(query_row['path'])
+        query_paths.append(os.path.join(workspace.root_dir,
+            query_row['path']))
 
         try:
             start = dfpose.pdb_info().pose2pdb(df_row['start']).split(' ')[0]
@@ -148,4 +149,4 @@ def main():
                 ascending=True)
         for i in range(0, 100):
             testrow = results.iloc[i]
-            session_from_graph(testrow, helices, df, alpha)
+            session_from_graph(workspace, testrow, helices, df, alpha)
