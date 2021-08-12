@@ -248,9 +248,9 @@ def main():
             fixbb.apply(pose)
             score = ref(pose)
             pose.dump_pdb(pdb)
-            chain = pose.split_by_chain(1)
+            # chain = pose.split_by_chain(1)
             row = {'name': os.path.basename(pdb),
-                    'size': chain.size(),
+                    'size': pose.size(),
                     'score': score}
             rows.append(row)
 

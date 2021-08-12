@@ -30,13 +30,13 @@ class Score(object):
             alpha=None, pdb=None, query_CAs=None, target_path=None):
         self.workspace = workspace
         self.graph = results_row['graph']
-        self.name = results_row['name'].split('_')[0]
+        self.name = results_row['name']#.split('_')[0]
         self.db_helices = database_helices
         self.subgraphs = max_subgraph(self.graph)
         self.query_helices = query_helices
         if 'path' not in database_helices.columns:
             print(database_helices.columns)
-            self.pdb_path = download_and_clean_pdb(self.name)
+            self.pdb_path = download_and_clean_pdb(self.name.split('_')[0])
         else:
             self.pdb_path = os.path.join(
                     self.workspace.root_dir,
@@ -68,7 +68,7 @@ class Score(object):
         '''
         # tar_CAs = atoms.select('name CA').getCoords()
 
-        def func(dist, w=20.0):
+        def func(dist, w=15):
             return -w * math.cos(2 * dist * math.pi / 5.4) + w
 
         atoms = atoms.select("name CA")
@@ -93,10 +93,16 @@ class Score(object):
             for j in range(0, len(tar_CAs)):
                 nearest = distance_matrix[j].sort_values()
                 nearest = nearest.iloc[0]
-                if nearest < 5.4:
+                if nearest < 5.4:# and nearest > 1.3:
+                    # helix_scores.append(nearest)
                     helix_scores.append(func(nearest))
-            helix_score = sum(helix_scores) / len(helix_scores)
-            scores.append(helix_score)
+                # else:
+                    # helix_scores.append(0)
+            if len(helix_scores) > 0:
+                helix_score = sum(helix_scores) / len(helix_scores)
+                scores.append(helix_score)
+            else:
+                scores.append(0)
 
         return sum(scores)
 
@@ -122,14 +128,17 @@ class Score(object):
                     transform.translation)
             prody_transform.apply(atoms)
             score = self.calculate(atoms)
-            if score < best_score:
-                best_score = score
-                best_subgraph = subgraph
-            # self.interweave_score = self.calc_interweave_score(atoms, df_rows, query_rows)
+            interweave_score = self.calc_interweave_score(atoms, df_rows, query_rows)
             # assert(self.interweave_score is not None)
             # print(self.interweave_score)
+            if score + interweave_score < best_score:
+                best_interweave_score = interweave_score
+                best_clash_score = score
+                best_score = score + interweave_score
+                best_subgraph = subgraph
 
-        self.score = best_score
+        self.interweave_score = best_interweave_score
+        self.score = best_clash_score
         self.subgraph = best_subgraph
 
     def calculate(self, atoms):
