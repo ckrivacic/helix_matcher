@@ -474,4 +474,5 @@ def main():
 
 if __name__=='__main__':
     # test()
-    test_scoring()
+    # test_scoring()
+    main()
