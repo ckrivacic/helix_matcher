@@ -448,6 +448,9 @@ def main():
 
     output_size = output.shape[0]
     interval = output_size // ntasks
+    # print(task)
+    # print(num_dataframes)
+    # print(subjob)
     start = subjob * interval
     stop = start + interval
     print("START ROW: {}".format(start))

@@ -11,7 +11,7 @@ options:
 
     --plot-alphashape, -p  Show a plot that displays the alphashape of the target protein
 
-    --task=INT, -t  Specify a task number if running locally  [default: 0]
+    --task=INT, -t  Specify a task number if running locally
 
     --ntasks=INT, -n  How many tasks to split each result dataframe into  [default: 1]
 
@@ -63,7 +63,7 @@ def main():
             utils.run_command(cmd)
         else:
             for i in range(1, ntasks + 1):
-                cmd += '--task', args['--task']
+                cmd += '--task', str(i)
                 utils.run_command(cmd)
 
     else:

@@ -223,7 +223,7 @@ class Workspace(object):
     @property
     def all_match_outputs(self):
         look = os.path.join(self.match_outdir, '*/',
-                'outputs/', '*.pkl')
+                'outputs/', 'query_results_*.pkl')
         return sorted(glob.glob(look))
 
     def target_match_path(self, target):
