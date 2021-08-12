@@ -435,7 +435,7 @@ def main():
     subjob = task // num_dataframes
 
     match_workspace = ws.workspace_from_dir(os.path.dirname(dataframes[this_job]))
-    result = workspace.all_match_outputs[this_job]
+    result = dataframes[this_job]
 
     try:
         output = pd.read_pickle(result)
@@ -465,6 +465,7 @@ def main():
     results = score_matches(match_workspace, output, helices, df,
             plot=args['--plot-alphashape'])
     out = os.path.join(match_workspace.output_dir,'results_scored_{}_{}.pkl'.format(suffix, subjob))
+    print('SAVING RESULTS TO {}'.format(out))
     results.to_pickle(out)
 
 
