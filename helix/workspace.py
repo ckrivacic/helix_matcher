@@ -742,7 +742,8 @@ class MatchWorkspace(Workspace):
 
     @property
     def outputs(self):
-        return sorted(glob.glob(os.path.join(self.output_dir, '*.pkl')))
+        return sorted(glob.glob(os.path.join(self.output_dir,
+            'query_results_*.pkl')))
 
     def make_dirs(self):
         scripting.mkdir(self.focus_dir)

@@ -67,7 +67,7 @@ def main():
                 utils.run_command(cmd)
 
     else:
-        cmd += '--ntasks', args['--ntasks']
+        print('Submitting command {}'.format(cmd))
         script_name = 'score_matches'
         big_jobs.submit(workspace, cmd,
                 nstruct=ntasks,
