@@ -11,6 +11,8 @@ options:
         Specify a task number if running locally  [default: 0]
     --ntasks=INT, -n
         How many tasks to split each result dataframe into  [default: 1]
+    --target=TAR, -t
+        Only run scoring analysis for a certain target
 '''
 from helix.analysis import clash
 from helix import workspace as ws
