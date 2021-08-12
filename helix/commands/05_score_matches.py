@@ -63,7 +63,7 @@ def main():
             utils.run_command(cmd)
         else:
             for i in range(1, ntasks + 1):
-                run_cmd = cmd + '--task', str(i)
+                run_cmd = cmd + ('--task', str(i))
                 utils.run_command(run_cmd)
 
     else:
