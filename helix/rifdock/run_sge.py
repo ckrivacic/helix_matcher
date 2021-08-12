@@ -109,6 +109,15 @@ def get_flag_params(folder):
     return target, rfcache
 
 
+def strlist_to_vector1_str(strlist):
+    # Should also go in utils eventually
+    from pyrosetta.rosetta.utility import vector1_std_string
+    vector = vector1_std_string()
+    for string in strlist:
+        vector.append(string)
+    return vector
+
+
 def run_command(cmd, environment=None):
     print("Working directory: {}".format(os.getcwd()))
     print("Command: {}".format(' '.join(cmd)))
@@ -236,7 +245,11 @@ def main():
             no_packing = operation.PreventRepackingRLT()
             static = operation.OperateOnResidueSubset(no_packing,
                     not_selector)
+            notaa = operation.ProhibitSpecifiedBaseResidueTypes(strlist_to_vector1_str(
+                ['G'], selector
+                ))
             tf.push_back(static)
+            tf.push_back(notaa)
             packertask = tf.create_task_and_apply_taskoperations(pose)
             print('REPACK')
             print(packertask.repacking_residues())
