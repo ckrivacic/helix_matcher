@@ -158,8 +158,8 @@ class Workspace(object):
                         'results_scored_*.pkl'
                         )
                     )
-        for sc in scored:
-            os.remove(sc)
+            for sc in scored:
+                os.remove(sc)
 
     def is_default_database(self, dbpath):
         '''Checks if a database path is the default one by
