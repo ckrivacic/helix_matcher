@@ -165,8 +165,8 @@ def main():
                     scores = pickle.load(f)
             results = pd.concat([results, scores],
                     ignore_index=True)
-        results = results.sort_values(by='total_match_score',
-                ascending=True)
+        results = results.sort_values(by=['n_matched_helices', 
+            'total_match_score'], ascending=True)
         for i in range(0, 100):
             testrow = results.iloc[i]
             session_from_graph(match_workspace, testrow, helices, df)
