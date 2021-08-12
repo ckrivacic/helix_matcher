@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+helix_paths="${1//;/ }"
+pdb=$2
+tarstr=$3
+dbstr=$4
+chain=$5
+m1=$6
+m2=$7
+m3=$8
+m4=$9
+m5=${10}
+m6=${11}
+m7=${12}
+m8=${13}
+m9=${14}
+m10=${15}
+m11=${16}
+m12=${17}
+qobjs=${18}
+
+matrix="[$m1, $m2, $m3, $m4, $m5, $m6, $m7, $m8, $m9, $m10, $m11, $m12,\
+0, 0, 0, 1]"
+#echo $matrix
+
+pdb_name=$(basename ${pdb})
+if [[ $pdb_name == *.pdb.gz ]]
+then
+    pdb_name=${pdb_name%.pdb.gz}
+elif [[ $pdb_name == *.pdb ]]
+then
+    pdb_name=${pdb_name%.pdb}
+fi
+
+pymol -q $helix_paths $pdb \
+    -d "color white, name c*" \
+    -d "select target, $tarstr" \
+    -d "color green, chain A and name c*" \
+    -d "color orange, target and name c*" \
+    -d "select mobile, $pdb_name and $dbstr" \
+    -d "hide everything, $pdb_name and not chain $chain" \
+    -d "color yellow, mobile" \
+    -d "hide everything, not (($qobjs and (chain A or chain B)) or $pdb_name)" \
+    -d "remove resn hoh" \
+    -d "cmd.transform_selection('$pdb_name', $matrix, homogenous=0)" \
+    -d "center target" \
+    #-d "fetch $pdb" \
