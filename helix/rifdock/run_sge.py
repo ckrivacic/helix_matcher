@@ -262,7 +262,7 @@ def main():
             fixbb.apply(pose)
             score = ref(pose)
             pose.dump_pdb(pdb)
-            interface_scorer = interface.InterfaceScore(pdb)
+            interface_scorer = interface.InterfaceScore(pose)
             # chain = pose.split_by_chain(1)
             row = {'name': os.path.basename(pdb),
                     'size': pose.size(),
