@@ -247,7 +247,7 @@ def main():
             static = operation.OperateOnResidueSubset(no_packing,
                     not_selector)
             notaa = operation.ProhibitSpecifiedBaseResidueTypes(strlist_to_vector1_str(
-                ['G']), selector
+                ['GLY']), selector
                 )
             tf.push_back(static)
             tf.push_back(notaa)
