@@ -50,6 +50,8 @@ class PDB(object):
         # chains = left_chains + '_' + right_chains
         sfxn = create_score_function('ref2015')
         sfxn(self.pose)
+        weights = sfxn.weights()
+        egraph = pose.energies().energy_graph()
         print('SETTING UP FOLD TREE FOR INTERFACE {}'.format(chains))
         setup_foldtree(self.pose, chains, movable_jumps)
 
@@ -64,9 +66,11 @@ class PDB(object):
 
         # Logic for filtering out residues not on chains of interest
         interface_list = []
+        contacts = interface.contact_list()
         # interface_resis = []
         for side in interface.pair_list():
             for resi in side:
+                resi_score = 0
                 # Find out what chain the residue belongs to
                 pdbinfo = self.pose.pdb_info().pose2pdb(resi)
                 # resnum = pdbinfo.split(' ')[0]
@@ -83,12 +87,18 @@ class PDB(object):
                 # to a dictionary or something)
                 if chain in list(chains) and interacting_chain in list(chains):
                     # interface_resis.append(resi)
+                    for contact in contacts[resi]:
+                        edge = egraph.find_energy_edge(resi,
+                                contact).fill_energy_map()
+                        filled = edge * weights
+                        resi_score += filled.sum()
                     row = {'pdb': name,
                             'interface': chains,
                             'chain':chain,
                             'rosetta_resnum': resi,
                             'closest_chain': interacting_chain, 
                             'closest_rosetta_resnum': closest,
+                            'residue_score': resi_score,
                             }
                             # 'closest_pdb_resnum': interacting_resi}
                             # 'pdb_resnum': resnum,
