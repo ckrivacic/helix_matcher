@@ -643,7 +643,7 @@ class RIFWorkspace(Workspace):
 
     @property
     def log_dir(self):
-        return os.path.join(self.focus_dir, 'logs')
+        return os.path.join(self.focus_dir, 'logs/')
 
     def clear_outputs(self):
         for docking_dir in self.docking_directories:

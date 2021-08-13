@@ -253,7 +253,7 @@ def apply(scorer, cutoff=50):
                 score_row =\
                         rosetta_scores[rosetta_scores['original_path']==os.path.relpath(helixpath,
                         scorer.workspace.root_dir)]
-                rosetta_score += float(score_row['score'])
+                rosetta_score += float(score_row['interface_score'])
                 length += float(score_row['size'])
             row['rosetta_score'] = rosetta_score
             row['rifdock_score'] = rifdock_score
