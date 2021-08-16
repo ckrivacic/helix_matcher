@@ -150,9 +150,11 @@ class PDB(object):
                     if n in this_interface['rosetta_resnum'].tolist():
                         helix_interface_resis.append(n)
                 interacting_chains = []
+                interface_score = 0
                 for resi in helix_interface_resis:
-                    interacting_chains.append(this_interface[this_interface['rosetta_resnum'] ==
-                            resi]['closest_chain'].tolist()[0])
+                    this_residue = this_interface[this_interface['rosetta_resnum'] == resi]
+                    interacting_chains.append(this_residue['closest_chain'].tolist()[0])
+                    interface_score += this_residue['residue_score'].tolist()[0]
 
                 chain = self.pose.pdb_info().pose2pdb(helix[0]).split(' ')[1]
                 pdb_resis = [self.pose.pdb_info().pose2pdb(x).split(' ')[0] for x in
@@ -175,6 +177,7 @@ class PDB(object):
                         interacting_chains,
                         'interacting_length':
                         len(helix_interface_resis),
+                        'interface_score': interface_score,
                         }
 
                 rows.append(row)
