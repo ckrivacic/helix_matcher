@@ -51,7 +51,7 @@ class PDB(object):
         sfxn = create_score_function('ref2015')
         sfxn(self.pose)
         weights = sfxn.weights()
-        egraph = pose.energies().energy_graph()
+        egraph = self.pose.energies().energy_graph()
         print('SETTING UP FOLD TREE FOR INTERFACE {}'.format(chains))
         setup_foldtree(self.pose, chains, movable_jumps)
 
