@@ -207,16 +207,16 @@ def contiguous_secstruct(ss_str):
     ss_positions['L'] = []
     ss_positions['E'] = []
 
-	start = 0
-	for i in range(0, len(ss_str)):
-		if ss_str[i] != ss_str[start]:
-			ss_positions[ss_str[start]].append((start + 1, i))
-			start = i
+    start = 0
+    for i in range(0, len(ss_str)):
+        if ss_str[i] != ss_str[start]:
+            ss_positions[ss_str[start]].append((start + 1, i))
+            start = i
 
-	if i + 1== len(ss_str):
-		ss_positions[ss_str[start]].append((start + 1, i + 1))
+    if i + 1== len(ss_str):
+        ss_positions[ss_str[start]].append((start + 1, i + 1))
 
-	return ss_positions
+    return ss_positions
 
 
 def get_pdb_obj(line):
