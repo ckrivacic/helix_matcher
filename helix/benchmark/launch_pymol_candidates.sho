@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+pdb=$1
+selstr=$2
+
+pymol -q \
+    -d "fetch $pdb" \
+    -d "util.cbc all"\
+    -d "$selstr" \
+    -d "color orange, helices and name c*"\
+    -d "center helices" \
