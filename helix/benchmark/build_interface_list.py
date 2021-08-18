@@ -88,8 +88,7 @@ class PDB(object):
                 if chain in list(chains) and interacting_chain in list(chains):
                     # interface_resis.append(resi)
                     for contact in contacts[resi]:
-                        if
-                        self.pose.pdb_info().pose2pdb(contact).split(' ')[1] != chain:
+                        if self.pose.pdb_info().pose2pdb(contact).split(' ')[1] != chain:
                             edge = egraph.find_energy_edge(resi,
                                     contact).fill_energy_map()
                             filled = edge * weights
@@ -153,12 +152,14 @@ class PDB(object):
                         helix_interface_resis.append(n)
                 interacting_chains = []
                 interface_score = 0
+                interface_scores = []
                 interacting_residues_by_score = 0
                 for resi in helix_interface_resis:
                     this_residue = this_interface[this_interface['rosetta_resnum'] == resi]
                     interacting_chains.append(this_residue['closest_chain'].tolist()[0])
                     interface_score += this_residue['residue_score'].tolist()[0]
-                    if this_residue['residue_score'].tolist()[0] < -2:
+                    interface_scores.append(this_residue['residue_score'].tolist()[0])
+                    if this_residue['residue_score'].tolist()[0] < -1.5:
                         interacting_residues_by_score += 1
 
                 chain = self.pose.pdb_info().pose2pdb(helix[0]).split(' ')[1]
@@ -184,7 +185,8 @@ class PDB(object):
                         len(helix_interface_resis),
                         'interface_score': interface_score,
                         'interacting_residues_by_score':
-                        interacting_residues_by_score
+                        interacting_residues_by_score,
+                        'interface_scores' = interface_scores,
                         }
 
                 rows.append(row)
