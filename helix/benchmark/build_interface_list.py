@@ -88,10 +88,12 @@ class PDB(object):
                 if chain in list(chains) and interacting_chain in list(chains):
                     # interface_resis.append(resi)
                     for contact in contacts[resi]:
-                        edge = egraph.find_energy_edge(resi,
-                                contact).fill_energy_map()
-                        filled = edge * weights
-                        resi_score += filled.sum()
+                        if
+                        self.pose.pdb_info().pose2pdb(contact).split(' ')[1] != chain:
+                            edge = egraph.find_energy_edge(resi,
+                                    contact).fill_energy_map()
+                            filled = edge * weights
+                            resi_score += filled.sum()
                     row = {'pdb': name,
                             'interface': chains,
                             'chain':chain,
@@ -193,15 +195,15 @@ class PDB(object):
 
 def contiguous_secstruct(ss_str):
 	"""
-	This function takes the output from rosetta.core.scoring.dssp.Dssp(pair.pose), which is
-	a string of H, L, and E's that denote secondary struct at each residue.
+    This function takes the output from rosetta.core.scoring.dssp.Dssp(pair.pose), which is
+    a string of H, L, and E's that denote secondary struct at each residue.
 
-	Returns a dictionary. Keys = H, L, or E. Values = lists of tuples, each corresp to one continuous secstruct element
-	"""
-	ss_positions = {}
-	ss_positions['H'] = []
-	ss_positions['L'] = []
-	ss_positions['E'] = []
+    Returns a dictionary. Keys = H, L, or E. Values = lists of tuples, each corresp to one continuous secstruct element
+    """
+    ss_positions = {}
+    ss_positions['H'] = []
+    ss_positions['L'] = []
+    ss_positions['E'] = []
 
 	start = 0
 	for i in range(0, len(ss_str)):

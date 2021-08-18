@@ -37,8 +37,10 @@ def main():
     df = df[df['interacting_chain'].apply(lambda x: x is not None)]
     df['target'] = df['interface'].apply(lambda x: x.split('_')[0])
     print
-    df = df[df['interacting_length'].apply(lambda x: int(x) >=
-        args['--interface_residues'])]
+    df = df[df['interacting_residues_by_score'].apply(lambda x: int(x) >=
+        int(args['--interface_residues']))]
+    # df = df[df['interacting_length'].apply(lambda x: int(x) >=
+        # int(args['--interface_residues']))]
     df = df[df['chain'] != df['target']]
     df = df[df['interacting_chain'] == df['target']]
     groups = df.groupby(by=['name', 'target', 'chain'])

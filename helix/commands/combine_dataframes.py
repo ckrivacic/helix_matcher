@@ -15,6 +15,7 @@ import docopt
 import glob
 import sys
 import os
+import pickle5 as pickle
 
 
 def main():
@@ -22,7 +23,11 @@ def main():
     out = pd.DataFrame()
     for path in sorted(glob.glob(args['<folder>'] + '/*.pkl')):
         print('Reading {}'.format(path))
-        df = pd.read_pickle(path)
+        try:
+            df = pd.read_pickle(path)
+        except:
+            with open(path, 'rb') as f:
+                df = pickle.load(f)
         out = out.append(df, ignore_index=True)
 
     if args['--out']:

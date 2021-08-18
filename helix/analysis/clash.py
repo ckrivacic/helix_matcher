@@ -201,7 +201,7 @@ def get_alphashape(pdb, chain=None, plot=False):
 
     # coords = [(0., 0.), (0., 1.), (1., 1.), (1., 0.), (0.5, 0.5)]
 
-    alpha_shape = alphashape.alphashape(coords, 0.1)
+    alpha_shape = alphashape.alphashape(coords, 0.2)
 
     if plot:
         helix = prody.parsePDB(pdb, chain='A')
