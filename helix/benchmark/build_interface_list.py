@@ -196,7 +196,7 @@ class PDB(object):
 
 
 def contiguous_secstruct(ss_str):
-	"""
+    """
     This function takes the output from rosetta.core.scoring.dssp.Dssp(pair.pose), which is
     a string of H, L, and E's that denote secondary struct at each residue.
 
