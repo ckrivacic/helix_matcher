@@ -186,7 +186,7 @@ class PDB(object):
                         'interface_score': interface_score,
                         'interacting_residues_by_score':
                         interacting_residues_by_score,
-                        'interface_scores' = interface_scores,
+                        'interface_scores': interface_scores,
                         }
 
                 rows.append(row)
