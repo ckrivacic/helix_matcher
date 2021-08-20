@@ -42,3 +42,7 @@ def main():
 
     stream = file(chainmap_path, 'w')
     yaml.dump(chainmap, stream)
+
+
+if __name__=='__main__':
+    main()
