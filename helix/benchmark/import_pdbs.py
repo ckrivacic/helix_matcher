@@ -44,7 +44,7 @@ def main():
             'chainmap.yml'
             )
 
-    stream = file(chainmap_path, 'w')
+    stream = open(chainmap_path, 'w')
     yaml.dump(chainmap, stream)
 
 
