@@ -13,8 +13,12 @@ def link_pdb(workspace, pdbid, chain):
     pdb_prefix = '/wynton/home/database/pdb/remediated/pdb/'
     path = os.path.join(pdb_prefix, pdbid[1:3],
             'pdb{}.ent.gz'.format(pdbid))
-    os.symlink(path, os.path.join(workspace.target_dir,
-        '{}_{}.pdb.gz'.format(pdbid, chain)))
+    lnpath = os.path.join(
+            workspace.target_dir,
+            '{}_{}.pdb.gz'.format(pdbid, chain)
+            )
+    if not os.path.exists(lnpath):
+        os.symlink(path, lnpath)
 
 
 def main():
