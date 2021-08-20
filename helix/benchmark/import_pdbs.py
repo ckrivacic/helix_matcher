@@ -36,7 +36,14 @@ def main():
     for idx, row in df.iterrows():
         pdbid = row['name']
         chain = row['target']
-        link_pdb(workspace, pdbid, chain)
+        # link_pdb(workspace, pdbid, chain)
+        path = utils.download_and_clean_pdb(pdbid,
+                prefix=workspace.target_dir)
+        outpath = os.path.join(
+                workspace.target_dir,
+                '{}_{}.pdb'.format(pdbid, chain)
+                )
+        os.rename(path, outpath)
         chainmap['{}_{}'.format(pdbid, chain)] = chain
 
     chainmap_path = os.path.join(
