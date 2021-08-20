@@ -186,43 +186,47 @@ def main():
         for res in range(1, pose.size() + 1):
             if pose.residue(res).is_protein():
                 reslist.append(res)
-        patches = Patches(pose)
-        patches.set_reslist(reslist)
-        patches.determine_surface_residues()
-        patches.map_residues()
-        print(patches.resmap)
-        # parent_folder = os.path.abspath(os.path.join(args['<output_folder>']))
-        target_pdb = workspace.target_path
-        i = 1
-        for res in patches.reslist:
-            patch_folder = os.path.join(workspace.focus_dir, 'patch_{}'.format(i))
-            i += 1
-            if not os.path.exists(patch_folder):
-                os.makedirs(patch_folder, exist_ok=True)
-            # print(patches.nearest_n_residues(res, 100,
-                # cutoff=float(args['--patchsize']),
-                # pymol=True))
-            for scaffold in workspace.scaffolds:
-                name = workspace.basename(scaffold)
-                cutoff = cutoffs[name]
-                scaffold_folder = workspace.scaffold_dir(i, name)
-                if not os.path.exists(scaffold_folder):
-                    os.makedirs(scaffold_folder, exist_ok=True)
-                write_to_file(patches.nearest_n_residues(res, 100,
-                    cutoff=cutoff),
-                        scaffold_folder)
-                write_flags(scaffold_folder, target_pdb)
+        try:
+            patches = Patches(pose)
+            patches.set_reslist(reslist)
+            patches.determine_surface_residues()
+            patches.map_residues()
+            print(patches.resmap)
+            # parent_folder = os.path.abspath(os.path.join(args['<output_folder>']))
+            target_pdb = workspace.target_path
+            i = 1
+            for res in patches.reslist:
+                patch_folder = os.path.join(workspace.focus_dir, 'patch_{}'.format(i))
+                i += 1
+                if not os.path.exists(patch_folder):
+                    os.makedirs(patch_folder, exist_ok=True)
+                # print(patches.nearest_n_residues(res, 100,
+                    # cutoff=float(args['--patchsize']),
+                    # pymol=True))
+                for scaffold in workspace.scaffolds:
+                    name = workspace.basename(scaffold)
+                    cutoff = cutoffs[name]
+                    scaffold_folder = workspace.scaffold_dir(i, name)
+                    if not os.path.exists(scaffold_folder):
+                        os.makedirs(scaffold_folder, exist_ok=True)
+                    write_to_file(patches.nearest_n_residues(res, 100,
+                        cutoff=cutoff),
+                            scaffold_folder)
+                    write_flags(scaffold_folder, target_pdb)
 
-        pose.dump_pdb(target_pdb)
+            pose.dump_pdb(target_pdb)
 
-        # if not os.path.exists(workspace.rifgen):
-            # os.symlink(os.environ['RIFGEN'], os.path.join(
-                # workspace.root_dir, 'rifgen'
-                # ))
-        # if not os.path.exists(workspace.rifdock):
-            # os.symlink(os.environ['RIFDOCK'], os.path.join(
-                # workspace.root_dir, 'rifdock'
-                # ))
+            # if not os.path.exists(workspace.rifgen):
+                # os.symlink(os.environ['RIFGEN'], os.path.join(
+                    # workspace.root_dir, 'rifgen'
+                    # ))
+            # if not os.path.exists(workspace.rifdock):
+                # os.symlink(os.environ['RIFDOCK'], os.path.join(
+                    # workspace.root_dir, 'rifdock'
+                    # ))
+        except Exception as e:
+            print("Error finding patches for {}. Error was:".format(target))
+            print(e)
 
 
 if __name__=='__main__':
