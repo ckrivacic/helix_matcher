@@ -18,8 +18,9 @@ def link_pdb(workspace, pdbid, chain):
             workspace.target_dir,
             '{}_{}.pdb.gz'.format(pdbid, chain)
             )
-    if not os.path.exists(lnpath):
-        os.symlink(path, lnpath)
+    # if not os.path.exists(lnpath):
+        # os.symlink(path, lnpath)
+    pyrosetta.toolbox.cleanATOM(path, out_file=lnpath)
 
 
 def main():
@@ -37,14 +38,14 @@ def main():
     for idx, row in df.iterrows():
         pdbid = row['name']
         chain = row['target']
-        # link_pdb(workspace, pdbid, chain)
-        path = utils.download_and_clean_pdb(pdbid,
-                prefix=workspace.target_dir)
-        outpath = os.path.join(
-                workspace.target_dir,
-                '{}_{}.pdb'.format(pdbid, chain)
-                )
-        os.rename(path, outpath)
+        link_pdb(workspace, pdbid, chain)
+        # path = utils.download_and_clean_pdb(pdbid,
+                # prefix=workspace.target_dir)
+        # outpath = os.path.join(
+                # workspace.target_dir,
+                # '{}_{}.pdb'.format(pdbid, chain)
+                # )
+        # os.rename(path, outpath)
         chainmap['{}_{}'.format(pdbid, chain)] = chain
 
     chainmap_path = os.path.join(
