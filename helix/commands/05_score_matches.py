@@ -13,6 +13,9 @@ options:
 
     --task=INT, -t  Specify a task number if running locally
 
+    --threshold=NUM  Score over which results will not be saved
+    [default: 50]
+
     --ntasks=INT, -n  How many tasks to split each result dataframe into  [default: 1]
 
     --target=TAR  Only run for a specific target
@@ -58,6 +61,8 @@ def main():
         cmd += '--plot-alphashape',
     if args['--ntasks']:
         cmd += '--ntasks', args['--ntasks']
+    if args['--threshold']:
+        cmd += '--threshold', args['--threshold']
 
     if args['--local']:
         if args['--task']:

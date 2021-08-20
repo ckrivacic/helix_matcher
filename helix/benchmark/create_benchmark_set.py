@@ -11,7 +11,7 @@ Options:
     --out=PATH, -o  Where to save final dataframe pickle  
     [default: interface_finder/benchmark_candidates.pkl]
     --interface_residues=NUM, -n  How many residues must be in the interface
-    for a helix to be considered "flat"  [default: 5]
+    for a helix to be considered "flat"  [default: 4]
     --percent_interface=FLOAT, -p  Percentage of helix residues that
     must participate in interface for it to be considered "flat"
 '''
@@ -51,8 +51,47 @@ def main():
         i += 1
         print('Processing group {} of {}'.format(i, total_groups),
                 end='\r')
-        group['n_helices'] = group.shape[0]
-        final_df = pd.concat([final_df, group], ignore_index=True)
+        sampled_resis = []
+
+        # Filter out overlapping or identical helices (not sure why
+        # these exist in the first place)
+        for idx, row in group.iterrows():
+            resis = [int(x) for x in row['pdb_resis']]
+            max_resi = max(resis)
+            min_resi = min(resis)
+            sampled_resis.append((min_resi, max_resi, idx))
+        final_idxs = {}
+        for sample in sampled_resis:
+            final_idxs[sample[2]] = True
+        for sample in sampled_resis:
+            for other_sample in sampled_resis:
+                # print('----')
+                # print(sample)
+                # print(other_sample)
+                if sample != other_sample and\
+                        final_idxs[other_sample[2]]:
+                    if sample[0] >= other_sample[0] and sample[0] <=\
+                            other_sample[1]:
+                        # print('skipping; min between')
+                        final_idxs[sample[2]] = False
+                    elif sample[1] >= other_sample[0] and sample[1] <=\
+                            other_sample[1]:
+                        # print('skipping; max between')
+                        final_idxs[sample[2]] = False
+                    else:
+                        # print('not skipping')
+                        final_idxs[sample[2]] = True
+        outgroups = []
+        for idx in final_idxs:
+            if final_idxs[idx]:
+                outgroups.append(group.loc[idx])
+
+        outgroup = pd.DataFrame(outgroups)
+        outgroup['n_helices'] = outgroup.shape[0]
+        # print('original nhelices: {}'.format(group.shape[0]))
+        # print('new nhelices: {}'.format(outgroup.shape[0]))
+        # print('---------------------------')
+        final_df = pd.concat([final_df, outgroup], ignore_index=True)
 
     final_df = final_df[final_df['n_helices'] > 2]
 

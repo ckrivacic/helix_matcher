@@ -13,6 +13,8 @@ options:
         How many tasks to split each result dataframe into  [default: 1]
     --target=TAR, -t
         Only run scoring analysis for a certain target
+    --threshold=NUM
+        Threshold over which results will not be saved.  [default: 50]
 '''
 from helix.analysis import clash
 from helix import workspace as ws
@@ -274,7 +276,8 @@ def apply(scorer, cutoff=50):
     return rows, scorer
 
 
-def score_matches(workspace, results, query_df, db_df, plot=False):
+def score_matches(workspace, results, query_df, db_df, plot=False,
+        threshold=50):
     '''Go through results dataframe and score the matches'''
     # for i in range(0, 100): # Review top 100 matches for now.
         # testrow = results.iloc[i]
@@ -294,7 +297,7 @@ def score_matches(workspace, results, query_df, db_df, plot=False):
         clash_score = clash.Score(workspace, row, db_df, query_df,
                 alpha=alpha)
         # clash_score.apply()
-        candidates, clash_score = apply(clash_score)
+        candidates, clash_score = apply(clash_score, threshold=threshold)
         scored_results.extend(candidates)
         # print('CLASH SCORE IS {}'.format(clash_score.score))
         # results.at[idx,'clash_score'] = clash_score.score
@@ -471,7 +474,8 @@ def main():
         match_workspace.dataframe_path))
 
     results = score_matches(match_workspace, output, helices, df,
-            plot=args['--plot-alphashape'])
+            plot=args['--plot-alphashape'],
+            threshold=float(args['--threshold']))
     out = os.path.join(match_workspace.output_dir,'results_scored_{}_{}.pkl'.format(suffix, subjob))
     print('SAVING RESULTS TO {}'.format(out))
     results.to_pickle(out)

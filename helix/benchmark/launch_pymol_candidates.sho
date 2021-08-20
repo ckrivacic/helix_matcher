@@ -9,3 +9,4 @@ pymol -q \
     -d "$selstr" \
     -d "color orange, helices and name c*"\
     -d "center helices" \
+    -d "hide everything, not (chain $3 or chain $4)"\
