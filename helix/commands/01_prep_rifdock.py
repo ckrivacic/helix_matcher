@@ -165,7 +165,7 @@ def main():
             chain = args['--chain']
 
         if chain:
-            print('MAKING PATCHES FOR CHAIN {}'.format(args['--chain']))
+            print('MAKING PATCHES FOR CHAIN {}'.format(chain))
             poses = []
             for i in range(1, pose.num_chains() + 1):
                 chainpose = pose.split_by_chain(i)
