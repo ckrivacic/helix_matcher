@@ -2,6 +2,7 @@
 Usage:
     import_pdbs.py <workspace> <dataframe>
 """
+import pyrosetta
 import pandas as pd
 import os
 import docopt
