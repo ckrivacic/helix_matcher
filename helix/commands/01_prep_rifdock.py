@@ -155,38 +155,38 @@ def main():
         cutoff = numeric.euclidean_distance(xyz1, xyz2) / 2
         cutoffs[scaffold] = cutoff
     for target in targets:
-        workspace = ws.RIFWorkspace(args['<workspace>'], target)
-        workspace.make_dirs()
-        pose = pose_from_file(workspace.initial_target_path)
-        chain = None
-        if chainmap:
-            chain = chainmap[workspace.focus_name]
-        elif args['--chain']:
-            chain = args['--chain']
-
-        if chain:
-            print('MAKING PATCHES FOR CHAIN {}'.format(chain))
-            poses = []
-            for i in range(1, pose.num_chains() + 1):
-                chainpose = pose.split_by_chain(i)
-                info = chainpose.pdb_info().pose2pdb(1)
-                if info.split(' ')[1] in chain and chainpose.residue(1).is_protein():
-                    if chainpose.size() < 5:
-                        raise('Error: chain {} too small.'.format(chain))
-                    else:
-                        poses.append(chainpose)
-            pose = poses[0]
-            if len(poses) > 1:
-                for chainpose in poses[1:]:
-                    append_pose_to_pose(pose, chainpose)
-
-        else:
-            pose = pose.split_by_chain(1)
-        reslist = []
-        for res in range(1, pose.size() + 1):
-            if pose.residue(res).is_protein():
-                reslist.append(res)
         try:
+            workspace = ws.RIFWorkspace(args['<workspace>'], target)
+            workspace.make_dirs()
+            pose = pose_from_file(workspace.initial_target_path)
+            chain = None
+            if chainmap:
+                chain = chainmap[workspace.focus_name]
+            elif args['--chain']:
+                chain = args['--chain']
+
+            if chain:
+                print('MAKING PATCHES FOR CHAIN {}'.format(chain))
+                poses = []
+                for i in range(1, pose.num_chains() + 1):
+                    chainpose = pose.split_by_chain(i)
+                    info = chainpose.pdb_info().pose2pdb(1)
+                    if info.split(' ')[1] in chain and chainpose.residue(1).is_protein():
+                        if chainpose.size() < 5:
+                            raise('Error: chain {} too small.'.format(chain))
+                        else:
+                            poses.append(chainpose)
+                pose = poses[0]
+                if len(poses) > 1:
+                    for chainpose in poses[1:]:
+                        append_pose_to_pose(pose, chainpose)
+
+            else:
+                pose = pose.split_by_chain(1)
+            reslist = []
+            for res in range(1, pose.size() + 1):
+                if pose.residue(res).is_protein():
+                    reslist.append(res)
             patches = Patches(pose)
             patches.set_reslist(reslist)
             patches.determine_surface_residues()
