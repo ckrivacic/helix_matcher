@@ -719,7 +719,12 @@ class MatchWorkspace(Workspace):
 
     @property
     def target_path(self):
-        return self.initial_target_path
+        return os.path.join(
+                self.root_dir,
+                self.rifdock_outdir,
+                self.focus_name,
+                'target.pdb'
+                )
 
     @property
     def initial_target_path(self):
