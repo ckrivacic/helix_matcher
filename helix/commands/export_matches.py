@@ -39,19 +39,19 @@ def get_pymol_transform(transformation):
 def session_from_graph(workspace, results_row, query_df, db_df):
 
     init()
-    def chain_from_name(string):
-        chainno = int(string.split('_')[-1])
-        chain = chr(ord('@')+chainno)
-        return chain
+    # def chain_from_name(string):
+        # chainno = int(string.split('_')[-1])
+        # chain = chr(ord('@')+chainno)
+        # return chain
 
     subgraph = results_row['subgraph']
 
-    query_selstr = ""
-    db_selstr = "db and "
+    # query_selstr = ""
+    # db_selstr = "db and "
 
     # query_path = os.path.dirname(query_df.loc[0]['path'])
 
-    db_sels = []
+    # db_sels = []
     df_row = db_df.loc[subgraph[0][0]]
     if 'path' in df_row:
         pdb = df_row['path']
@@ -65,16 +65,16 @@ def session_from_graph(workspace, results_row, query_df, db_df):
         dfpose = pose_from_file(pdb + '.cif')
     query_vectors = []
     df_vectors = []
-    qobjs = '('
+    # qobjs = '('
 
-    query_paths = []
+    # query_paths = []
     for node in subgraph:
         df_idx = node[0]
         query_idx = node[1]
         df_row = db_df.loc[df_idx]
         query_row = query_df.loc[query_idx]
-        query_paths.append(os.path.join(workspace.root_dir,
-            query_row['path']))
+        # query_paths.append(os.path.join(workspace.root_dir,
+            # query_row['path']))
 
         try:
             start = dfpose.pdb_info().pose2pdb(df_row['start']).split(' ')[0]
@@ -86,51 +86,69 @@ def session_from_graph(workspace, results_row, query_df, db_df):
         query_vectors.extend(query_row['vector'])
         df_vectors.extend(df_row['vector'])
 
-        query_name = os.path.basename(query_row['path'])[:-7]
-        qobjs += query_name + ' or '
+        # query_name = os.path.basename(query_row['path'])[:-7]
+        # qobjs += query_name + ' or '
 
-        query_selstr += "({} and (resi {}-{})) or ".format(
-                query_name,
-                query_row['start'], query_row['stop']
-                )
-        db_selstr = "(resi {}-{} and chain {})".format(
-                start, stop,
-                df_row['chain']
-                )
-        db_sels.append(db_selstr)
+        # query_selstr += "({} and (resi {}-{})) or ".format(
+                # query_name,
+                # query_row['start'], query_row['stop']
+                # )
+        # db_selstr = "(resi {}-{} and chain {})".format(
+                # start, stop,
+                # df_row['chain']
+                # )
+        # db_sels.append(db_selstr)
 
     transform = numeric.Transformation(df_vectors, query_vectors)
     pymol_transform = get_pymol_transform(transform)
 
-    db_selstr = '('+ db_sels[0]
-    for i in range(1, len(db_sels)):
-        db_selstr += ' or '
-        db_selstr += db_sels[i]
-    db_selstr += ')'
+    """
+    # pymol_tranform: matrix to apply to the df PDB (a LUCS model)
+    transform: object containing trotation + translation
+    matrices/vectors. 
+        transform.rotation
+        transform.translation
+    dfpose: pose containing the database protein
 
-    query_selstr = query_selstr[:-4]
-    query_selstr += ' and chain A'
+    rotation = numeric.np_array_to_xyzM(transform.rotation)
+    translation = numeric.np_array_to_xyzV(transform.translation)
+    dfpose.apply_transform_Rx_plus_v(rotation, tranlsation)
+    dfpose.append_pose_by_jump...
 
-    qobjs = qobjs[:-3] + ')'
+    Put files in os.path.join(workspace.focus_dir, 'pdbs')
+    dfpose.dump_pdb(filename)
 
-    print(query_selstr)
-    print(db_selstr)
+    """
 
-    script_path = os.path.dirname(os.path.realpath(__file__))
-    script_path = os.path.join(script_path, '..', 'analysis',
-            'launch_pymol.sho')
-    cmd = [script_path]
-    cmd.append(';'.join(query_paths))
-    cmd.append(pdb)
-    cmd.append(query_selstr)
-    cmd.append(db_selstr)
-    cmd.append(df_row['chain'])
-    cmd.extend(pymol_transform)
-    cmd.append(qobjs)
+    # db_selstr = '('+ db_sels[0]
+    # for i in range(1, len(db_sels)):
+        # db_selstr += ' or '
+        # db_selstr += db_sels[i]
+    # db_selstr += ')'
 
-    print(cmd)
+    # query_selstr = query_selstr[:-4]
+    # query_selstr += ' and chain A'
 
-    subprocess.call(cmd)
+    # qobjs = qobjs[:-3] + ')'
+
+    # print(query_selstr)
+    # print(db_selstr)
+
+    # script_path = os.path.dirname(os.path.realpath(__file__))
+    # script_path = os.path.join(script_path, '..', 'analysis',
+            # 'launch_pymol.sho')
+    # cmd = [script_path]
+    # cmd.append(';'.join(query_paths))
+    # cmd.append(pdb)
+    # cmd.append(query_selstr)
+    # cmd.append(db_selstr)
+    # cmd.append(df_row['chain'])
+    # cmd.extend(pymol_transform)
+    # cmd.append(qobjs)
+
+    # print(cmd)
+
+    # subprocess.call(cmd)
 
 
 def main():
