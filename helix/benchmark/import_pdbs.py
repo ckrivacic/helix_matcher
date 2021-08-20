@@ -19,9 +19,9 @@ def link_pdb(workspace, pdbid, chain):
             workspace.target_dir,
             '{}_{}.pdb.gz'.format(pdbid, chain)
             )
-    # if not os.path.exists(lnpath):
-        # os.symlink(path, lnpath)
-    pyrosetta.toolbox.cleanATOM(path, out_file=lnpath)
+    if not os.path.exists(lnpath):
+        os.symlink(path, lnpath)
+    # pyrosetta.toolbox.cleanATOM(path, out_file=lnpath)
 
 
 def main():
