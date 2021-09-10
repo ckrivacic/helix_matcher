@@ -27,6 +27,27 @@ def ensure_path_exists(path):
         raise ValueError("'{0}' does not exist.".format(path))
     return path
 
+
+class PatchMANPath:
+    prompt = "Path to PatchMAN folder: "
+    description = """\
+PatchMAN path: Path to your PatchMAN folder. Make sure PyRosetta package is
+installed. You can skip this step in the future by adding a PATCHMAN 
+variable to your environment.
+    """
+
+    if 'PATCHMAN' in os.environ:
+        print('PATCHMAN found in environment: {}'.format(
+            os.environ.get('PATCHMAN')))
+        setting_env_var = os.environ.get('PATCHMAN')
+
+    @staticmethod
+    def install(workspace, patchman_path):
+        python_path = ensure_path_exists(patchman_path)
+
+        os.symlink(patchman_path, workspace.patchman_path)
+
+
 class PythonPath:
     prompt = "Path to python binary where PyRosetta is installed: "
     description = """\
@@ -263,6 +284,7 @@ Design '{0}' already exists.  Use '-o' to overwrite.""", workspace.root_dir)
                 Database,
                 RsyncUrl,
                 PythonPath,
+                PatchMANPath,
         )
     else:
         installers = (
@@ -273,6 +295,7 @@ Design '{0}' already exists.  Use '-o' to overwrite.""", workspace.root_dir)
                 Helices,
                 RIFDock,
                 Database,
+                PatchMANPath,
                 # LoopsFile,
                 # Resfile,
                 # ParamsFile,
