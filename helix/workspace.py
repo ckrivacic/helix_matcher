@@ -309,6 +309,10 @@ class Workspace(object):
         return self.find_path('python', self.root_dir)
 
     @property
+    def patchman_path(self):
+        return self.find_path('patchman', self.root_dir)
+
+    @property
     def rosetta_dir(self):
         return self.find_path('rosetta', self.root_dir)
 
