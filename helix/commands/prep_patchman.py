@@ -19,10 +19,15 @@ Options:
 import docopt
 import helix.workspace as ws
 from helix.utils import utils
+from pyrosetta import init
+from pyrosetta import pose_from_file
+import os
+import glob
 
 
 def main():
     args = docopt.docopt(__doc__)
+    init()
     root_workspace = ws.workspace_from_dir(args['<workspace>'])
 
     if args['--target']:
@@ -37,6 +42,7 @@ def main():
 
     sizes = [10, 14, 21, 28]
 
+    orig_dir = os.path.abspath(os.getcwd())
     for target in targets:
         try:
             workspace = ws.RIFWorkspace(args['<workspace>'], target)
@@ -67,12 +73,23 @@ def main():
             else:
                 pose = pose.split_by_chain(1)
 
-            target_pdb = workspace.target_path
+            target_pdb = os.path.abspath(workspace.target_path)
             pose.dump_pdb(target_pdb)
             script_path = os.path.join(workspace.patchman_path,
                     'split_to_motifs.py')
+            os.chdir(workspace.focus_dir)
             utils.run_command([workspace.python_path,
-                workspace.script_path, workspace.target_path])
+                script_path, target_pdb])
+            outputs = glob.glob('???_target.pdb')
+            for output in outputs:
+                patchno = output[:3]
+                patch_folder = os.path.join(workspace.focus_dir,
+                        'patch_{}'.format(patchno))
+                if not os.path.exists(patch_folder):
+                    os.makedirs(patch_folder, exist_ok=True)
+                os.rename(output, os.path.join(patch_folder,
+                    os.path.basename(output)))
+            os.chdir(orig_dir)
 
         except Exception as e:
             print("Error finding patches for {}. Error was:".format(target))

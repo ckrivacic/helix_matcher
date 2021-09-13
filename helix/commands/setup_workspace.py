@@ -293,7 +293,7 @@ Design '{0}' already exists.  Use '-o' to overwrite.""", workspace.root_dir)
                 PythonPath,
                 DefaultScripts,
                 Helices,
-                RIFDock,
+                # RIFDock,
                 Database,
                 PatchMANPath,
                 # LoopsFile,
