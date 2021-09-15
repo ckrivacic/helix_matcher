@@ -91,11 +91,12 @@ def main():
     # Run MASTER for all motifs
     pds_list = glob.glob('*pds')
     for pds in pds_list:
+        name = pds.split('.')[0]
         exe = os.path.join(workspace.master_path, 'master')
         cmd = [exe, '--query', pds,
                 '--targetlist', 'db_list',
                 '--bbRMSD', '--rmsdCut', '1.5', '--topN', '1000000', 
-                '--matchOut', '{}_matches'.format(pds)]
+                '--matchOut', '{}_matches'.format(name)]
 
     # Prepack the receptor structure for further FlexPepDock refinement
     import platform
