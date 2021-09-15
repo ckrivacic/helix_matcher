@@ -123,7 +123,7 @@ def main():
                     workspace.patchman_path,
                     'extract_peps_for_motif.py'
                     )
-            cmd = [script, '-m', name + '_matches', '-d', '-r',
+            cmd = [workspace.python_path, script, '-m', name + '_matches', '-d', '-r',
                     'target.ppk.pdb', '--patch', line, '-l', str(length)]
             utils.run_command(cmd)
 
