@@ -7,6 +7,7 @@ Usage:
 Options:
     --target=PDB, -t  Only runs on a specific target
     --task=INT  Only run a specific task
+    --flexpepdock  Run flexpepdock on matched motifs
 """
 from distutils.dir_util import copy_tree
 import docopt
