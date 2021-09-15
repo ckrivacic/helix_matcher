@@ -79,7 +79,7 @@ def main():
                 pose = pose.split_by_chain(1)
 
             target_pdb = os.path.abspath(workspace.target_path)
-            target_pdb.pdb_info().set_chains('A')
+            pose.pdb_info().set_chains('A')
             pose.dump_pdb(target_pdb)
 
             script_path = os.path.join(workspace.patchman_path,
