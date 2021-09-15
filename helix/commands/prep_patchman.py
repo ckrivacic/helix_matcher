@@ -21,7 +21,7 @@ import helix.workspace as ws
 from helix.utils import utils
 from pyrosetta import init
 from pyrosetta import pose_from_file
-import os
+import os, shutil
 import glob
 
 
@@ -87,10 +87,17 @@ def main():
                         'patch_{}'.format(patchno))
                 if not os.path.exists(patch_folder):
                     os.makedirs(patch_folder, exist_ok=True)
-                os.rename(output, os.path.join(patch_folder,
-                    os.path.basename(output)))
+                for out_length in workspace.matchlen:
+                    len_folder = 'len_{}'.format(out_length)
+                    os.makedirs(os.path.join(patch_folder, len_folder),
+                            exist_ok=True)
+                    shutil.copyfile(output, os.path.join(patch_folder,
+                        len_folder, os.path.basename(output)))
+                    os.remove(output)
             os.chdir(orig_dir)
 
         except Exception as e:
+            import traceback
             print("Error finding patches for {}. Error was:".format(target))
+            print(traceback.format_exc())
             print(e)

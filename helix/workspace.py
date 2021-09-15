@@ -313,6 +313,14 @@ class Workspace(object):
         return self.find_path('patchman', self.root_dir)
 
     @property
+    def master_path(self):
+        return self.find_path('master', self.root_dir)
+
+    @property
+    def master_db_path(self):
+        return self.find_path('master_db', self.root_dir)
+
+    @property
     def rosetta_dir(self):
         return self.find_path('rosetta', self.root_dir)
 
@@ -558,8 +566,16 @@ class RIFWorkspace(Workspace):
         return RIFWorkspace(root, target_path)
 
     @property
+    def matchlen(self):
+        return [15]
+
+    @property
     def target_path(self):
         return os.path.join(self.focus_dir, 'target.pdb')
+
+    @property
+    def target_path_clean(self):
+        return os.path.join(self.focus_dir, 'target.clean.pdb')
 
     @property
     def initial_target_path(self):
@@ -575,7 +591,8 @@ class RIFWorkspace(Workspace):
 
     @property
     def scaffold_prefix(self):
-        return 'scaffold_'
+        # return 'scaffold_'
+        return 'len_'
 
     def scaffold_folder(self, scaffold_basename):
         return self.scaffold_prefix + scaffold_basename

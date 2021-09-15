@@ -48,6 +48,48 @@ variable to your environment.
         os.symlink(patchman_path, workspace.patchman_path)
 
 
+class MASTERPath:
+    prompt = "Path to MASTER bin folder: "
+    description = """\
+PatchMAN path: Path to the 'bin' folder in your MASTER install.
+You can skip this step in the future by adding a MASTER variable to your environment.
+    """
+
+    if 'MASTER' in os.environ:
+        print('MASTER found in environment: {}'.format(
+            os.environ.get('MASTER')))
+        setting_env_var = os.environ.get('MASTER')
+
+    @staticmethod
+    def install(workspace, master_path):
+        python_path = ensure_path_exists(master_path)
+
+        os.symlink(master_path, workspace.master_path)
+
+
+class MASTERDB:
+    prompt = "Path to MASTER database: "
+    description = """\
+Path to MASTER database. You can get this by running the following
+command:
+    rsync -varz arteni.cs.dartmouth.edu::masterDB/ /local/path
+
+You can skip this step in the future by adding a MASTER_DB variable to
+your environment.
+    """
+
+    if 'MASTER_DB' in os.environ:
+        print('MASTER_DB found in environment: {}'.format(
+            os.environ.get('MASTER_DB')))
+        setting_env_var = os.environ.get('MASTER_DB')
+
+    @staticmethod
+    def install(workspace, master_db_path):
+        python_path = ensure_path_exists(master_db_path)
+
+        os.symlink(master_db_path, workspace.master_db_path)
+
+
 class PythonPath:
     prompt = "Path to python binary where PyRosetta is installed: "
     description = """\
@@ -284,11 +326,12 @@ Design '{0}' already exists.  Use '-o' to overwrite.""", workspace.root_dir)
                 Database,
                 RsyncUrl,
                 PythonPath,
-                PatchMANPath,
+                # PatchMANPath,
+                # MASTERPath,
         )
     else:
         installers = (
-                # RosettaDir,
+                RosettaDir,
                 InputPdb,
                 PythonPath,
                 DefaultScripts,
@@ -296,6 +339,8 @@ Design '{0}' already exists.  Use '-o' to overwrite.""", workspace.root_dir)
                 # RIFDock,
                 Database,
                 PatchMANPath,
+                MASTERPath,
+                MASTERDB,
                 # LoopsFile,
                 # Resfile,
                 # ParamsFile,

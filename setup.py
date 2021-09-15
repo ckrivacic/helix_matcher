@@ -74,6 +74,7 @@ setuptools.setup(
             define_command('bin_database'),
             define_command('view_matches'),
             define_command('prep_patchman'),
+            define_command('patchman'),
             define_command('01_prep_rifdock'),
             define_command('02_rifdock'),
             define_command('03_cluster'),
