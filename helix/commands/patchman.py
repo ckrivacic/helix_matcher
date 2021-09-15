@@ -12,6 +12,7 @@ Options:
     --task=INT  Only run a specific task
     --clear, -o  Overwrite a prevoius run. Gets rid of docked outputs,
     log files, and job info files.
+    --flexpepdock  Run flexpepdock at the end of the PatchMAN run
 """
 import helix.workspace as ws
 import os
@@ -43,6 +44,9 @@ def main():
 
         cmd = workspace.python_path, script_path
         cmd += target,
+
+        if args['--flexpepdock']:
+            cmd += '--flexpepdock'
 
         if args['--task']:
             cmd += '--task', args['--task']
