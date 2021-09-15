@@ -55,6 +55,10 @@ def main():
                 chain = args['--chain']
 
             if chain:
+                if len(chain) > 1:
+                    print("Error: cannot specify more than 1 chain for "\
+                            " PatchMAN runs.")
+                    sys.exit()
                 print('MAKING PATCHES FOR CHAIN {}'.format(chain))
                 poses = []
                 for i in range(1, pose.num_chains() + 1):
@@ -75,6 +79,11 @@ def main():
 
             target_pdb = os.path.abspath(workspace.target_path)
             pose.dump_pdb(target_pdb)
+
+            replace = "sed -i 's/^\(ATOM.\{17\}\){0}/\1{1}/' {2}".format(chain,
+                    'A', target_pdb)
+            os.system(replace)
+
             script_path = os.path.join(workspace.patchman_path,
                     'split_to_motifs.py')
             os.chdir(workspace.focus_dir)
