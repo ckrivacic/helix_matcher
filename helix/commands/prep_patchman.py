@@ -22,6 +22,7 @@ from helix.utils import utils
 from pyrosetta import init
 from pyrosetta import pose_from_file
 import os, shutil
+import yaml
 import glob
 
 
