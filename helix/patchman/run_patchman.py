@@ -112,7 +112,7 @@ def main():
     os.system("grep ' A ' *target_0001.pdb > target.ppk.pdb")
 
     # Extract templates and thread the peptide sequence
-    length = 15
+    length = os.path.basename(folder).split('_')[-1]
     with open('motif_list', 'r') as f:
         for line in f:
             line = line.strip('\n')

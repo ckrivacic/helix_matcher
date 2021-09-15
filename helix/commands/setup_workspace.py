@@ -17,6 +17,10 @@ Options:
     --overwrite, -o
         If a design with the given name already exists, remove it and replace 
         it with the new design created by this script.
+
+    --rifdock
+        Setup a design workspace for use with RIFDock. Otherwise you
+        will be asked for PatchMAN-related paths.
 """
 
 import os, re, shutil, subprocess, glob
@@ -329,6 +333,22 @@ Design '{0}' already exists.  Use '-o' to overwrite.""", workspace.root_dir)
                 # PatchMANPath,
                 # MASTERPath,
         )
+    elif args['--rifdock']:
+        installers = (
+                RosettaDir,
+                InputPdb,
+                PythonPath,
+                DefaultScripts,
+                Helices,
+                RIFDock,
+                Database,
+                # PatchMANPath,
+                # MASTERPath,
+                # MASTERDB,
+                # LoopsFile,
+                # Resfile,
+                # ParamsFile,
+        )
     else:
         installers = (
                 RosettaDir,
@@ -336,15 +356,12 @@ Design '{0}' already exists.  Use '-o' to overwrite.""", workspace.root_dir)
                 PythonPath,
                 DefaultScripts,
                 Helices,
-                # RIFDock,
                 Database,
                 PatchMANPath,
                 MASTERPath,
                 MASTERDB,
-                # LoopsFile,
-                # Resfile,
-                # ParamsFile,
         )
+
 
     # Get the necessary settings from the user and use them to fill in the 
     # workspace.
