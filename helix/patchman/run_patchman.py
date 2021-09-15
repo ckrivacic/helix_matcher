@@ -65,6 +65,8 @@ def main():
         motif = motif_list[0]
 
     target = workspace.target_path_clean
+    print("TARGET:")
+    print(target)
 
     # Split surface into structural patches (done in prep_patchman)
     # print('Running split_to_motifs.py on {}'.format(target))
