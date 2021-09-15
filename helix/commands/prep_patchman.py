@@ -79,11 +79,8 @@ def main():
                 pose = pose.split_by_chain(1)
 
             target_pdb = os.path.abspath(workspace.target_path)
+            target_pdb.pdb_info().set_chains('A')
             pose.dump_pdb(target_pdb)
-
-            replace = "sed -i 's/^\(ATOM.\{17\}\){0}/\1{1}/' {2}".format(chain,
-                    'A', target_pdb)
-            os.system(replace)
 
             script_path = os.path.join(workspace.patchman_path,
                     'split_to_motifs.py')
