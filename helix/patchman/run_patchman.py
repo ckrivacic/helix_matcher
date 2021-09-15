@@ -126,26 +126,30 @@ def main():
             utils.run_command(cmd)
 
     # Create a list of input structures for refinement
-    os.system('ls ???_????_*_*.pdb > input_list')
+    os.makedirs('docked_full/', exist_ok=True)
 
     # Run FlexPepDock refinement
-    exe = os.path.join(
-            workspace.rosetta_dir, 'source', 'bin',
-            'FlexPepDocking.{}'.format(suffix)
-            )
-    if not os.path.exists('docked_full/'):
-        os.path.makedirs('docked_full', exist_ok=True)
-    cmd = [exe, '-in:file:l', 'input_list', '-scorefile', 'score.sc',
-            '-out:pdb', '-lowres_preoptimize',
-            '-flexPepDocking:pep_refine',
-            '-out:prefix', 'docked_full/',
-            '-flexPepDocking:flexpep_score_only', '-ex1', '-ex2aro',
-            '-use_input_sc', 'unboundrot', target]
-    utils.run_command(cmd)
+    if args['--flexpepdock']:
+        os.system('ls ???_????_*_*.pdb > input_list')
+        exe = os.path.join(
+                workspace.rosetta_dir, 'source', 'bin',
+                'FlexPepDocking.{}'.format(suffix)
+                )
+        if not os.path.exists('docked_full/'):
+            os.path.makedirs('docked_full', exist_ok=True)
+        cmd = [exe, '-in:file:l', 'input_list', '-scorefile', 'score.sc',
+                '-out:pdb', '-lowres_preoptimize',
+                '-flexPepDocking:pep_refine',
+                '-out:prefix', 'docked_full/',
+                '-flexPepDocking:flexpep_score_only', '-ex1', '-ex2aro',
+                '-use_input_sc', 'unboundrot', target]
+        utils.run_command(cmd)
+    else:
+        os.system('mv ???_????_*_*.pdb docked_full/')
 
     # Copy back to main folder
     outputs = os.path.join(tempdir, 'docked_full')
-    final_out = os.path.join(fold, 'docked_full')
+    final_out = os.path.join(folder, 'docked_full')
     copy_tree(outputs, final_out)
 
 if __name__=='__main__':
