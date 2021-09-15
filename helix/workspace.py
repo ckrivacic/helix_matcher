@@ -567,7 +567,7 @@ class RIFWorkspace(Workspace):
 
     @property
     def matchlen(self):
-        return [15]
+        return [14, 28]
 
     @property
     def target_path(self):
