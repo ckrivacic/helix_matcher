@@ -45,6 +45,7 @@ def main():
 
     orig_dir = os.path.abspath(os.getcwd())
     for target in targets:
+        os.chdir(orig_dir)
         try:
             workspace = ws.RIFWorkspace(args['<workspace>'], target)
             workspace.make_dirs()
@@ -100,8 +101,7 @@ def main():
                             exist_ok=True)
                     shutil.copyfile(output, os.path.join(patch_folder,
                         len_folder, os.path.basename(output)))
-                    os.remove(output)
-            os.chdir(orig_dir)
+                os.remove(output)
 
         except Exception as e:
             import traceback
