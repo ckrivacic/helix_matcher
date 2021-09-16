@@ -95,8 +95,9 @@ def main():
         exe = os.path.join(workspace.master_path, 'master')
         cmd = [exe, '--query', pds,
                 '--targetList', 'db_list',
-                '--bbRMSD', '--rmsdCut', '1.5', '--topN', '1000000', 
+                '--bbRMSD', '--rmsdCut', '1.5', '--topN', '1000000',
                 '--matchOut', '{}_matches'.format(name)]
+        utils.run_command(cmd)
 
     # Prepack the receptor structure for further FlexPepDock refinement
     import platform
