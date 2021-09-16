@@ -13,6 +13,7 @@ Options:
     --clear, -o  Overwrite a prevoius run. Gets rid of docked outputs,
     log files, and job info files.
     --flexpepdock  Run flexpepdock at the end of the PatchMAN run
+    --relax  Run relax on target
 """
 import helix.workspace as ws
 import os
@@ -47,6 +48,9 @@ def main():
 
         if args['--flexpepdock']:
             cmd += '--flexpepdock'
+
+        if args['--relax']:
+            cmd += '--relax'
 
         if args['--task']:
             cmd += '--task', args['--task']

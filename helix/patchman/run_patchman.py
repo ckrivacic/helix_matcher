@@ -8,6 +8,7 @@ Options:
     --target=PDB, -t  Only runs on a specific target
     --task=INT  Only run a specific task
     --flexpepdock  Run flexpepdock on matched motifs
+    --relax  Do not run relax on target
 """
 from distutils.dir_util import copy_tree
 import docopt
@@ -100,21 +101,24 @@ def main():
         utils.run_command(cmd)
 
     # Prepack the receptor structure for further FlexPepDock refinement
-    import platform
-    ostype = platform.system()
-    if ostype == 'Linux':
-        suffix = 'linuxgccrelease'
-    elif ostype == 'Darwin':
-        suffix = 'macosclangrelease'
-    exe = os.path.join(
-            workspace.rosetta_dir, 'source', 'bin',
-            'relax.{}'.format(suffix)
-            )
-    cmd = [exe, '-s', target, '-out:pdb', '-scorefile', 'ppk.score.sc',
-            '-nstruct', '1', '-ex1', '-ex2aro', '-use_input_sc']
-    utils.run_command(cmd)
+    if args['--relax']:
+        import platform
+        ostype = platform.system()
+        if ostype == 'Linux':
+            suffix = 'linuxgccrelease'
+        elif ostype == 'Darwin':
+            suffix = 'macosclangrelease'
+        exe = os.path.join(
+                workspace.rosetta_dir, 'source', 'bin',
+                'relax.{}'.format(suffix)
+                )
+        cmd = [exe, '-s', target, '-out:pdb', '-scorefile', 'ppk.score.sc',
+                '-nstruct', '1', '-ex1', '-ex2aro', '-use_input_sc']
+        utils.run_command(cmd)
 
-    os.system("grep ' A ' *target.clean_0001.pdb > target.ppk.pdb")
+        os.system("grep ' A ' *target.clean_0001.pdb > target.ppk.pdb")
+    else:
+        os.system("grep ' A ' {} > target.ppk.pdb".format(target))
 
     # Extract templates and thread the peptide sequence
     length = os.path.basename(folder).split('_')[-1]
