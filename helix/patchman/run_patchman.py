@@ -120,7 +120,7 @@ def main():
     with open('motif_list', 'r') as f:
         for line in f:
             line = line.strip('\n')
-            name = line.split('.')[1]
+            name = line.split('.')[0]
             script = os.path.join(
                     workspace.patchman_path,
                     'extract_peps_for_motif.py'
