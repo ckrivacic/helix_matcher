@@ -189,6 +189,8 @@ class Workspace(object):
                 return os.path.basename(target).split('.')[0]
         elif os.path.isdir(target):
             return os.path.basename(target)
+        else:
+            return os.path.basename(target).split('.')[0]
 
     @property
     def focus_name(self):

@@ -89,6 +89,21 @@ def main():
         os.path.join(workspace.master_db_path, '*', '*pds')
         ))
 
+    # Remove homologs
+    homologs = []
+    with open(os.path.join(workspace.focus_dir, 'homologs'), 'r') as f:
+        for line in f:
+            homologs.append(line.strip().lower())
+    matches = glob.glob('*_matches')
+    fout = open('db_list_nohom', 'w')
+    with open('db_list', 'r') as f:
+        for line in f:
+            pdbid = line.split('/')[-1].split('_')[0]
+            if pdbid not in homologs:
+                fout.write(line)
+    os.remove('db_list')
+    os.rename('db_list_nohom', 'db_list')
+
     # Run MASTER for all motifs
     pds_list = glob.glob('*pds')
     for pds in pds_list:
