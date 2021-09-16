@@ -94,7 +94,7 @@ def main():
         name = pds.split('.')[0]
         exe = os.path.join(workspace.master_path, 'master')
         cmd = [exe, '--query', pds,
-                '--targetlist', 'db_list',
+                '--targetList', 'db_list',
                 '--bbRMSD', '--rmsdCut', '1.5', '--topN', '1000000', 
                 '--matchOut', '{}_matches'.format(name)]
 
