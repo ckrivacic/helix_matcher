@@ -157,6 +157,7 @@ def main():
         os.system('mv ???_????_*_*.pdb docked_full/')
 
     # Copy back to main folder
+    os.system('gzip docked_full/*.pdb')
     outputs = os.path.join(tempdir, 'docked_full')
     final_out = os.path.join(folder, 'docked_full')
     copy_tree(outputs, final_out)
