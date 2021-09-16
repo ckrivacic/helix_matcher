@@ -85,7 +85,7 @@ def main():
 
     # Create a list of database structures for the template search
     os.system("ls {} > db_list".format(
-        os.path.join(workspace.master_db_path, '*')
+        os.path.join(workspace.master_db_path, '*', '*pds')
         ))
 
     # Run MASTER for all motifs
