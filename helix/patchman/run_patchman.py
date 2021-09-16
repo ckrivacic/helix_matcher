@@ -113,7 +113,7 @@ def main():
             '-nstruct', '1', '-ex1', '-ex2aro', '-use_input_sc']
     utils.run_command(cmd)
 
-    os.system("grep ' A ' *target_0001.pdb > target.ppk.pdb")
+    os.system("grep ' A ' *target.clean_0001.pdb > target.ppk.pdb")
 
     # Extract templates and thread the peptide sequence
     length = os.path.basename(folder).split('_')[-1]
