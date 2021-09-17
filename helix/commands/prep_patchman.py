@@ -32,7 +32,7 @@ def main():
     root_workspace = ws.workspace_from_dir(args['<workspace>'])
 
     if args['--target']:
-        targets = args['--target']
+        targets = [args['--target']]
     else:
         targets = root_workspace.targets
     
