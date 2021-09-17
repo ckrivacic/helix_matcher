@@ -183,7 +183,7 @@ def main():
     os.system('tar -cf docked_full.tar docked_full/')
     outputs = os.path.join(tempdir, 'docked_full.tar')
     final_out = os.path.join(folder, 'docked_full.tar')
-    copy_tree(outputs, final_out)
+    os.rename(outputs, final_out)
 
 if __name__=='__main__':
     main()
