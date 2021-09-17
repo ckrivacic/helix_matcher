@@ -48,6 +48,8 @@ def main():
         os.chdir(orig_dir)
         try:
             workspace = ws.RIFWorkspace(args['<workspace>'], target)
+            if os.path.exists(workspace.target_path_clean):
+                continue
             workspace.make_dirs()
             pose = pose_from_file(workspace.initial_target_path)
             chain = None
@@ -64,7 +66,10 @@ def main():
                 print('MAKING PATCHES FOR CHAIN {}'.format(chain))
                 poses = []
                 for i in range(1, pose.num_chains() + 1):
-                    chainpose = pose.split_by_chain(i)
+                    try:
+                        chainpose = pose.split_by_chain(i)
+                    except:
+                        continue
                     info = chainpose.pdb_info().pose2pdb(1)
                     if info.split(' ')[1] in chain and chainpose.residue(1).is_protein():
                         if chainpose.size() < 5:
