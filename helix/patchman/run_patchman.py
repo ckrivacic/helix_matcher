@@ -96,11 +96,16 @@ def main():
             homologs.append(line.strip().lower())
     matches = glob.glob('*_matches')
     fout = open('db_list_nohom', 'w')
+    removed = open('removed_psds', 'w')
     with open('db_list', 'r') as f:
         for line in f:
             pdbid = line.split('/')[-1].split('_')[0]
             if pdbid not in homologs:
                 fout.write(line)
+            else:
+                removed.write(line)
+    fout.close()
+    removed.close()
     os.remove('db_list')
     os.rename('db_list_nohom', 'db_list')
 
@@ -170,6 +175,8 @@ def main():
         utils.run_command(cmd)
     else:
         os.system('mv ???_????_*_*.pdb docked_full/')
+        os.system('mv db_list docked_full/')
+        os.system('mv removed_psds docked_full/')
 
     # Copy back to main folder
     os.system('gzip docked_full/*.pdb')
