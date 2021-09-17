@@ -180,8 +180,9 @@ def main():
 
     # Copy back to main folder
     os.system('gzip docked_full/*.pdb')
-    outputs = os.path.join(tempdir, 'docked_full')
-    final_out = os.path.join(folder, 'docked_full')
+    os.system('tar -cf docked_full.tar docked_full/')
+    outputs = os.path.join(tempdir, 'docked_full.tar')
+    final_out = os.path.join(folder, 'docked_full.tar')
     copy_tree(outputs, final_out)
 
 if __name__=='__main__':
