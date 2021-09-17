@@ -21,6 +21,7 @@ import helix.workspace as ws
 from helix.utils import utils
 from pyrosetta import init
 from pyrosetta import pose_from_file
+from pyrosetta.rosetta.core.pose import append_pose_to_pose
 import os, shutil
 import yaml
 import glob
@@ -79,7 +80,7 @@ def main():
                 pose = poses[0]
                 if len(poses) > 1:
                     for chainpose in poses[1:]:
-                        pose.append_pose_to_pose(pose, chainpose)
+                        append_pose_to_pose(pose, chainpose)
 
             else:
                 pose = pose.split_by_chain(1)
