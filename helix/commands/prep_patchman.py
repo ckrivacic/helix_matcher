@@ -79,7 +79,7 @@ def main():
                 pose = poses[0]
                 if len(poses) > 1:
                     for chainpose in poses[1:]:
-                        append_pose_to_pose(pose, chainpose)
+                        pose.append_pose_to_pose(pose, chainpose)
 
             else:
                 pose = pose.split_by_chain(1)
