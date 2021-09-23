@@ -126,7 +126,7 @@ def main():
 
             # Running split to motifs
             toolbox.cleaning.cleanATOM(target_pdb)
-            prot_name = os.path.splitext(os.path.basename(inpdb))[0]
+            prot_name = os.path.splitext(os.path.basename(target_pdb))[0]
             pose = pose_from_pdb(prot_name + '.clean.pdb')
             motifs = split_to_motifs.define_motifs(pose, prot_name,
                     selected_res=positions)
