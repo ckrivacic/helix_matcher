@@ -37,6 +37,7 @@ def parse_sequence_range(string):
     ranges = string.split(',')
     final_range = []
     for res_range in ranges:
+        print(res_range)
         if '-' in res_range:
             rsplit = res_range.split('-')
             range_start = int(rsplit[0])
@@ -127,7 +128,7 @@ def main():
             # Running split to motifs
             toolbox.cleaning.cleanATOM(target_pdb)
             prot_name = os.path.splitext(os.path.basename(target_pdb))[0]
-            pose = pose_from_pdb(prot_name + '.clean.pdb')
+            pose = pose_from_file(prot_name + '.clean.pdb')
             motifs = split_to_motifs.define_motifs(pose, prot_name,
                     selected_res=positions)
             outputs = glob.glob('???_target.pdb')
