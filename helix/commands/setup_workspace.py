@@ -18,7 +18,7 @@ Options:
         If a design with the given name already exists, remove it and replace 
         it with the new design created by this script.
 
-    --rifdock
+    --rifdock  
         Setup a design workspace for use with RIFDock. Otherwise you
         will be asked for PatchMAN-related paths.
 """
