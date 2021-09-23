@@ -13,6 +13,10 @@ Options:
     --chainmap=YAML, -m
         YAML file that tells this script which chains go with which
         target.
+    --sequence=STR
+        Only make patches for a given string. Input should be a
+        comma-separated list of residue ranges, i.e. "1-20,23-25,29".
+        Residue numbers should be given using PDB numbering.
 
 """
 
@@ -22,15 +26,33 @@ from helix.utils import utils
 from pyrosetta import init
 from pyrosetta import pose_from_file
 from pyrosetta.rosetta.core.pose import append_pose_to_pose
+from pyrosetta import toolbox
 import os, shutil
 import yaml
 import glob
+
+
+def parse_sequence_range(string):
+    '''Parse a string that defines a sequence range'''
+    ranges = string.split(',')
+    final_range = []
+    for res_range in ranges:
+        if '-' in res_range:
+            rsplit = res_range.split('-')
+            range_start = int(rsplit[0])
+            range_end = int(rsplit[1])
+            these_resis = [x for x in range(range_start, range_end + 1)]
+            final_range.extend(these_resis)
+        else:
+            final_range.append(res_range)
 
 
 def main():
     args = docopt.docopt(__doc__)
     init()
     root_workspace = ws.workspace_from_dir(args['<workspace>'])
+    sys.path.insert(1, root_workspace.patchman_path)
+    import split_to_motifs
 
     if args['--target']:
         targets = [args['--target']]
@@ -89,12 +111,27 @@ def main():
             pose.pdb_info().set_chains('A')
             pose.dump_pdb(target_pdb)
 
-            script_path = os.path.join(workspace.patchman_path,
-                    'split_to_motifs.py')
+            # script_path = os.path.join(workspace.patchman_path,
+                    # 'split_to_motifs.py')
             os.chdir(workspace.focus_dir)
-            utils.run_command([workspace.python_path,
-                script_path, target_pdb])
+            # cmd = [workspace.python_path, script_path, target_pdb]
+            if args['--sequence']:
+                positions = parse_sequence_range(args['--sequence'])
+                print('Using the following positions:')
+                print(positions)
+            else:
+                positions = None
+            # utils.run_command([workspace.python_path,
+                # script_path, target_pdb])
+
+            # Running split to motifs
+            toolbox.cleaning.cleanATOM(target_pdb)
+            prot_name = os.path.splitext(os.path.basename(inpdb))[0]
+            pose = pose_from_pdb(prot_name + '.clean.pdb')
+            motifs = split_to_motifs.define_motifs(pose, prot_name,
+                    selected_res=positions)
             outputs = glob.glob('???_target.pdb')
+
             for output in outputs:
                 patchno = output[:3]
                 patch_folder = os.path.join(workspace.focus_dir,
