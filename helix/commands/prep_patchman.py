@@ -27,7 +27,7 @@ from pyrosetta import init
 from pyrosetta import pose_from_file
 from pyrosetta.rosetta.core.pose import append_pose_to_pose
 from pyrosetta import toolbox
-import os, shutil
+import os, shutil, sys
 import yaml
 import glob
 
