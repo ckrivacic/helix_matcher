@@ -6,7 +6,7 @@ given below.  This information is used to build a workspace for this design
 that will be used by the rest of the scripts in this pipeline.  
 
 Usage:
-    helix setup_workspace <workspace> [--remote] [--overwrite]
+    helix setup_workspace <workspace> [--remote] [--overwrite] [--rifdock]
 
 Options:
     --remote, -r
@@ -18,7 +18,7 @@ Options:
         If a design with the given name already exists, remove it and replace 
         it with the new design created by this script.
 
-    --rifdock  
+    --rifdock
         Setup a design workspace for use with RIFDock. Otherwise you
         will be asked for PatchMAN-related paths.
 """
