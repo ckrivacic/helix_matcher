@@ -37,7 +37,6 @@ def parse_sequence_range(string):
     ranges = string.split(',')
     final_range = []
     for res_range in ranges:
-        print(res_range)
         if '-' in res_range:
             rsplit = res_range.split('-')
             range_start = int(rsplit[0])
@@ -46,6 +45,7 @@ def parse_sequence_range(string):
             final_range.extend(these_resis)
         else:
             final_range.append(res_range)
+    return final_range
 
 
 def main():
