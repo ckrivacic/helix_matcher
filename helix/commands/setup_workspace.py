@@ -333,7 +333,7 @@ Design '{0}' already exists.  Use '-o' to overwrite.""", workspace.root_dir)
                 # PatchMANPath,
                 # MASTERPath,
         )
-    elif args['--rifdock']:
+    elif arguments['--rifdock']:
         installers = (
                 RosettaDir,
                 InputPdb,
