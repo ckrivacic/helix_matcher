@@ -18,6 +18,15 @@ from helix.utils import utils
 from helix import big_jobs
 
 
+def strlist_to_vector1_str(strlist):
+    # Should also go in utils eventually
+    from pyrosetta.rosetta.utility import vector1_std_string
+    vector = vector1_std_string()
+    for string in strlist:
+        vector.append(string)
+    return vector
+
+
 def main():
     args = docopt.docopt(__doc__)
     workspace, job_info = big_jobs.initiate()
@@ -160,15 +169,55 @@ def main():
 
     # Run FlexPepDock refinement
     if args['--flexpepdock']:
+        from pyrosetta.rosetta.core.pack.task import TaskFactory
+        from pyrosetta.rosetta.core.pack.task import operation
+        from pyrosetta.rosetta.core.select import residue_selector
+        from pyrosetta import pose_from_pdb
+        from pyrosetta import create_score_function
+        import pyrosetta
+
         os.system('ls ???_????_*_*.pdb > input_list')
+        inputs = []
+        with open('input_list', 'r') as f:
+            for line in f:
+                inputs.append(line.strip())
+        for pdb in inputs:
+            pose = pose_from_pdb(pdb)
+            ref = create_score_function('ref2015')
+            fastdes = pyrosetta.rosetta.protocols.denovo_designs.movers.FastDesign(ref)
+
+            selector = residue_selector.ChainSelector('B')
+            not_selector = residue_selector.NotResidueSelector(selector)
+            tf = TaskFactory()
+            no_packing = operation.PreventRepackingRLT()
+            static = operation.OperateOnResidueSubset(no_packing,
+                    not_selector)
+            notaa = operation.ProhibitSpecifiedBaseResidueTypes(
+                    strlist_to_vector1_str(['GLY']),
+                    selector)
+            tf.push_back(static)
+            tf.push_back(notaa)
+            packertask = tf.create_task_and_apply_taskoperations(pose)
+            print('REPACK')
+            print(packertask.repacking_residues())
+            print('DESIGN')
+            print(packertask.designing_residues())
+
+            fastdes.set_task_factory(tf)
+            fastdes.set_scorefxn(ref)
+            fastdes.apply(pose)
+            score = ref(pose)
+            pose.dump_pdb(pdb)
+
         exe = os.path.join(
                 workspace.rosetta_dir, 'source', 'bin',
                 'FlexPepDocking.{}'.format(suffix)
                 )
         if not os.path.exists('docked_full/'):
             os.path.makedirs('docked_full', exist_ok=True)
-        cmd = [exe, '-in:file:l', 'input_list', '-scorefile', 'score.sc',
-                '-out:pdb', '-lowres_preoptimize',
+        cmd = [exe, '-in:file:l', 'input_list', '-scorefile',
+                'docked_full/score.sc',
+                '-out:pdb_gz', '-lowres_preoptimize',
                 '-flexPepDocking:pep_refine',
                 '-out:prefix', 'docked_full/',
                 '-flexPepDocking:flexpep_score_only', '-ex1', '-ex2aro',
@@ -178,9 +227,9 @@ def main():
         os.system('mv ???_????_*_*.pdb docked_full/')
         os.system('mv db_list docked_full/')
         os.system('mv removed_psds docked_full/')
+        os.system('gzip docked_full/*.pdb')
 
     # Copy back to main folder
-    os.system('gzip docked_full/*.pdb')
     # os.system('tar -cf docked_full.tar docked_full/')
     outputs = os.path.join(tempdir, 'docked_full/')
     final_out = os.path.join(folder, 'docked_full/')

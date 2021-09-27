@@ -240,7 +240,9 @@ if __name__=='__main__':
         task = 0
     # targets = workspace.targets
     helices = workspace.scaffolds
-    helix = helices[task]
+    if len(helices) == 0:
+        helices = workspace.matchlen
+    helix = workspace.scaffold_folder(str(helices[task]))
     # folders = workspace.patches
     # workspace = ws.RIFWorkspace(workspace.root_dir, targets[task])
 
