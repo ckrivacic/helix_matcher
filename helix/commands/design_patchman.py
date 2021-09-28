@@ -20,6 +20,7 @@ import os
 import docopt
 from helix.utils import utils
 from helix import submit
+import glob
 from copy import deepcopy
 
 
