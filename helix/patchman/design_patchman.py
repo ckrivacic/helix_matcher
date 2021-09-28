@@ -65,7 +65,7 @@ def main():
             )
     os.chdir(folder)
     target = workspace.target_path_clean
-    os.system('ls ???_????_*_*.pdb > input_list')
+    # os.system('ls ???_????_*_*.pdb > input_list')
     # inputs = []
     # with open('input_list', 'r') as f:
         # for line in f:
@@ -73,7 +73,7 @@ def main():
     # for pdb in inputs:
     pose = pose_from_pdb(pdb)
     ref = create_score_function('ref2015')
-    fastdes = pyrosetta.rosetta.protocols.denovo_designs.movers.FastDesign(ref)
+    fastdes = pyrosetta.rosetta.protocols.denovo_design.movers.FastDesign(ref)
 
     selector = residue_selector.ChainSelector('B')
     not_selector = residue_selector.NotResidueSelector(selector)
