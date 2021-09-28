@@ -85,8 +85,13 @@ def main():
             workspace.rosetta_dir, 'source', 'bin',
             'FlexPepDocking.{}'.format(suffix)
             )
-    if not os.path.exists('docked_full/'):
-        os.path.makedirs('docked_full', exist_ok=True)
+    # if not os.path.exists('docked_full/'):
+        # os.path.makedirs('docked_full', exist_ok=True)
+    folder = os.path.dirname(
+            os.path.abspath(pdb)
+            )
+    os.chdir(folder)
+
     cmd = [exe, '-in:file:s', pdb, '-scorefile',
             'score.sc',
             '-out:pdb_gz', '-lowres_preoptimize',
