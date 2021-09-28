@@ -117,7 +117,7 @@ def main():
             '-out:pdb_gz', '-lowres_preoptimize',
             '-flexPepDocking:pep_refine',
             '-flexPepDocking:flexpep_score_only', '-ex1', '-ex2aro',
-            '-use_input_sc', 'unboundrot', target]
+            '-use_input_sc', '-unboundrot', target]
             # '-out:prefix', 'docked_full/',
     utils.run_command(cmd)
 
