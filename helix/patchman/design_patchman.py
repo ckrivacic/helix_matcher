@@ -12,6 +12,7 @@ Options:
 from pyrosetta.rosetta.core.pack.task import TaskFactory
 from pyrosetta.rosetta.core.pack.task import operation
 from pyrosetta.rosetta.core.select import residue_selector
+from pyrosetta import init
 from pyrosetta import pose_from_pdb
 from pyrosetta import create_score_function
 import pyrosetta
@@ -33,6 +34,7 @@ def strlist_to_vector1_str(strlist):
 
 
 def main():
+    init()
     args = docopt.docopt(__doc__)
     workspace, job_info = big_jobs.initiate()
     if not hasattr(workspace, 'docking_directory'):
