@@ -69,6 +69,7 @@ class Workspace(object):
     def log_dir(self):
         return os.path.join(self.project_params_dir, 'logs')
 
+    @property
     def scaffold_prefix(self):
         # return 'scaffold_'
         return 'len_'
