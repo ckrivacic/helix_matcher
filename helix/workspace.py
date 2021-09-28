@@ -69,6 +69,10 @@ class Workspace(object):
     def log_dir(self):
         return os.path.join(self.project_params_dir, 'logs')
 
+    def scaffold_prefix(self):
+        # return 'scaffold_'
+        return 'len_'
+
     @property
     def settings(self):
         settings_paths =\
@@ -592,10 +596,6 @@ class RIFWorkspace(Workspace):
         return os.path.join(self.rifdock_outdir, self.focus_name)
 
     @property
-    def scaffold_prefix(self):
-        # return 'scaffold_'
-        return 'len_'
-
     def scaffold_folder(self, scaffold_basename):
         return self.scaffold_prefix + scaffold_basename
 
