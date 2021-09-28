@@ -60,6 +60,10 @@ def main():
 
     print('TASK: {}'.format(task_id))
     pdb = inputs[task_id]
+    folder = os.path.dirname(
+            os.path.abspath(pdb)
+            )
+    os.chdir(folder)
     target = workspace.target_path_clean
     os.system('ls ???_????_*_*.pdb > input_list')
     # inputs = []
@@ -100,10 +104,6 @@ def main():
             )
     # if not os.path.exists('docked_full/'):
         # os.path.makedirs('docked_full', exist_ok=True)
-    folder = os.path.dirname(
-            os.path.abspath(pdb)
-            )
-    os.chdir(folder)
 
     cmd = [exe, '-in:file:s', pdb, '-scorefile',
             'score.sc',
