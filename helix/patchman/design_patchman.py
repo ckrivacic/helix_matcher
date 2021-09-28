@@ -98,6 +98,13 @@ def main():
     score = ref(pose)
     pose.dump_pdb(pdb)
 
+    import platform
+    ostype = platform.system()
+    if ostype == 'Linux':
+        suffix = 'linuxgccrelease'
+    elif ostype == 'Darwin':
+        suffix = 'macosclangrelease'
+
     exe = os.path.join(
             workspace.rosetta_dir, 'source', 'bin',
             'FlexPepDocking.{}'.format(suffix)
