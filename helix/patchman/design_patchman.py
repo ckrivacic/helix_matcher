@@ -111,3 +111,6 @@ def main():
             '-use_input_sc', 'unboundrot', target]
             # '-out:prefix', 'docked_full/',
     utils.run_command(cmd)
+
+if __name__=='__main__':
+    main()
