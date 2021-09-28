@@ -1,3 +1,14 @@
+"""
+Script to run FastDesign + FlexPepDock on outputs of PatchMAN.
+
+Usage:
+    design_patchman.py <workspace> [options]
+
+Options:
+    --task=INT  Only run a specific task
+
+"""
+
 from pyrosetta.rosetta.core.pack.task import TaskFactory
 from pyrosetta.rosetta.core.pack.task import operation
 from pyrosetta.rosetta.core.select import residue_selector
