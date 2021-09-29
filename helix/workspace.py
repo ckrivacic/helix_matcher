@@ -596,7 +596,6 @@ class RIFWorkspace(Workspace):
     def focus_dir(self):
         return os.path.join(self.rifdock_outdir, self.focus_name)
 
-    @property
     def scaffold_folder(self, scaffold_basename):
         return self.scaffold_prefix + scaffold_basename
 
