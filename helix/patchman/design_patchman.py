@@ -14,7 +14,7 @@ from pyrosetta.rosetta.core.pack.task import TaskFactory
 from pyrosetta.rosetta.core.pack.task import operation
 from pyrosetta.rosetta.core.select import residue_selector
 from pyrosetta import init
-from pyrosetta import pose_from_pdb
+from pyrosetta import pose_from_file
 from pyrosetta import create_score_function
 import pyrosetta
 from distutils.dir_util import copy_tree
@@ -73,7 +73,7 @@ def main():
         # for line in f:
             # inputs.append(line.strip())
     # for pdb in inputs:
-    pose = pose_from_pdb(pdb)
+    pose = pose_from_file(pdb)
     ref = create_score_function('ref2015')
     fastdes = pyrosetta.rosetta.protocols.denovo_design.movers.FastDesign(ref)
 
