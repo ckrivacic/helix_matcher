@@ -6,6 +6,7 @@ Usage:
 
 Options:
     --task=INT  Only run a specific task
+    --delete  Delete target structures
 
 """
 
@@ -120,6 +121,9 @@ def main():
             '-use_input_sc', '-unboundrot', target]
             # '-out:prefix', 'docked_full/',
     utils.run_command(cmd)
+
+    if args['--delete']:
+        os.remove(pdb)
 
 if __name__=='__main__':
     main()

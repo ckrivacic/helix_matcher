@@ -14,6 +14,7 @@ Options:
     log files, and job info files.
     --flexpepdock  Run flexpepdock at the end of the PatchMAN run
     --relax  Run relax on target
+    --delete  Delete non-designed structures
 """
 import helix.workspace as ws
 import os
@@ -55,7 +56,10 @@ def main():
             cmd += '--flexpepdock'
 
         if args['--relax']:
-            cmd += '--relax'
+            cmd += '--relax',
+
+        if args['--delete']:
+            cmd += '--delete',
 
         if args['--task']:
             cmd += '--task', args['--task']
