@@ -15,8 +15,11 @@ Options:
     --flexpepdock  Run flexpepdock at the end of the PatchMAN run
     --relax  Run relax on target
     --delete  Delete non-designed structures
+    --max-memory  How much memory to allocate
+    --max-runtime  How long to allocate the CPUs
 """
 import helix.workspace as ws
+from helix import big_jobs
 import os
 import docopt
 from helix.utils import utils
@@ -74,7 +77,29 @@ def main():
                 utils.run_command(local_cmd)
 
         else:
+            # print('Submitting jobs for {}'.format(target))
+            # submit.submit(rif_workspace, cmd, distributor='sge',
+                    # make_dirs=args['--make-dirs'],
+                    # test_run=args['--test-run'], clear=args['--clear'],)
+            script_name='design_patchman'
             print('Submitting jobs for {}'.format(target))
-            submit.submit(rif_workspace, cmd, distributor='sge',
-                    make_dirs=args['--make-dirs'],
-                    test_run=args['--test-run'], clear=args['--clear'],)
+            # submit.submit(rif_workspace, cmd, distributor='sge',
+                    # make_dirs=args['--make-dirs'],
+                    # test_run=args['--test-run'], clear=args['--clear'],
+                    # ntasks=ntasks,
+                    # )
+            if args['--clear']:
+                rif_workspace.clear_cluster_outputs()
+            print('Submitting the following command to SGE:')
+            print(' '.join(cmd))
+            # Call big_jobs.submit directly, so that it doesn't care
+            # about unclaimed inputs
+            big_jobs.submit(
+                    rif_workspace, cmd,
+                    nstruct=ntasks,
+                    max_runtime=args['--max-runtime'],
+                    max_memory=args['--max-memory'],
+                    test_run=False,
+                    job_name=script_name,
+                    create_job_info=False,
+                    )
