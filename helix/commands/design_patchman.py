@@ -53,7 +53,7 @@ def main():
         cmd += target,
 
         if args['--flexpepdock']:
-            cmd += '--flexpepdock'
+            cmd += '--flexpepdock',
 
         if args['--relax']:
             cmd += '--relax',

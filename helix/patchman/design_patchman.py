@@ -23,6 +23,7 @@ import os, sys, glob
 from helix import workspace as ws
 from helix.utils import utils
 from helix import big_jobs
+from helix.rifdock import interface
 
 
 def strlist_to_vector1_str(strlist):
@@ -121,6 +122,18 @@ def main():
             '-use_input_sc', '-unboundrot', target]
             # '-out:prefix', 'docked_full/',
     utils.run_command(cmd)
+
+    pdb_basename = pdb.split('.')[0]
+    flexpep_file = pdb_basename + '_0001.pdb.gz'
+    flexpep_pose = pose_from_file(flexpep_file)
+    score = ref(flexpep_pose)
+    interface_scorer = interface.InterfaceScore(flexpep_pose)
+    row = {'name': os.path.basename(flexpep_file),
+            'size': flexpep_pose.size(),
+            'pose_score': score,
+            'interface_score': interface_scorer.apply()}
+    df = pd.DataFrame([row])
+    df.to_pickle('{basename}_{task}.pkl'.format(pdb_basename, task_id))
 
     if args['--delete']:
         os.remove(pdb)
