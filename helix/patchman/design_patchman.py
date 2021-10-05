@@ -49,6 +49,8 @@ def main():
     print('TOTAL JOBS: {}'.format(total_jobs))
     num_tasks = total_jobs
 
+    print('Job info')
+    print(job_info)
     task_id = job_info['task_id']
     if not task_id:
         if args['--task']:
