@@ -20,6 +20,7 @@ import pyrosetta
 from distutils.dir_util import copy_tree
 import docopt
 import os, sys, glob
+import pandas as pd
 from helix import workspace as ws
 from helix.utils import utils
 from helix import big_jobs
