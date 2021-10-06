@@ -58,11 +58,14 @@ def main():
         else:
             task_id = 0
 
-    # inputs = sorted(glob.glob(
-        # os.path.join(workspace.focus_dir, 'patch_*',
-            # workspace.scaffold_prefix + '*', 'docked_full', '*.pdb.gz')
-        # ))
-    inputs = job_info['inputs']
+    try:
+        inputs = job_info['inputs']
+    except:
+        print('This is probably a local command.')
+        inputs = sorted(glob.glob(
+            os.path.join(workspace.focus_dir, 'patch_*',
+                workspace.scaffold_prefix + '*', 'docked_full', '*.pdb.gz')
+            ))
 
     print('TASK: {}'.format(task_id))
     pdb = inputs[task_id]
