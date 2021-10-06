@@ -58,10 +58,11 @@ def main():
         else:
             task_id = 0
 
-    inputs = sorted(glob.glob(
-        os.path.join(workspace.focus_dir, 'patch_*',
-            workspace.scaffold_prefix + '*', 'docked_full', '*.pdb.gz')
-        ))
+    # inputs = sorted(glob.glob(
+        # os.path.join(workspace.focus_dir, 'patch_*',
+            # workspace.scaffold_prefix + '*', 'docked_full', '*.pdb.gz')
+        # ))
+    inputs = job_info['inputs']
 
     print('TASK: {}'.format(task_id))
     pdb = inputs[task_id]
