@@ -101,5 +101,5 @@ def main():
                     max_memory=args['--max-memory'],
                     test_run=False,
                     job_name=script_name,
-                    create_job_info=False,
+                    create_job_info=True,
                     )
