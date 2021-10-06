@@ -64,7 +64,7 @@ def main():
 
     # print('Job info')
     # print(job_info)
-    if task_id not in job_info:
+    if 'task_id' not in job_info:
         if args['--task']:
             task_id = int(args['--task']) - 1
         else:
