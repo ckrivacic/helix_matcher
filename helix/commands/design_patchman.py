@@ -53,7 +53,7 @@ def main():
         ntasks = len(inputs)
 
         cmd = workspace.python_path, script_path
-        cmd += rif_workspace.focus_dir, target
+        cmd += rif_workspace.focus_dir,
 
         if args['--flexpepdock']:
             cmd += '--flexpepdock',
