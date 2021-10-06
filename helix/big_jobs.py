@@ -141,6 +141,8 @@ def submit(workspace, cmd, create_job_info=True, **params):
     for param in cmd:
         qsub_command += param,
 
+    print('QSUB COMMAND:')
+    print(qsub_command)
     status = process.check_output(qsub_command).decode('utf-8')
     status_pattern = re.compile(r'Your job-array (\d+).[0-9:-]+ \(".*"\) has been submitted')
     status_match = status_pattern.match(status)

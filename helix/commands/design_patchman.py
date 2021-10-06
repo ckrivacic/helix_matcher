@@ -45,7 +45,10 @@ def main():
 
     for target in targets:
         rif_workspace = ws.RIFWorkspace(workspace.root_dir, target)
-        # inputs = rif_workspace.unclaimed_inputs
+
+        if args['--clear']:
+            rif_workspace.clear_patchman_designs()
+
         inputs = sorted(glob.glob(
             os.path.join(rif_workspace.focus_dir, 'patch_*',
                 workspace.scaffold_prefix + '*', 'docked_full', '*.pdb.gz')
@@ -88,8 +91,6 @@ def main():
                     # test_run=args['--test-run'], clear=args['--clear'],
                     # ntasks=ntasks,
                     # )
-            if args['--clear']:
-                rif_workspace.clear_patchman_designs()
             print('Submitting the following command to SGE:')
             print(' '.join(cmd))
             # Call big_jobs.submit directly, so that it doesn't care

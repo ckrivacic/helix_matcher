@@ -37,7 +37,7 @@ def strlist_to_vector1_str(strlist):
 
 
 def main():
-    init()
+    init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro')
     args = docopt.docopt(__doc__)
     try:
         workspace, job_info = big_jobs.initiate()
