@@ -97,6 +97,7 @@ def main():
             big_jobs.submit(
                     rif_workspace, cmd,
                     nstruct=ntasks,
+                    inputs=inputs,
                     max_runtime=args['--max-runtime'],
                     max_memory=args['--max-memory'],
                     test_run=False,
