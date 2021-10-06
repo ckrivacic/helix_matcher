@@ -691,6 +691,22 @@ class RIFWorkspace(Workspace):
         for clst in clustered:
             shutil.rmtree(clst)
 
+    def clear_patchman_designs(self):
+        import shutil
+        design_logs = glob.glob(
+                os.path.join(
+                    self.log_dir,
+                    'design*'))
+        for log in design_logs:
+            os.remove(log)
+        for dock_dir in self.docking_directories:
+            design_files = glob.glob(os.path.join(
+                dock_dir, '*_????.pdb.gz'
+                ))
+            for f in design_files:
+                os.remove(f)
+
+
     @property
     def unclaimed_inputs(self):
         inputs = set(self.patches)

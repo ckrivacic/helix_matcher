@@ -89,7 +89,7 @@ def main():
                     # ntasks=ntasks,
                     # )
             if args['--clear']:
-                rif_workspace.clear_cluster_outputs()
+                rif_workspace.clear_patchman_designs()
             print('Submitting the following command to SGE:')
             print(' '.join(cmd))
             # Call big_jobs.submit directly, so that it doesn't care
