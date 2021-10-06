@@ -64,12 +64,13 @@ def main():
 
     # print('Job info')
     # print(job_info)
-    task_id = job_info['task_id']
-    if not task_id:
+    if task_id not in job_info:
         if args['--task']:
             task_id = int(args['--task']) - 1
         else:
             task_id = 0
+    else:
+        task_id = int(job_info['task_id'])
 
 
     print('TASK: {}'.format(task_id))
