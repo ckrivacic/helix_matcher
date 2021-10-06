@@ -39,15 +39,28 @@ def strlist_to_vector1_str(strlist):
 def main():
     init()
     args = docopt.docopt(__doc__)
-    workspace, job_info = big_jobs.initiate()
+    try:
+        workspace, job_info = big_jobs.initiate()
+    except:
+        print('Maybe this is local?')
+        workspace = ws.workspace_from_dir(args['<workspace>'])
+        job_info = {
+                'task_id': args['--task'],
+                'inputs' : sorted(glob.glob(
+                    os.path.join(workspace.focus_dir, 'patch_*',
+                        workspace.scaffold_prefix + '*', 'docked_full',
+                        '*.pdb.gz'),
+            ))
+                }
+
     if not hasattr(workspace, 'docking_directory'):
-        raise Exception("Error: run_sge.py requires RIFWorkspaces as input. You "\
+        raise Exception("Error: design_patchman.py requires RIFWorkspaces as input. You "\
                 "may have provided the root directory to this script "\
                 "somehow.")
 
-    total_jobs = len(glob.glob(workspace.focus_dir + '/patch_*/len_*'))
+    inputs = job_info['inputs']
+    total_jobs = len(inputs)
     print('TOTAL JOBS: {}'.format(total_jobs))
-    num_tasks = total_jobs
 
     print('Job info')
     print(job_info)
@@ -58,14 +71,6 @@ def main():
         else:
             task_id = 0
 
-    try:
-        inputs = job_info['inputs']
-    except:
-        print('This is probably a local command.')
-        inputs = sorted(glob.glob(
-            os.path.join(workspace.focus_dir, 'patch_*',
-                workspace.scaffold_prefix + '*', 'docked_full', '*.pdb.gz')
-            ))
 
     print('TASK: {}'.format(task_id))
     pdb = inputs[task_id]
