@@ -62,8 +62,8 @@ def main():
     total_jobs = len(inputs)
     print('TOTAL JOBS: {}'.format(total_jobs))
 
-    print('Job info')
-    print(job_info)
+    # print('Job info')
+    # print(job_info)
     task_id = job_info['task_id']
     if not task_id:
         if args['--task']:
