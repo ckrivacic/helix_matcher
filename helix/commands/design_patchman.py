@@ -95,6 +95,8 @@ def main():
             print(' '.join(cmd))
             # Call big_jobs.submit directly, so that it doesn't care
             # about unclaimed inputs
+            print(args['--max-runtime'])
+            print(args['--max-memory'])
             big_jobs.submit(
                     rif_workspace, cmd,
                     nstruct=ntasks,
