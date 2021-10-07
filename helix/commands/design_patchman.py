@@ -97,13 +97,16 @@ def main():
             # about unclaimed inputs
             print(args['--max-runtime'])
             print(args['--max-memory'])
-            big_jobs.submit(
-                    rif_workspace, cmd,
-                    nstruct=ntasks,
-                    inputs=inputs,
-                    max_runtime=args['--max-runtime'],
-                    max_memory=args['--max-memory'],
-                    test_run=False,
-                    job_name=script_name,
-                    create_job_info=True,
-                    )
+            try:
+                big_jobs.submit(
+                        rif_workspace, cmd,
+                        nstruct=ntasks,
+                        inputs=inputs,
+                        max_runtime=args['--max-runtime'],
+                        max_memory=args['--max-memory'],
+                        test_run=False,
+                        job_name=script_name,
+                        create_job_info=True,
+                        )
+            except:
+                print('{} DID NOT SUBMIT'.format(target))
