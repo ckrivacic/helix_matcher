@@ -21,6 +21,7 @@ Options:
 import helix.workspace as ws
 from helix import big_jobs
 import os
+import math
 import docopt
 from helix.utils import utils
 from helix import submit
@@ -53,7 +54,8 @@ def main():
             os.path.join(rif_workspace.focus_dir, 'patch_*',
                 workspace.scaffold_prefix + '*', 'docked_full', '*.pdb.gz')
             ))
-        ntasks = len(inputs)
+        # ntasks = len(inputs)
+        ntasks = math.ceil(len(inputs) / 30)
 
         cmd = workspace.python_path, script_path
         cmd += rif_workspace.focus_dir,
