@@ -159,7 +159,7 @@ def main():
     if not os.path.exists(pickle_outdir):
         os.makedirs(pickle_outdir, exist_ok=True)
     df.to_pickle(os.path.join(pickle_outdir,
-        '{basename}_{task}.pkl'.format(pdb_basename, task_id)))
+        '{basename}_{task}.pkl'.format(basename=pdb_basename, task=task_id)))
 
     # if args['--delete']:
         # os.remove(pdb)
