@@ -80,6 +80,12 @@ def main():
     rowlist = []
     for input_idx in range(start, stop):
         pdb = os.path.abspath(inputs[input_idx])
+        designed = False
+        with gzip.open(pdb, 'rt') as f:
+            for line in f:
+                if line.startswith('pose'):
+                    designed = True
+
         folder = os.path.dirname(
                 os.path.abspath(pdb)
                 )
@@ -93,30 +99,31 @@ def main():
         # for pdb in inputs:
         pose = pose_from_file(pdb)
         ref = create_score_function('ref2015')
-        fastdes = pyrosetta.rosetta.protocols.denovo_design.movers.FastDesign(ref)
+        if not designed:
+            fastdes = pyrosetta.rosetta.protocols.denovo_design.movers.FastDesign(ref)
 
-        selector = residue_selector.ChainSelector('B')
-        not_selector = residue_selector.NotResidueSelector(selector)
-        tf = TaskFactory()
-        no_packing = operation.PreventRepackingRLT()
-        static = operation.OperateOnResidueSubset(no_packing,
-                not_selector)
-        notaa = operation.ProhibitSpecifiedBaseResidueTypes(
-                strlist_to_vector1_str(['GLY']),
-                selector)
-        tf.push_back(static)
-        tf.push_back(notaa)
-        packertask = tf.create_task_and_apply_taskoperations(pose)
-        print('REPACK')
-        print(packertask.repacking_residues())
-        print('DESIGN')
-        print(packertask.designing_residues())
+            selector = residue_selector.ChainSelector('B')
+            not_selector = residue_selector.NotResidueSelector(selector)
+            tf = TaskFactory()
+            no_packing = operation.PreventRepackingRLT()
+            static = operation.OperateOnResidueSubset(no_packing,
+                    not_selector)
+            notaa = operation.ProhibitSpecifiedBaseResidueTypes(
+                    strlist_to_vector1_str(['GLY']),
+                    selector)
+            tf.push_back(static)
+            tf.push_back(notaa)
+            packertask = tf.create_task_and_apply_taskoperations(pose)
+            print('REPACK')
+            print(packertask.repacking_residues())
+            print('DESIGN')
+            print(packertask.designing_residues())
 
-        fastdes.set_task_factory(tf)
-        fastdes.set_scorefxn(ref)
-        fastdes.apply(pose)
-        score = ref(pose)
-        pose.dump_pdb(pdb)
+            fastdes.set_task_factory(tf)
+            fastdes.set_scorefxn(ref)
+            fastdes.apply(pose)
+            score = ref(pose)
+            pose.dump_pdb(pdb)
 
         # import platform
         # ostype = platform.system()
