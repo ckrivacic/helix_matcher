@@ -163,11 +163,13 @@ def main():
         rowlist.append(row)
 
     df = pd.DataFrame(rowlist)
+    print(df)
     pickle_outdir = os.path.join(workspace.focus_dir, 'scores')
+    print('Saving in folder {}'.format(pickle_outdir))
     if not os.path.exists(pickle_outdir):
         os.makedirs(pickle_outdir, exist_ok=True)
     df.to_pickle(os.path.join(pickle_outdir,
-        '{basename}_{task}.pkl'.format(basename=pdb_basename, task=task_id)))
+        'task_{task}.pkl'.format(task=task_id)))
 
     # if args['--delete']:
         # os.remove(pdb)
