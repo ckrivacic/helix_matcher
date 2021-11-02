@@ -80,8 +80,9 @@ def main():
     print('TASK: {}'.format(task_id))
     rowlist = []
     for input_idx in range(start, stop):
-        pdb = os.path.relpath(inputs[input_idx],
+        pdb_save = os.path.relpath(inputs[input_idx],
                 start=workspace.root_dir)
+        pdb = os.path.abspath(inputs[input_idx])
         designed = False
         with gzip.open(pdb, 'rt') as f:
             for line in f:
@@ -157,7 +158,7 @@ def main():
         flexpep_pose = pose
         score = ref(flexpep_pose)
         interface_scorer = interface.InterfaceScore(flexpep_pose)
-        row = {'patchman_file': flexpep_file,
+        row = {'patchman_file': pdb_save,
                 'name': os.path.basename(flexpep_file),
                 'size': flexpep_pose.size(),
                 'pose_score': score,
