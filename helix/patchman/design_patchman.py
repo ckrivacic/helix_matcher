@@ -156,13 +156,44 @@ def main():
         # flexpep_pose = pose_from_file(flexpep_file)
         flexpep_file = pdb
         flexpep_pose = pose
+
+        buns_all = '''
+        <BuriedUnsatHbonds 
+            name="Buried Unsat [[-]]"
+            report_all_heavy_atom_unsats="true" scorefxn="ref2015"
+            cutoff="4" residue_surface_cutoff="20.0"
+            ignore_surface_res="true" print_out_info_to_pdb="true"
+            dalphaball_sasa="1" probe_radius="1.1" confidence="0"
+            only_interface="true" />
+
+        '''
+        buns_sc = '''
+        <BuriedUnsatHbonds 
+            name="Buried Unsat Sidechains [[-]]"
+            report_sc_heavy_atom_unsats="true" scorefxn="ref2015" cutoff="4"
+            residue_surface_cutoff="20.0" ignore_surface_res="true"
+            print_out_info_to_pdb="true"  dalphaball_sasa="1"
+            probe_radius="1.1" confidence="0" only_interface="true" />
+
+        '''
+        buns_all_obj = XmlObjects.static_get_filter(buns_all)
+        buns_sc_obj = XmlObjects.static_get_filter(buns_sc)
+        buns_all_score = buns_all_obj.report_sm(flexpep_pose)
+        buns_sc_score = buns_sc_obj.report_sm(flexpep_pose)
+
         score = ref(flexpep_pose)
         interface_scorer = interface.InterfaceScore(flexpep_pose)
+        interface_score = interface_scorer.apply()
+        n_hbonds = interface_scorer.n_hbonds
         row = {'patchman_file': pdb_save,
                 'name': os.path.basename(flexpep_file),
                 'size': flexpep_pose.size(),
                 'pose_score': score,
-                'interface_score': interface_scorer.apply()}
+                'interface_score': interface_score,
+                'n_hbonds': n_hbonds,
+                'buns_all': buns_all_score,
+                'buns_sc': buns_sc_score,
+                }
         rowlist.append(row)
 
     df = pd.DataFrame(rowlist)
