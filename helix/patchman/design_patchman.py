@@ -39,7 +39,11 @@ def strlist_to_vector1_str(strlist):
 
 
 def main():
-    init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro')
+    dalphaball = os.path.join('wynton', 'home', 'kortemme', 'krivacic',
+            'rosetta', 'source', 'external', 'DAlpahBall',
+            'DAlphaBall.gcc')
+    init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro'\
+            ' -holes:dalphaball {}'.format(dalphaball))
     args = docopt.docopt(__doc__)
     try:
         workspace, job_info = big_jobs.initiate()
