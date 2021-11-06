@@ -73,9 +73,9 @@ class InterfaceScore(object):
                     resi_score = 0
                     for scoretype in scoretypes:
                         score = self.pose.energies().residue_total_energies(resi)[scoretype]
-                        if type(scoretype) ==\
-                                type(ScoreType.hbond_bb_sc) or type(scoretype)\
-                                == type(ScoreType.hbond_sc):
+                        if scoretype ==\
+                                ScoreType.hbond_bb_sc or scoretype\
+                                == ScoreType.hbond_sc:
                             if score < -0.5:
                                 self.n_hbonds += 1
                         resi_score += score
