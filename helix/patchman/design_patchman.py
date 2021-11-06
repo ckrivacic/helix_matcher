@@ -26,6 +26,7 @@ from helix import workspace as ws
 from helix.utils import utils
 from helix import big_jobs
 from helix.rifdock import interface
+from pyrosetta.rosetta.protocols.rosetta_scripts import XmlObjects
 
 
 def strlist_to_vector1_str(strlist):
