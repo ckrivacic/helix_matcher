@@ -55,8 +55,12 @@ class InterfaceScore(object):
         interface.distance(self.dist)
         interface.calculate(self.pose)
 
+        egraph = self.pose.energies().energy_graph()
+        hbondset = bindings.pose.get_hbonds(self.pose)
+
         # Logic for filtering out residues not on chains of interest
-        interface_list = []
+        # interface_list = []
+        contacts = interface.contact_list()
         # interface_resis = []
         scoretypes = [ScoreType.fa_atr, ScoreType.fa_rep, 
                 ScoreType.fa_sol, ScoreType.fa_elec, 
@@ -65,24 +69,34 @@ class InterfaceScore(object):
         self.n_hbonds = 0
         for side in interface.pair_list():
             for resi in side:
+                resi_score = 0
                 # Find out what chain the residue belongs to
                 pdbinfo = self.pose.pdb_info().pose2pdb(resi)
                 # resnum = pdbinfo.split(' ')[0]
                 chain = pdbinfo.split(' ')[1]
-                if chain == 'A':
-                    resi_score = 0
-                    for scoretype in scoretypes:
-                        score = self.pose.energies().residue_total_energies(resi)[scoretype]
-                        if scoretype ==\
-                                ScoreType.hbond_bb_sc or scoretype\
-                                == ScoreType.hbond_sc:
-                            if score < -0.5:
-                                self.n_hbonds += 1
-                        resi_score += score
+                if chain == 'B':
+                    for contact in contacts[resi]:
+                        if self.pose.pdb_info().pose2pdb(contact).split(' ')[1] != chain:
+                            edge = egraph.find_energy_edge(resi,
+                                    contact).fill_energy_map()
+                            filled = edge * weights
+                            resi_score += filled.sum()
+                    for hbond in hbondset.residue_hbonds(resi):
+                        if hbond.energy() < -0.5:
+                            self.n_hbonds += 1
+
+                    # for scoretype in scoretypes:
+                        # score = self.pose.energies().residue_total_energies(resi)[scoretype]
+                        # if scoretype ==\
+                                # ScoreType.hbond_bb_sc or scoretype\
+                                # == ScoreType.hbond_sc:
+                            # if score < -0.5:
+                                # self.n_hbonds += 1
+                        # resi_score += score
                 interface_score += resi_score
                 # Find out what chain the resiude is interacting with
-                closest = interface.closest_interface_residue(self.pose,
-                        resi, self.dist)
+                # closest = interface.closest_interface_residue(self.pose,
+                        # resi, self.dist)
 
         return interface_score
 
