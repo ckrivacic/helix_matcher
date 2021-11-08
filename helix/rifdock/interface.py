@@ -45,6 +45,7 @@ class InterfaceScore(object):
         # chains we care about
         # chains = left_chains + '_' + right_chains
         sfxn = create_score_function('ref2015')
+        weights = sfxn.weights()
         sfxn(self.pose)
         print('SETTING UP FOLD TREE FOR INTERFACE {}'.format(self.chains))
         setup_foldtree(self.pose, self.chains, movable_jumps)
