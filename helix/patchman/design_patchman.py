@@ -47,12 +47,12 @@ def main():
     args = docopt.docopt(__doc__)
     try:
         workspace, job_info = big_jobs.initiate()
-        job_info['task_id'] = int(args['--task'])
-        job_info['inputs'] = sorted(glob.glob(
-            os.path.join(workspace.focus_dir, 'patch_*',
-                workspace.scaffold_prefix + '*', 'docked_full',
-                '*.pdb.gz'),
-            ))
+        # job_info['task_id'] = int(args['--task'])
+        # job_info['inputs'] = sorted(glob.glob(
+            # os.path.join(workspace.focus_dir, 'patch_*',
+                # workspace.scaffold_prefix + '*', 'docked_full',
+                # '*.pdb.gz'),
+            # ))
     except:
         print('Maybe this is local?')
         workspace = ws.workspace_from_dir(args['<workspace>'])
