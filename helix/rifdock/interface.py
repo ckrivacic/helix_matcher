@@ -83,7 +83,8 @@ class InterfaceScore(object):
                             filled = edge * weights
                             resi_score += filled.sum()
                     for hbond in hbondset.residue_hbonds(resi):
-                        if hbond.energy() < -0.5:
+                        if hbond.energy() < -0.5 and not\
+                                is_same_chain(self.pose, hbond):
                             self.n_hbonds += 1
 
                     # for scoretype in scoretypes:
@@ -100,6 +101,12 @@ class InterfaceScore(object):
                         # resi, self.dist)
 
         return interface_score
+
+
+def is_same_chain(pose, hbond):
+    chain1 = pose.pdb_info().pose2pdb(hbond.acc_res).split(' ')[1]
+    chain2 = pose.pdb_info().pose2pdb(hbond.don_res).split(' ')[1]
+    return chain1 == chain2
 
 
 def test():
@@ -139,13 +146,6 @@ def test():
     df.to_csv('{}/pdb_interfaces_{}.csv'.format(outfolder, idx))
     df.to_pickle('{}/pdb_interfaces_{}.pkl'.format(outfolder, idx))
 
-# Test of get_interface_residues(). Works, can delete.
-def test(pdb):
-    init()
-    pose = pose_from_file(pdb)
-    db = InterfaceScore(pose)
-    print(db)
-    print(db.apply())
 
 if __name__=='__main__':
     args = docopt.docopt(__doc__)
