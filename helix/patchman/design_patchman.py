@@ -13,6 +13,7 @@ Options:
 from pyrosetta.rosetta.core.pack.task import TaskFactory
 from pyrosetta.rosetta.core.pack.task import operation
 from pyrosetta.rosetta.core.select import residue_selector
+from pyrosetta.rosetta.core.scoring.dssp import Dssp
 from pyrosetta import init
 from pyrosetta import pose_from_file
 from pyrosetta import create_score_function
@@ -26,6 +27,7 @@ from helix import workspace as ws
 from helix.utils import utils
 from helix import big_jobs
 from helix.rifdock import interface
+# from helix.matching.scan_helices import contiguous_secstruct
 from pyrosetta.rosetta.protocols.rosetta_scripts import XmlObjects
 
 
@@ -113,10 +115,10 @@ def main():
         # for pdb in inputs:
         pose = pose_from_file(pdb)
         ref = create_score_function('ref2015')
+        selector = residue_selector.ChainSelector('B')
         if not designed:
             fastdes = pyrosetta.rosetta.protocols.denovo_design.movers.FastDesign(ref)
 
-            selector = residue_selector.ChainSelector('B')
             not_selector = residue_selector.NotResidueSelector(selector)
             tf = TaskFactory()
             no_packing = operation.PreventRepackingRLT()
@@ -168,6 +170,12 @@ def main():
         flexpep_file = pdb
         flexpep_pose = pose
 
+        # Determine helical propensity
+        ss_str = Dssp(flexpep_pose).get_dssp_secstruct()
+        # secstruct = contiguous_secstruct(ss_str)
+        percent_helical = ss_str.count('H') / len(ss_str)
+
+        # Define filters
         buns_all = '''
         <BuriedUnsatHbonds 
             name="Buried Unsat [[-]]"
@@ -187,10 +195,28 @@ def main():
             probe_radius="1.1" confidence="0" only_interface="true" />
 
         '''
+        npsa = '''
+        <BuriedSurfaceArea name="Buried Nonpolar Surface Area [[+]]"
+        select_only_FAMILYVW="true" filter_out_low="false"
+        atom_mode="all_atoms"
+        confidence="1.0"
+        />
+        '''
+        packstat = '''
+          <PackStat
+            name="PackStat Score [[+]]"
+            threshold="0"
+          />
+        '''
         buns_all_obj = XmlObjects.static_get_filter(buns_all)
         buns_sc_obj = XmlObjects.static_get_filter(buns_sc)
+        npsa_obj = XmlObjects.static_get_filter(npsa)
+        npsa_obj.set_residue_selector(selector)
+        packstat_obj = XmlObjects.static_get_filter(packstat)
         buns_all_score = buns_all_obj.report_sm(flexpep_pose)
         buns_sc_score = buns_sc_obj.report_sm(flexpep_pose)
+        npsa_score = npsa_obj.report_sm(flexpep_pose)
+        packstat_score = packstat_obj.report_sm(flexpep_pose)
 
         score = ref(flexpep_pose)
         interface_scorer = interface.InterfaceScore(flexpep_pose)
@@ -204,6 +230,9 @@ def main():
                 'n_hbonds': n_hbonds,
                 'buns_all': buns_all_score,
                 'buns_sc': buns_sc_score,
+                'npsa': npsa_score,
+                'packstat': packstat_score,
+                'percent_helical': percent_helical,
                 }
         rowlist.append(row)
 

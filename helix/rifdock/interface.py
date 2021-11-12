@@ -83,7 +83,7 @@ class InterfaceScore(object):
                             filled = edge * weights
                             resi_score += filled.sum()
                     for hbond in hbondset.residue_hbonds(resi):
-                        if hbond.energy() < -0.5 and not\
+                        if (hbond.weight() * hbond.energy()) < -0.5 and not\
                                 is_same_chain(self.pose, hbond):
                             self.n_hbonds += 1
 
