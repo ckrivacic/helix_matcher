@@ -71,7 +71,7 @@ def main():
                 "somehow.")
 
     inputs = job_info['inputs']
-    nstruct = 100
+    nstruct = 50
     total_jobs = len(inputs)
     print('TOTAL JOBS: {}'.format(total_jobs))
 

@@ -55,7 +55,7 @@ def main():
                 workspace.scaffold_prefix + '*', 'docked_full', '*.pdb.gz')
             ))
         # ntasks = len(inputs)
-        ntasks = math.ceil(len(inputs) / 100)
+        ntasks = math.ceil(len(inputs) / 50)
 
         cmd = workspace.python_path, script_path
         cmd += rif_workspace.focus_dir,
