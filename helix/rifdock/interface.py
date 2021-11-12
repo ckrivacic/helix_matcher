@@ -104,8 +104,8 @@ class InterfaceScore(object):
 
 
 def is_same_chain(pose, hbond):
-    chain1 = pose.pdb_info().pose2pdb(hbond.acc_res).split(' ')[1]
-    chain2 = pose.pdb_info().pose2pdb(hbond.don_res).split(' ')[1]
+    chain1 = pose.pdb_info().pose2pdb(hbond.acc_res()).split(' ')[1]
+    chain2 = pose.pdb_info().pose2pdb(hbond.don_res()).split(' ')[1]
     return chain1 == chain2
 
 
