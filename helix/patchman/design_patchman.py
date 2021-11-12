@@ -29,6 +29,7 @@ from helix import big_jobs
 from helix.rifdock import interface
 # from helix.matching.scan_helices import contiguous_secstruct
 from pyrosetta.rosetta.protocols.rosetta_scripts import XmlObjects
+import pymol
 
 
 def strlist_to_vector1_str(strlist):
@@ -89,6 +90,7 @@ def main():
     start = task_id * nstruct
     stop = task_id * nstruct + nstruct
 
+    target = pymol.cmd.load(workspace.target_path_clean)
 
     print('TASK: {}'.format(task_id))
     rowlist = []
@@ -169,9 +171,14 @@ def main():
         # flexpep_pose = pose_from_file(flexpep_file)
         flexpep_file = pdb
         flexpep_pose = pose
+        chainB = pose.split_by_chain(2)
+        pymol_mobile = pymol.cmd.load(pdb, 'mobile')
+        pymol.cmd.align('mobile and chain A', 'target')
+        pymol.cmd.save(pdb, 'mobile')
+        pymol.cmd.delete('mobile')
 
         # Determine helical propensity
-        ss_str = Dssp(flexpep_pose).get_dssp_secstruct()
+        ss_str = Dssp(chainB).get_dssp_secstruct()
         # secstruct = contiguous_secstruct(ss_str)
         percent_helical = ss_str.count('H') / len(ss_str)
 
