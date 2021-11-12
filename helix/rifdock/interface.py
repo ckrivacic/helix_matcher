@@ -84,7 +84,7 @@ class InterfaceScore(object):
                             resi_score += filled.sum()
                     for hbond in hbondset.residue_hbonds(resi):
                         if hbond.energy() < -0.5 and not\
-                                is_same_chain(self.pose, hbond):
+                                is_same_chain(self.pose, resi, hbond):
                             self.n_hbonds += 1
 
                     # for scoretype in scoretypes:
@@ -103,9 +103,9 @@ class InterfaceScore(object):
         return interface_score
 
 
-def is_same_chain(pose, hbond):
-    chain1 = pose.pdb_info().pose2pdb(hbond.acc_res).split(' ')[1]
-    chain2 = pose.pdb_info().pose2pdb(hbond.don_res).split(' ')[1]
+def is_same_chain(pose, resi, hbond):
+    chain1 = pose.pdb_info(resi).pose2pdb(hbond.acc_res).split(' ')[1]
+    chain2 = pose.pdb_info(resi).pose2pdb(hbond.don_res).split(' ')[1]
     return chain1 == chain2
 
 
