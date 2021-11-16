@@ -14,6 +14,7 @@ from pyrosetta.rosetta.core.pack.task import TaskFactory
 from pyrosetta.rosetta.core.pack.task import operation
 from pyrosetta.rosetta.core.select import residue_selector
 from pyrosetta.rosetta.core.scoring.dssp import Dssp
+from pyrosetta.rosetta.core.kinematics import MoveMap
 from pyrosetta import init
 from pyrosetta import pose_from_file
 from pyrosetta import create_score_function
@@ -120,6 +121,13 @@ def main():
         selector = residue_selector.ChainSelector('B')
         if not designed:
             fastdes = pyrosetta.rosetta.protocols.denovo_design.movers.FastDesign(ref)
+
+            movemap = MoveMap()
+            movemap.set_bb_true_range(pose.chain_begin(2),
+                    pose.chain_end(2))
+            movemap.set_chi_true_range(pose.chain_begin(2),
+                    pose.chain_end(2))
+            fastdes.set_movemap(movemap)
 
             not_selector = residue_selector.NotResidueSelector(selector)
             tf = TaskFactory()
