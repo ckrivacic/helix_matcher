@@ -17,6 +17,7 @@ Options:
     --delete  Delete non-designed structures
     --max-memory=GB  How much memory to allocate  [default: 6G]
     --max-runtime=HH:MM:SS  How long to allocate the CPUs  [default: 12:00:00]
+    --designs_per_task=INT  How many designs per task  [default: 20]
 """
 import helix.workspace as ws
 from helix import big_jobs
@@ -55,7 +56,8 @@ def main():
                 workspace.scaffold_prefix + '*', 'docked_full', '*.pdb.gz')
             ))
         # ntasks = len(inputs)
-        ntasks = math.ceil(len(inputs) / 50)
+        des_per_task = int(args['--designs_per_task'])
+        ntasks = math.ceil(len(inputs) / des_per_task)
 
         cmd = workspace.python_path, script_path
         cmd += rif_workspace.focus_dir,

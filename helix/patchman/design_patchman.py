@@ -7,6 +7,7 @@ Usage:
 Options:
     --task=INT  Only run a specific task
     --delete  Delete target structures
+    --designs_per_task=INT  How many designs per task  [default: 20]
 
 """
 
@@ -75,7 +76,7 @@ def main():
                 "somehow.")
 
     inputs = job_info['inputs']
-    nstruct = 50
+    nstruct = int(args['--designs_per_task'])
     total_jobs = len(inputs)
     print('TOTAL JOBS: {}'.format(total_jobs))
 
