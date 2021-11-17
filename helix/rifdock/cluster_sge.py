@@ -254,7 +254,8 @@ if __name__=='__main__':
     clust.cluster_coords(verbose=True)
     clusters = clust.clusters
 
-    outpath = os.path.join(workspace.focus_dir, 'cluster_representatives',
+    outpath = os.path.join(workspace.focus_dir,
+            workspace.cluster_outputs,
             basename)
     # if not os.path.exists(outpath):
         # print('PATH NO EXIST')

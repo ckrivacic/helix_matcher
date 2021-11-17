@@ -599,6 +599,27 @@ class RIFWorkspace(Workspace):
     def scaffold_folder(self, scaffold_basename):
         return self.scaffold_prefix + scaffold_basename
 
+    def get_scores(self):
+        # This will go faster if you run helix combine on the "scores"
+        # folder
+        if os.path.exists(self.final_scorefile_path):
+            return safe_open_dataframe(self.final_scorefile_path)
+        else:
+            dataframes = []
+            for f in self.all_scorefile_paths:
+                df = safe_open_dataframe(f)
+                dataframes.append(df)
+            return pd.concat(dataframes, ignore_index=True)
+
+    @property
+    def all_scorefile_paths(self):
+        return sorted(glob.glob(os.path.join(self.focus_dir, 'scores',
+            'task_*.pkl')))
+
+    @property
+    def final_scorefile_path(self):
+        return os.path.join(self.focus_dir, 'scores', 'final.pkl')
+
     @property
     def patches(self):
         return sorted(glob.glob(os.path.join(
@@ -826,7 +847,7 @@ class MatchWorkspace(Workspace):
     @property
     def cluster_outputs(self):
         return os.path.join(self.rifdock_workspace,
-                'cluster_representatives')
+                'filtered')
 
     @property
     def all_scaffold_clusters(self):
@@ -1077,6 +1098,17 @@ def push_data(directory, remote_url=None, recursive=True, dry_run=False):
         print(' '.join(rsync_command))
     else:
         subprocess.call(rsync_command)
+
+
+def safe_open_dataframe(filepath):
+    '''Safely open a pickled dataframe that may require pickle5'''
+    import pandas as pd
+    try:
+        return pd.read_pickle(filepath)
+    except:
+        import pickle5
+        f = open(filepath, 'rb')
+        return pickle5.load(f)
 
 
 class PipelineError (IOError):
