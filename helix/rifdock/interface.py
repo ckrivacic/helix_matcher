@@ -35,11 +35,18 @@ class InterfaceScore(object):
         # self.secstruct = contiguous_secstruct(ss_str)
 
         self.chains = 'A_BCDEFGH'
+        self.hbonds = []
+
+
+    @property
+    def n_hbonds(self):
+        return len(self.hbonds)
 
     def apply(self):
 
         # We are going to only change jump 1, so we know which jump to look at
         # in the Interface class
+        self.hbonds = []
         movable_jumps = vector1_int(1)
         # Now we can alter the fold tree such that the jump is between the
         # chains we care about
@@ -67,7 +74,7 @@ class InterfaceScore(object):
                 ScoreType.fa_sol, ScoreType.fa_elec, 
                 ScoreType.hbond_bb_sc, ScoreType.hbond_sc]
         interface_score = 0
-        self.n_hbonds = 0
+        # self.n_hbonds = 0
         for side in interface.pair_list():
             for resi in side:
                 resi_score = 0
@@ -85,7 +92,8 @@ class InterfaceScore(object):
                     for hbond in hbondset.residue_hbonds(resi):
                         if (hbond.weight() * hbond.energy()) < -0.5 and not\
                                 is_same_chain(self.pose, hbond):
-                            self.n_hbonds += 1
+                            # self.n_hbonds += 1
+                            self.hbonds.append(hbond)
 
                     # for scoretype in scoretypes:
                         # score = self.pose.energies().residue_total_energies(resi)[scoretype]
