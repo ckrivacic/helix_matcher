@@ -10,6 +10,8 @@ Options:
     --flexpepdock  Run flexpepdock on matched motifs
     --relax  Do not run relax on target
 """
+from pyrosetta import pose_from_pdb
+from pyrosetta import pose_from_file
 from distutils.dir_util import copy_tree
 import docopt
 import os, sys, glob
@@ -25,6 +27,46 @@ def strlist_to_vector1_str(strlist):
     for string in strlist:
         vector.append(string)
     return vector
+
+
+def align_matches():
+    '''
+    For each match, get the sequence of the patch and the match. Record
+    sequence compatibility.
+    '''
+    import ast
+    for matchlist in glob.glob('*_matches'):
+        split = matchlist.split('_')
+        patchno = split[0]
+        basename = split[1]
+        chain = split[2]
+        patch_pdb = "{}_{}_{}.pdb".format(
+                patchno, basename, chain
+                )
+        patch_pose = pose_from_file(patch_pdb)
+        patch_sequence = patch_pose.sequence()
+        with open(matchlist, 'r') as f:
+            for line in f:
+                position_string = line[line.find('['):line.find(']') + 1]
+                position_list = ast.literal_eval(postiion_string)
+                filename = line.split(' ')[1].split('/')[-1]
+                match_pdbid = filename.split('_')[0]
+                match_chain = filename.split('.')[0].split('_')[1]
+                # All this try/except nonsense is probably not necessary
+                try:
+                    match_pose = pose_from_file('{}.clean.pdb'.format(
+                        match_pdbid))
+                except:
+                    try:
+                        match_pose =
+                            pose_from_file('{}.clean.pdb'.format(match_pdbid.lower()))
+                    except:
+                        match_pose =
+                            pose_from_file('{}.clean.pdb'.format(match_pdbid.upper()))
+                match_sequence = match_pose.sequence()
+
+
+    return
 
 
 def main():
@@ -172,7 +214,6 @@ def main():
         from pyrosetta.rosetta.core.pack.task import TaskFactory
         from pyrosetta.rosetta.core.pack.task import operation
         from pyrosetta.rosetta.core.select import residue_selector
-        from pyrosetta import pose_from_pdb
         from pyrosetta import create_score_function
         import pyrosetta
 
