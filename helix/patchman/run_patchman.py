@@ -122,10 +122,12 @@ def align_matches(folder):
                         # match_sequence, matrix, -1, -0.3)
                 # print(format_alignment(*alignments[0]))
                 # print(alignments[0].score)
+                pdb_save = os.path.relpath(cmplx,
+                        start=workspace.root_dir)
                 for cmplx in complexes:
                     dict_list.append({
                         'patch': patchno,
-                        'complex': cmplx,
+                        'complex': pdb_save,
                         'target_pdb': basename,
                         'patch_pdb': os.path.join(folder, patch_pdb),
                         'patch_sequence': patch_sequence,
@@ -284,6 +286,9 @@ def main():
     # Create a list of input structures for refinement
     os.makedirs('docked_full/', exist_ok=True)
 
+    alignment_df = align_matches(tempdir)
+    alignment_df.to_pickle('alignment_scores.pkl')
+
     # Run FlexPepDock refinement
     if args['--flexpepdock']:
         from pyrosetta.rosetta.core.pack.task import TaskFactory
@@ -340,6 +345,7 @@ def main():
                 '-use_input_sc', 'unboundrot', target]
         utils.run_command(cmd)
     else:
+        os.system('mv alignment_scores.pkl docked_full/')
         os.system('mv ???_????_*_*.pdb docked_full/')
         os.system('mv db_list docked_full/')
         os.system('mv removed_psds docked_full/')
