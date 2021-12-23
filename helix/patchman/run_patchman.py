@@ -219,10 +219,10 @@ def main():
 
     # Remove homologs
     homologs = []
-    # if os.path.exists(os.path.join(workspace.focus_dir, 'homologs')):
-        # with open(os.path.join(workspace.focus_dir, 'homologs'), 'r') as f:
-            # for line in f:
-                # homologs.append(line.strip().lower())
+    if os.path.exists(os.path.join(workspace.focus_dir, 'homologs')):
+        with open(os.path.join(workspace.focus_dir, 'homologs'), 'r') as f:
+            for line in f:
+                homologs.append(line.strip().lower())
     matches = glob.glob('*_matches')
     fout = open('db_list_nohom', 'w')
     removed = open('removed_psds', 'w')
@@ -345,7 +345,7 @@ def main():
                 '-use_input_sc', 'unboundrot', target]
         utils.run_command(cmd)
     else:
-        os.system('mv alignment_scores.pkl docked_full/')
+        os.system('mv alignment_scores.pkl docked_full/t')
         os.system('mv ???_????_*_*.pdb docked_full/')
         os.system('mv db_list docked_full/')
         os.system('mv removed_psds docked_full/')
