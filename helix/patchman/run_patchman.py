@@ -11,6 +11,7 @@ Options:
     --relax  Do not run relax on target
 """
 from pyrosetta import pose_from_pdb
+from pyrosetta import init
 from pyrosetta import pose_from_file
 from distutils.dir_util import copy_tree
 import docopt
@@ -18,6 +19,7 @@ import os, sys, glob
 from helix import workspace as ws
 from helix.utils import utils
 from helix import big_jobs
+from Bio.SubsMat import MatrixInfo
 
 
 def strlist_to_vector1_str(strlist):
@@ -29,13 +31,39 @@ def strlist_to_vector1_str(strlist):
     return vector
 
 
-def align_matches():
+def score_sequences(seq1, seq2):
+    matrix = MatrixInfo.blosum62
+    score = 0
+    assert(len(seq1)==len(seq2))
+    for i in range(0, len(seq1)):
+        aa1 = seq1[i]
+        aa2 = seq2[i]
+        if (aa1, aa2) in matrix:
+            score += matrix[(aa1, aa2)]
+        else:
+            score += matrix[(aa2, aa1)]
+
+    return score
+
+
+
+def align_matches(folder):
     '''
     For each match, get the sequence of the patch and the match. Record
     sequence compatibility.
     '''
     import ast
-    for matchlist in glob.glob('*_matches'):
+    import pandas as pd
+    # from Bio import pairwise2
+    # from Bio.pairwise2 import format_alignment
+
+    # init('-ignore_zero_occupancy false')
+    init()
+    dict_list = []
+    for matchlist in sorted(glob.glob('*_matches')):
+        print('Evaluating sequence similarity for {}'.format(
+            matchlist
+            ))
         split = matchlist.split('_')
         patchno = split[0]
         basename = split[1]
@@ -45,28 +73,75 @@ def align_matches():
                 )
         patch_pose = pose_from_file(patch_pdb)
         patch_sequence = patch_pose.sequence()
+
         with open(matchlist, 'r') as f:
+            latest_pdbid = None
+            nline = 0
             for line in f:
+                nline += 1
                 position_string = line[line.find('['):line.find(']') + 1]
-                position_list = ast.literal_eval(postiion_string)
-                filename = line.split(' ')[1].split('/')[-1]
+                position_list = ast.literal_eval(position_string)
+                filename = line.strip().split(' ')[1].split('/')[-1]
                 match_pdbid = filename.split('_')[0]
                 match_chain = filename.split('.')[0].split('_')[1]
+
+                complexes = []
+                # if match_pdbid.lower() != '1m6y':
+                    # continue
+                for comp in glob.glob('{}_{}_{}_*.pdb'.format(patchno,
+                    match_pdbid.lower(), position_list[0][0] + 1)):
+                    complexes.append(os.path.join(
+                        folder, 'docked_full', comp
+                        ))
+                if len(complexes) < 1:
+                    # print('No complexes for this match; skipping')
+                    continue
+                else:
+                    print('FILENAME')
+                    print(filename)
+                    print('The following complexes were found:')
+                    print(complexes)
+
                 # All this try/except nonsense is probably not necessary
-                try:
-                    match_pose = pose_from_file('{}.clean.pdb'.format(
-                        match_pdbid))
-                except:
-                    try:
-                        match_pose =
-                            pose_from_file('{}.clean.pdb'.format(match_pdbid.lower()))
-                    except:
-                        match_pose =
-                            pose_from_file('{}.clean.pdb'.format(match_pdbid.upper()))
-                match_sequence = match_pose.sequence()
+                if not match_pdbid == latest_pdbid:
+                    match_pose = utils.psoe_from_wynton(pdbid)
+                match_pose = utils.pose_get_chain(match_pose, match_chain)
+                match_sequence = ''
+                for pos in position_list:
+                    print(pos)
+                    match_sequence += match_pose.sequence(pos[0]+1,
+                            pos[1]+1) 
+                # MASTER output is apparently 0-indexed
 
+                print('Aligning the following sequences')
+                print(patch_sequence)
+                print(match_sequence)
+                score = score_sequences(patch_sequence, match_sequence)
+                print('SCORE: {}'.format(score))
+                # alignments = pairwise2.align.globalds(patch_sequence,
+                        # match_sequence, matrix, -1, -0.3)
+                # print(format_alignment(*alignments[0]))
+                # print(alignments[0].score)
+                for cmplx in complexes:
+                    dict_list.append({
+                        'patch': patchno,
+                        'complex': cmplx,
+                        'target_pdb': basename,
+                        'patch_pdb': os.path.join(folder, patch_pdb),
+                        'patch_sequence': patch_sequence,
+                        'match_pdb': match_pdbid,
+                        'match_chain': match_chain,
+                        'match_resis': position_list,
+                        'match_sequence': match_sequence,
+                        'alignment_score': score,
+                        })
+                print('Finished {} lines'.format(nline))
+                # if match_pdbid.lower() == '4m8r':
+                # if match_pdbid.lower() == '1m6y':
+                    # print(dict_list)
+                    # sys.exit()
 
-    return
+    return pd.DataFrame(dict_list)
 
 
 def main():

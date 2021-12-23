@@ -28,6 +28,15 @@ def pose_from_rcsb(pdbid, prefix=None):
     return pose
 
 
+def pose_from_wynton(pdbid,
+        prefix='/wynton/home/database/pdb/remediated/pdb/'):
+    pdbid = pdbid.lower()
+    folder = os.path.join(prefix, pdbid[1:3])
+    fname = 'pdb{}.ent.gz'.format(pdbid)
+    fpath = os.path.join(folder, fname)
+    return pose_from_file(fpath)
+
+
 def download_and_clean_pdb(pdbid, prefix=None):
     if prefix:
         path = os.path.join(prefix, pdbid)
@@ -187,6 +196,29 @@ def run_command(cmd, environment=None):
     sys.stdout.flush()
 
     process.wait()
+
+
+def pose_get_chain(pose, chain):
+    from pyrosetta.rosetta.core.pose import append_pose_to_pose
+    '''
+    Given a Rosetta pose and a chain letter, get only the relevant chain
+    pose.
+    '''
+    poses = []
+    for i in range(1, pose.num_chains() + 1):
+        chainpose = pose.split_by_chain(i)
+        info = chainpose.pdb_info().pose2pdb(1)
+        if info.split(' ')[1] in chain and chainpose.residue(1).is_protein():
+            # if chainpose.size() < 5:
+                # raise('Error: chain {} too small.'.format(chain))
+            # else:
+            poses.append(chainpose)
+    pose = poses[0]
+    if len(poses) > 1:
+        for chainpose in poses[1:]:
+            append_pose_to_pose(pose, chainpose)
+
+    return pose
 
 
 if __name__=='__main__':
