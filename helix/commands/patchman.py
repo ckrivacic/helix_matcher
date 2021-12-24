@@ -68,4 +68,5 @@ def main():
             print('Submitting jobs for {}'.format(target))
             submit.submit(rif_workspace, cmd, distributor='sge',
                     make_dirs=args['--make-dirs'],
-                    test_run=args['--test-run'], clear=args['--clear'],)
+                    test_run=args['--test-run'], clear=args['--clear'],
+                    max_runtime='24:00:00', max_memory='6G')
