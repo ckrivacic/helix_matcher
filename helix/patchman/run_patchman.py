@@ -68,7 +68,7 @@ def align_matches(folder):
         patchno = split[0]
         basename = split[1]
         chain = split[2]
-        patch_pdb = "{}_{}_{}.pdb".format(
+        patch_pdb = "{}_{}.pdb".format(
                 patchno, basename, chain
                 )
         patch_pose = pose_from_file(patch_pdb)
