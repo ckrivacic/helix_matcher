@@ -74,6 +74,9 @@ def align_matches(folder):
         patch_pose = pose_from_file(patch_pdb)
         patch_sequence = patch_pose.sequence()
 
+        print('FILES IN FOLDER')
+        print(os.listdir())
+
         with open(matchlist, 'r') as f:
             latest_pdbid = None
             nline = 0
