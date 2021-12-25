@@ -90,7 +90,7 @@ def align_matches(folder):
                     # continue
                 print("GLOBSTR")
                 print("{}_{}_{}_*.pdb".format(patchno,
-                    match_dbid.lower(), position_list[0][0] + 1))
+                    match_pdbid.lower(), position_list[0][0] + 1))
                 for comp in glob.glob('{}_{}_{}_*.pdb'.format(patchno,
                     match_pdbid.lower(), position_list[0][0] + 1)):
                     complexes.append(os.path.join(
@@ -347,6 +347,7 @@ def main():
                 '-flexPepDocking:flexpep_score_only', '-ex1', '-ex2aro',
                 '-use_input_sc', 'unboundrot', target]
         utils.run_command(cmd)
+        os.system('mv alignment_scores.pkl docked_full/')
     else:
         os.system('mv alignment_scores.pkl docked_full/')
         os.system('mv ???_????_*_*.pdb docked_full/')
