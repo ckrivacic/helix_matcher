@@ -356,6 +356,7 @@ def main():
         os.system('mv ???_????_*_*.pdb docked_full/')
         os.system('mv db_list docked_full/')
         os.system('mv removed_psds docked_full/')
+        os.system('mv *_matches docked_full/')
         os.system('gzip docked_full/*.pdb')
 
     # Copy back to main folder
