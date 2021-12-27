@@ -80,6 +80,7 @@ def align_matches(folder):
         with open(matchlist, 'r') as f:
             latest_pdbid = None
             nline = 0
+            line_idx = 0
             for line in f:
                 nline += 1
                 position_string = line[line.find('['):line.find(']') + 1]
@@ -93,9 +94,9 @@ def align_matches(folder):
                     # continue
                 print("GLOBSTR")
                 print("{}_{}_{}_*.pdb".format(patchno,
-                    match_pdbid.lower(), position_list[0][0] + 1))
+                    match_pdbid.lower(), line_idx))
                 for comp in glob.glob('{}_{}_{}_*.pdb'.format(patchno,
-                    match_pdbid.lower(), position_list[0][0] + 1)):
+                    match_pdbid.lower(), line_idx)):
                     complexes.append(os.path.join(
                         folder, 'docked_full', comp
                         ))
@@ -144,6 +145,7 @@ def align_matches(folder):
                         'alignment_score': score,
                         })
                 print('Finished {} lines'.format(nline))
+                line_idx += 1
                 # if match_pdbid.lower() == '4m8r':
                 # if match_pdbid.lower() == '1m6y':
                     # print(dict_list)
