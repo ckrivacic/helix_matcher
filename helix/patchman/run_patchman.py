@@ -356,7 +356,7 @@ def main():
         os.system('mv alignment_scores.pkl docked_full/')
     else:
         os.system('mv alignment_scores.pkl docked_full/')
-        os.system('mv ???_????_*_*.pdb docked_full/')
+        os.system('mv ???_*_*_*.pdb docked_full/')
         os.system('mv db_list docked_full/')
         os.system('mv removed_psds docked_full/')
         os.system('mv *_matches docked_full/')
