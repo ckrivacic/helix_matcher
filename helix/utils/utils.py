@@ -34,6 +34,9 @@ def pose_from_wynton(pdbid,
     folder = os.path.join(prefix, pdbid[1:3])
     fname = 'pdb{}.ent.gz'.format(pdbid)
     fpath = os.path.join(folder, fname)
+    print('HELIX opening following from Wynton:')
+    print(pdbid)
+    print(fpath)
     return pose_from_file(fpath)
 
 
