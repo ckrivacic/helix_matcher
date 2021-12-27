@@ -102,6 +102,7 @@ def align_matches(folder):
                         ))
                 if len(complexes) < 1:
                     # print('No complexes for this match; skipping')
+                    line_idx += 1
                     continue
                 else:
                     print('FILENAME')
