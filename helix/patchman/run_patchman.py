@@ -47,7 +47,7 @@ def score_sequences(seq1, seq2):
 
 
 
-def align_matches(folder):
+def align_matches(folder, workspace):
     '''
     For each match, get the sequence of the patch and the match. Record
     sequence compatibility.
@@ -303,7 +303,7 @@ def main():
     # Create a list of input structures for refinement
     os.makedirs('docked_full/', exist_ok=True)
 
-    alignment_df = align_matches(tempdir)
+    alignment_df = align_matches(tempdir, workspace)
     alignment_df.to_pickle('alignment_scores.pkl')
 
     # Run FlexPepDock refinement
