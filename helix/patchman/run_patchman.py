@@ -138,9 +138,9 @@ def align_matches(folder):
                         # match_sequence, matrix, -1, -0.3)
                 # print(format_alignment(*alignments[0]))
                 # print(alignments[0].score)
-                pdb_save = os.path.relpath(cmplx,
-                        start=workspace.root_dir)
                 for cmplx in complexes:
+                    pdb_save = os.path.relpath(cmplx,
+                            start=workspace.root_dir)
                     dict_list.append({
                         'patch': patchno,
                         'complex': pdb_save,
