@@ -112,7 +112,15 @@ def align_matches(folder):
 
                 # All this try/except nonsense is probably not necessary
                 if not match_pdbid == latest_pdbid:
-                    match_pose = utils.pose_from_wynton(match_pdbid)
+                    try:
+                        match_pose = utils.pose_from_wynton(match_pdbid)
+                    except:
+                        try:
+                            if match_pdbid.lower() == '4k0f':
+                                match_pose = utils.pose_from_wynton('5eqb')
+                        except:
+                            print('Could not find PDB {}'.format(match_pdbid))
+                            continue
                 match_pose = utils.pose_get_chain(match_pose, match_chain)
                 match_sequence = ''
                 for pos in position_list:
