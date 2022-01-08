@@ -376,7 +376,7 @@ def main():
                 'exposed_hydrophobics': exposed_score,
                 'packstat': packstat_score,
                 'percent_helical': percent_helical,
-                'n_interface_residues': ia_mover.get_num_interface_residue(),
+                'n_interface_residues': ia_mover.get_num_interface_residues(),
                 'complex_sasa': ia_mover.get_complexed_sasa(),
                 'delta_sasa': ia_mover.get_delta_sasa(),
                 'crossterm_energy': ia_mover.get_crossterm_energy(),
