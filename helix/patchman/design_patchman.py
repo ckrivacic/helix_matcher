@@ -226,10 +226,6 @@ def main():
             tf.push_back(notdesign)
             tf.push_back(upweight_taskop)
             packertask = tf.create_task_and_apply_taskoperations(pose)
-            print('REPACK')
-            print(packertask.repacking_residues())
-            print('DESIGN')
-            print(packertask.designing_residues())
 
             fastdes.set_task_factory(tf)
             fastdes.apply(pose)
