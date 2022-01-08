@@ -8,6 +8,8 @@ Options:
     --task=INT  Only run a specific task
     --delete  Delete target structures
     --designs_per_task=INT  How many designs per task  [default: 20]
+    --align_thresh=FLOAT  Per-residue alignment score above 
+    which favor native residue task operation will be added  [default: 0]
 
 """
 
@@ -24,6 +26,7 @@ from distutils.dir_util import copy_tree
 import docopt
 import os, sys, glob
 import pandas as pd
+import pickle5 as pickle
 import gzip
 from helix import workspace as ws
 from helix.utils import utils
@@ -43,6 +46,24 @@ def strlist_to_vector1_str(strlist):
     return vector
 
 
+def get_alignment_score(df, path):
+    fname = os.path.basename(path)
+    row = df[df['complex_basename'] == fname.strip('.gz')]
+    length = len(row.iloc[0]['patch_sequence'])
+    score = row.iloc[0]['alignment_score']  / length
+    return score
+
+
+def safe_load(pickledf):
+    try:
+        dataframe = pd.read_pickle(pickledf)
+    except:
+        with open(pickledf, 'rb') as f:
+            dataframe = pickle.load(f)
+
+    return dataframe
+
+
 def main():
     dalphaball = os.path.join('/wynton', 'home', 'kortemme', 'krivacic',
             'rosetta', 'source', 'external', 'DAlpahBall',
@@ -50,6 +71,7 @@ def main():
     init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro'\
             ' -holes:dalphaball {}'.format(dalphaball))
     args = docopt.docopt(__doc__)
+    align_threshold = int(args['--align_thresh'])
     try:
         workspace, job_info = big_jobs.initiate()
         # job_info['task_id'] = int(args['--task'])
@@ -58,6 +80,11 @@ def main():
                 # workspace.scaffold_prefix + '*', 'docked_full',
                 # '*.pdb.gz'),
             # ))
+        job_info['inputs'] = sorted(glob.glob(
+            os.path.join(workspace.focus_dir, 'patch_*',
+                workspace.scaffold_prefix + '*', 'docked_full',
+                '*.pdb.gz')
+            ))
     except:
         print('Maybe this is local?')
         workspace = ws.workspace_from_dir(args['<workspace>'])
@@ -82,7 +109,7 @@ def main():
 
     # print('Job info')
     # print(job_info)
-    if 'task_id' not in job_info:
+    if not job_info['task_id']:
         if args['--task']:
             task_id = int(args['--task']) - 1
         else:
@@ -96,16 +123,38 @@ def main():
 
     print('TASK: {}'.format(task_id))
     rowlist = []
+    latest_patchdir = os.path.dirname(inputs[start])
+    print('Starting in directory {}'.format(latest_patchdir))
+
+    alignment_path = os.path.join(latest_patchdir, 'alignment_scores.pkl')
+    alignment_df = safe_load(alignment_path)
+    alignment_df['complex_basename'] = alignment_df.apply(lambda x:\
+            os.path.basename(x['complex']), axis=1)
     for input_idx in range(start, stop):
+        # Track patchdir so not always loading alignment score df
+        current_patchdir = os.path.dirname(inputs[input_idx])
+        if current_patchdir != latest_patchdir:
+            alignment_path = os.path.join(current_patchdir,
+                    'alignment_scores.pkl')
+            alignment_df = safe_load(alignment_path)
+            latest_patchdir = current_patchdir
+            alignment_df['complex_basename'] = alignment_df.apply(lambda x:\
+                    os.path.basename(x['complex']))
+
+        # Figure out relative input path for dataframe
         pdb_save = os.path.relpath(inputs[input_idx],
                 start=workspace.root_dir)
         pdb = os.path.abspath(inputs[input_idx])
         designed = False
+
+        # Check if PDB has a score, if so it has been designed already
+        # and we can skip
         with gzip.open(pdb, 'rt') as f:
             for line in f:
                 if line.startswith('pose'):
                     designed = True
 
+        # Move into pdb folder as working directory
         folder = os.path.dirname(
                 os.path.abspath(pdb)
                 )
@@ -117,11 +166,24 @@ def main():
             # for line in f:
                 # inputs.append(line.strip())
         # for pdb in inputs:
+
+        # Load pose and score function
         pose = pose_from_file(pdb)
         ref = create_score_function('ref2015')
+
+        # Select chain B for selection
         selector = residue_selector.ChainSelector('B')
+        interface_selector_str = \
+        '''
+        <InterfaceByVector name="interface_selector">
+           <Chain chains='A'/>
+           <Chain chains='B'/>
+        </InterfaceByVector>
+        '''
+        interface_selector = XmlObjects.static_get_residue_selector(interface_selector_str)
         if not designed:
             fastdes = pyrosetta.rosetta.protocols.denovo_design.movers.FastDesign(ref)
+            fastdes.set_scorefxn(ref)
 
             movemap = MoveMap()
             movemap.set_bb_true_range(pose.chain_begin(2),
@@ -130,16 +192,39 @@ def main():
                     pose.chain_end(2))
             fastdes.set_movemap(movemap)
 
-            not_selector = residue_selector.NotResidueSelector(selector)
+            or_selector = residue_selector.OrResidueSelector(selector,
+                    interface_selector)
+            not_selector = residue_selector.NotResidueSelector(or_selector)
             tf = TaskFactory()
             no_packing = operation.PreventRepackingRLT()
+            no_design = operation.RestrictToRepackingRLT()
+            upweight = \
+            '''
+            <ProteinLigandInterfaceUpweighter name="upweight_interface" interface_weight="1.5" />
+            '''
+            upweight_taskop = XmlObjects.static_get_task_operation(upweight)
             static = operation.OperateOnResidueSubset(no_packing,
                     not_selector)
             notaa = operation.ProhibitSpecifiedBaseResidueTypes(
                     strlist_to_vector1_str(['GLY']),
                     selector)
+            notdesign = operation.OperateOnResidueSubset(no_design,
+                    interface_selector)
+
+            align_score = get_alignment_score(alignment_df, pdb)
+            if align_score > align_threshold:
+                favornative = \
+                '''
+                <FavorNativeResidue name="favornative" bonus="1.5"/>
+
+                '''
+                favornative_mvr = XmlObjects.static_get_mover(favornative)
+                favornative_mvr.apply(pose)
+
             tf.push_back(static)
             tf.push_back(notaa)
+            tf.push_back(notdesign)
+            tf.push_back(upweight_taskop)
             packertask = tf.create_task_and_apply_taskoperations(pose)
             print('REPACK')
             print(packertask.repacking_residues())
@@ -147,7 +232,6 @@ def main():
             print(packertask.designing_residues())
 
             fastdes.set_task_factory(tf)
-            fastdes.set_scorefxn(ref)
             fastdes.apply(pose)
             score = ref(pose)
             pose.dump_pdb(pdb)
@@ -218,21 +302,63 @@ def main():
         confidence="1.0"
         />
         '''
+        exposed_hydrophobics = \
+        '''
+        <ExposedHydrophobics
+        name="ExposedHydrophobics SASA [[-]]"
+        sasa_cutoff="20"
+        threshold="-1"
+        />
+        '''
         packstat = '''
           <PackStat
             name="PackStat Score [[+]]"
             threshold="0"
           />
         '''
+        sc = \
+        '''
+        <ShapeComplementarity name="shapecomp" min_sc="0" 
+        jump="1"  write_int_area="false" />
+        '''
+        ia = \
+        '''
+        <InterfaceAnalyzerMover name="interface_analyzer" 
+        pack_separated="false" pack_input="false"
+        resfile="false" packstat="true"
+        interface_sc="false" tracer="false"
+        use_jobname="false" 
+        interface="A_B" />
+        '''
+        ia_mover = XmlObjects.static_get_mover(ia)
+        ia_mover.apply(flexpep_pose)
+
+        # For delta NPSA, get the two chains
+        poseA = utils.pose_get_chain(flexpep_pose, 'A')
+        poseB = utils.pose_get_chain(flexpep_pose, 'B')
+
+        # Make filter objects
         buns_all_obj = XmlObjects.static_get_filter(buns_all)
         buns_sc_obj = XmlObjects.static_get_filter(buns_sc)
         npsa_obj = XmlObjects.static_get_filter(npsa)
-        npsa_obj.set_residue_selector(selector)
+        exposed_obj = XmlObjects.static_get_filter(exposed_hydrophobics)
         packstat_obj = XmlObjects.static_get_filter(packstat)
+        sc_obj = XmlObjects.static_get_filter(sc)
+
+        # Calculate delta NPSA
+        npsa_complex = npsa_obj.report_sm(flexpep_pose)
+        npsa_A = npsa_obj.report_sm(poseA)
+        npsa_B = npsa_obj.report_sm(poseB)
+        delta_npsa = npsa_complex - npsa_A - npsa_B
+        # Calculate NPSA for helix
+        npsa_obj.set_residue_selector(selector)
+        npsa_score = npsa_obj.report_sm(flexpep_pose)
+
         buns_all_score = buns_all_obj.report_sm(flexpep_pose)
         buns_sc_score = buns_sc_obj.report_sm(flexpep_pose)
-        npsa_score = npsa_obj.report_sm(flexpep_pose)
+        exposed_score = exposed_obj.report_sm(flexpep_pose)
         packstat_score = packstat_obj.report_sm(flexpep_pose)
+        sc_score = sc_obj.report_sm(flexpep_pose)
 
         score = ref(flexpep_pose)
         interface_scorer = interface.InterfaceScore(flexpep_pose)
@@ -244,11 +370,24 @@ def main():
                 'pose_score': score,
                 'interface_score': interface_score,
                 'n_hbonds': n_hbonds,
+                'shape_complementarity': sc_score,
                 'buns_all': buns_all_score,
                 'buns_sc': buns_sc_score,
-                'npsa': npsa_score,
+                # Buried NPSA applies only to helix
+                'buried_npsa_helix': npsa_score,
+                'delta_buried_npsa': delta_npsa,
+                # Exposed hydro. applies to whole protein
+                'exposed_hydrophobics': exposed_score,
                 'packstat': packstat_score,
                 'percent_helical': percent_helical,
+                'n_interface_residues': ia_mover.get_num_interface_residue(),
+                'complex_sasa': ia_mover.get_complexed_sasa(),
+                'delta_sasa': ia_mover.get_delta_sasa(),
+                'crossterm_energy': ia_mover.get_crossterm_energy(),
+                'interface_packstat': ia_mover.get_interface_packstat(),
+                'delta_unsat': ia_mover.get_interface_delta_hbond_unsat(),
+                'interface_dG': ia_mover.get_interface_dG(),
+                'interfac_residues': ia_mover.get_interface_set(),
                 }
         rowlist.append(row)
 
