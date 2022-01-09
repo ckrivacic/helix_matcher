@@ -75,6 +75,8 @@ def main():
             cmd += '--task', args['--task']
             ntasks = 1
 
+        cmd += '--designs_per_task', str(des_per_task)
+
         if args['--local']:
             print('Runinng locally')
             for n in range(1, ntasks + 1):
