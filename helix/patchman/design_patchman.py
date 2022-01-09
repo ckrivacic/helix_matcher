@@ -139,7 +139,7 @@ def main():
             alignment_df = safe_load(alignment_path)
             latest_patchdir = current_patchdir
             alignment_df['complex_basename'] = alignment_df.apply(lambda x:\
-                    os.path.basename(x['complex']))
+                    os.path.basename(x['complex']), axis=1)
 
         # Figure out relative input path for dataframe
         pdb_save = os.path.relpath(inputs[input_idx],
