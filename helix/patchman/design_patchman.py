@@ -379,7 +379,7 @@ def main():
                 'n_interface_residues': ia_mover.get_num_interface_residues(),
                 'complex_sasa': ia_mover.get_complexed_sasa(),
                 'delta_sasa': ia_mover.get_interface_delta_sasa(),
-                'crossterm_energy': ia_mover.get_crossterm_energy(),
+                'crossterm_energy': ia_mover.get_crossterm_interface_energy(),
                 'interface_packstat': ia_mover.get_interface_packstat(),
                 'delta_unsat': ia_mover.get_interface_delta_hbond_unsat(),
                 'interface_dG': ia_mover.get_interface_dG(),
