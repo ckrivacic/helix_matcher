@@ -302,15 +302,15 @@ def main():
             # cmd = [workspace.python_path, script, '-m', name + '_matches', '-d', '-r',
                     # 'target.ppk.pdb', '--patch', line, '-l', str(length)]
             # utils.run_command(cmd)
-            motif_args = extract_peps_for_motif.arg_parser().parse_args()
-            motif_args.match_list = name + '_matches'
-            motif_args.design = True
-            motif_args.receptor = 'target.ppk.pdb'
-            motif_args.patch = line
-            motif_args.peplen = str(length)
-            # arglist = ['-m', name + '_matches', '-d', '-r',
-                    # 'target.ppk.pdb', '--patch', line, '-l',
-                    # str(length)]
+            arglist = ['-m', name + '_matches', '-d', '-r',
+                    'target.ppk.pdb', '--patch', line, '-l',
+                    str(length)]
+            motif_args = extract_peps_for_motif.arg_parser().parse_args(arglist)
+            # motif_args.match_list = name + '_matches'
+            # motif_args.design = True
+            # motif_args.receptor = 'target.ppk.pdb'
+            # motif_args.patch = line
+            # motif_args.peplen = str(length)
             # print('ARGLIST')
             # print(arglist)
             # motif_args = ' '.join(arglist)
