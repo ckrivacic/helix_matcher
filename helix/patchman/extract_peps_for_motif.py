@@ -77,7 +77,11 @@ def extract_templates_for_motif(matches, pepseq, plen, patch, receptor_pose, scr
             try:
                 pdb_pose = pose_from_wynton(motif_pdb)
             except:
-                pdb_pose = toolbox.pose_from_rcsb(motif_pdb)
+                try:
+                    pdb_pose = toolbox.pose_from_rcsb(motif_pdb)
+                except:
+                    print('Could not open {}'.format(motif_pdb))
+                    continue
         else:
             print('Opening clean pdb for {}'.format(motif_pdb))
             pdb_pose = pose_from_pdb(motif_pdb.upper() + '.clean.pdb')
