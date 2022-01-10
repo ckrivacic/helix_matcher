@@ -66,11 +66,15 @@ def align_matches(folder, matches, workspace, patch):
         matches 
         ))
     split = patch.split('_')
+    if len(split) < 2:
+        print('Could not align matches; incorrect patch definition:')
+        print(patch)
+        return pd.DataFrame()
     patchno = split[0]
     basename = split[1]
-    chain = split[2]
+    # chain = split[2]
     patch_pdb = "{}_{}.pdb".format(
-            patchno, basename, chain
+            patchno, basename
             )
     patch_pose = pose_from_file(patch_pdb)
     patch_sequence = patch_pose.sequence()
@@ -293,6 +297,7 @@ def main():
     length = os.path.basename(folder).split('_')[-1]
     all_matches = []
     init()
+    alignment_df = pd.DataFrame()
     with open('motif_list', 'r') as f:
         for line in f:
             line = line.strip('\n')
@@ -322,11 +327,14 @@ def main():
 
             # Create a list of input structures for refinement
 
-            alignment_df = align_matches(tempdir, matches,
-                    workspace, line)
+            alignment_df = pd.concat([alignment_df, 
+                    align_matches(tempdir, 
+                        matches, workspace, line)],
+                    ignore_index=True
+                    )
 
     os.makedirs('docked_full/', exist_ok=True)
-    alignment_df.to_pickle('alignment_scores.pkl')
+    alignment_df.to_pickle('docked_full/alignment_scores.pkl')
 
     # Run FlexPepDock refinement
     if args['--flexpepdock']:
@@ -385,7 +393,7 @@ def main():
         utils.run_command(cmd)
         os.system('mv alignment_scores.pkl docked_full/')
     else:
-        os.system('mv alignment_scores.pkl docked_full/')
+        # os.system('mv alignment_scores.pkl docked_full/')
         os.system('mv ???_*_*_*.pdb docked_full/')
         os.system('mv db_list docked_full/')
         os.system('mv removed_psds docked_full/')
