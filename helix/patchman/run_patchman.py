@@ -92,9 +92,9 @@ def align_matches(folder, workspace):
                 complexes = []
                 # if match_pdbid.lower() != '1m6y':
                     # continue
-                print("GLOBSTR")
-                print("{}_{}_{}_*.pdb".format(patchno,
-                    match_pdbid.lower(), line_idx))
+                # print("GLOBSTR")
+                # print("{}_{}_{}_*.pdb".format(patchno,
+                    # match_pdbid.lower(), line_idx))
                 for comp in glob.glob('{}_{}_{}_*.pdb'.format(patchno,
                     match_pdbid.lower(), line_idx)):
                     complexes.append(os.path.join(
