@@ -360,6 +360,12 @@ def main():
         interface_scorer = interface.InterfaceScore(flexpep_pose)
         interface_score = interface_scorer.apply()
         n_hbonds = interface_scorer.n_hbonds
+
+        # Can't pickle a C++ set, so put it in a Python list
+        int_set = []
+        for interface_resi in ia_mover.get_interface_set():
+            int_set.append(interface_resi)
+
         row = {'patchman_file': pdb_save,
                 'name': os.path.basename(flexpep_file),
                 'size': flexpep_pose.size(),
@@ -383,7 +389,7 @@ def main():
                 'interface_packstat': ia_mover.get_interface_packstat(),
                 'delta_unsat': ia_mover.get_interface_delta_hbond_unsat(),
                 'interface_dG': ia_mover.get_interface_dG(),
-                'interfac_residues': ia_mover.get_interface_set(),
+                'interfac_residues': int_set,
                 }
         rowlist.append(row)
 
