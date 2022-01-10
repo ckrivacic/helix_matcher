@@ -325,6 +325,7 @@ def parse_matches(match_file):
         chain = line.split()[2]
         stretches = []
         match_ranges = line[line.find('[') + 1:line.find(']')]
+        position_string = line[line.find('['):line.find(']') + 1]
         position_list = ast.literal_eval(position_string)
         match_res = match_ranges.split(',')
         for k in range(0, len(match_res), 2):
