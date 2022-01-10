@@ -12,7 +12,7 @@ from os import system
 from os import path
 import argparse
 
-import pyrosetta_utils as utils
+import helix.patchman.pyrosetta_utils as utils
 from chain_filter import find_relevant_chains
 from rosetta_protocols import fixbb_design
 
