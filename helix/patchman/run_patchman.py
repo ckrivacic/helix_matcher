@@ -60,6 +60,7 @@ def align_matches(folder, matches, workspace, patch):
 
     # init('-ignore_zero_occupancy false')
     init()
+    print('here is patch: {}'.format(patch))
     dict_list = []
     print('Evaluating sequence similarity for {}'.format(
         matches 
