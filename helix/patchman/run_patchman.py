@@ -73,10 +73,10 @@ def align_matches(folder, matches, workspace, patch):
     patchno = split[0]
     basename = split[1]
     # chain = split[2]
-    patch_pdb = "{}_{}.pdb".format(
-            patchno, basename
-            )
-    patch_pose = pose_from_file(patch_pdb)
+    # patch_pdb = "{}_{}.pdb".format(
+            # patchno, basename
+            # )
+    patch_pose = pose_from_file(patch)
     patch_sequence = patch_pose.sequence()
 
     print('FILES IN FOLDER')
@@ -149,8 +149,7 @@ def align_matches(folder, matches, workspace, patch):
             dict_list.append({
                 'patch': patchno,
                 'complex': pdb_save,
-                'target_pdb': basename,
-                'patch_pdb': os.path.join(folder, patch_pdb),
+                'patch_pdb': os.path.join(folder, patch),
                 'patch_sequence': patch_sequence,
                 'match_pdb': match_pdbid,
                 'match_chain': match_chain,
