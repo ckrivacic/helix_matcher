@@ -291,6 +291,7 @@ def main():
     # Extract templates and thread the peptide sequence
     length = os.path.basename(folder).split('_')[-1]
     all_matches = []
+    init()
     with open('motif_list', 'r') as f:
         for line in f:
             line = line.strip('\n')
