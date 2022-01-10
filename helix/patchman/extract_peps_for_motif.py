@@ -1,5 +1,3 @@
-#!/vol/ek/Home/alisa/python3.5/bin/python3
-
 '''
 Code from Alisa Khramushin, modified to return matches and for
 compatibility with Wynton.
