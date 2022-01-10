@@ -16,8 +16,8 @@ Options:
     --relax  Run relax on target
     --delete  Delete non-designed structures
     --max-memory=GB  How much memory to allocate  [default: 6G]
-    --max-runtime=HH:MM:SS  How long to allocate the CPUs  [default: 30:00:00]
-    --designs_per_task=INT  How many designs per task  [default: 40]
+    --max-runtime=HH:MM:SS  How long to allocate the CPUs  [default: 36:00:00]
+    --designs_per_task=INT  How many designs per task  [default: 60]
 """
 import helix.workspace as ws
 from helix import big_jobs
