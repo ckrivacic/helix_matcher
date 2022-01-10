@@ -9,7 +9,7 @@ Options:
     --delete  Delete target structures
     --designs_per_task=INT  How many designs per task  [default: 20]
     --align_thresh=FLOAT  Per-residue alignment score above 
-    which favor native residue task operation will be added  [default: 0]
+    which favor native residue task operation will be added  [default: 5]
 
 """
 
@@ -50,8 +50,8 @@ def get_alignment_score(df, path):
     fname = os.path.basename(path)
     row = df[df['complex_basename'] == fname.strip('.gz')]
     length = len(row.iloc[0]['patch_sequence'])
-    score = row.iloc[0]['alignment_score']  / length
-    return score
+    score = row.iloc[0]['alignment_score']
+    return score, length
 
 
 def safe_load(pickledf):
@@ -181,6 +181,7 @@ def main():
         </InterfaceByVector>
         '''
         interface_selector = XmlObjects.static_get_residue_selector(interface_selector_str)
+        align_score, patchlength = get_alignment_score(alignment_df, pdb)
         if not designed:
             fastdes = pyrosetta.rosetta.protocols.denovo_design.movers.FastDesign(ref)
             fastdes.set_scorefxn(ref)
@@ -211,7 +212,6 @@ def main():
             notdesign = operation.OperateOnResidueSubset(no_design,
                     interface_selector)
 
-            align_score = get_alignment_score(alignment_df, pdb)
             if align_score > align_threshold:
                 favornative = \
                 '''
@@ -390,6 +390,8 @@ def main():
                 'delta_unsat': ia_mover.get_interface_delta_hbond_unsat(),
                 'interface_dG': ia_mover.get_interface_dG(),
                 'interfac_residues': int_set,
+                'alignment_score': align_score,
+                'patch_length': patchlength,
                 }
         rowlist.append(row)
 
