@@ -19,6 +19,7 @@ import os, sys, glob
 from helix import workspace as ws
 from helix.utils import utils
 from helix import big_jobs
+from helix.patchman import extract_peps_for_motif
 from Bio.SubsMat import MatrixInfo
 
 
@@ -47,7 +48,7 @@ def score_sequences(seq1, seq2):
 
 
 
-def align_matches(folder, workspace):
+def align_matches(folder, matches, workspace):
     '''
     For each match, get the sequence of the patch and the match. Record
     sequence compatibility.
@@ -294,13 +295,18 @@ def main():
         for line in f:
             line = line.strip('\n')
             name = line.split('.')[0]
-            script = os.path.join(
-                    workspace.patchman_path,
-                    'extract_peps_for_motif.py'
-                    )
-            cmd = [workspace.python_path, script, '-m', name + '_matches', '-d', '-r',
-                    'target.ppk.pdb', '--patch', line, '-l', str(length)]
-            utils.run_command(cmd)
+            # script = os.path.join(
+                    # workspace.patchman_path,
+                    # 'extract_peps_for_motif.py'
+                    # )
+            # cmd = [workspace.python_path, script, '-m', name + '_matches', '-d', '-r',
+                    # 'target.ppk.pdb', '--patch', line, '-l', str(length)]
+            # utils.run_command(cmd)
+            motif_args = ' '.join(['-m', name + '_matches', '-d', '-r',
+                    'target.ppk.pdb', '--patch', line, '-l',
+                    str(length)])
+            extracted_args = extract_peps_for_motif.arg_parser().parse_args(motif_args)
+            final_matches = extract_peps_for_motif.main(extracted_args)
 
     # Create a list of input structures for refinement
     os.makedirs('docked_full/', exist_ok=True)
