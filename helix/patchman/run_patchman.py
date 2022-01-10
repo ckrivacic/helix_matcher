@@ -10,6 +10,7 @@ Options:
     --flexpepdock  Run flexpepdock on matched motifs
     --relax  Do not run relax on target
 """
+import pandas as pd
 from pyrosetta import pose_from_pdb
 from pyrosetta import init
 from pyrosetta import pose_from_file
@@ -54,7 +55,6 @@ def align_matches(folder, matches, workspace, patch):
     sequence compatibility.
     '''
     import ast
-    import pandas as pd
     # from Bio import pairwise2
     # from Bio.pairwise2 import format_alignment
 
