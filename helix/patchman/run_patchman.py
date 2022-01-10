@@ -160,6 +160,8 @@ def align_matches(folder, workspace):
                     # print(dict_list)
                     # sys.exit()
 
+        print('Got through {} lines total'.format(line_idx))
+
     return pd.DataFrame(dict_list)
 
 
