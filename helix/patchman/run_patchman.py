@@ -48,7 +48,7 @@ def score_sequences(seq1, seq2):
 
 
 
-def align_matches(folder, matches, workspace):
+def align_matches(folder, matches, workspace, patch):
     '''
     For each match, get the sequence of the patch and the match. Record
     sequence compatibility.
@@ -61,107 +61,106 @@ def align_matches(folder, matches, workspace):
     # init('-ignore_zero_occupancy false')
     init()
     dict_list = []
-    for matchlist in sorted(glob.glob('*_matches')):
-        print('Evaluating sequence similarity for {}'.format(
-            matchlist
-            ))
-        split = matchlist.split('_')
-        patchno = split[0]
-        basename = split[1]
-        chain = split[2]
-        patch_pdb = "{}_{}.pdb".format(
-                patchno, basename, chain
-                )
-        patch_pose = pose_from_file(patch_pdb)
-        patch_sequence = patch_pose.sequence()
+    print('Evaluating sequence similarity for {}'.format(
+        matches 
+        ))
+    split = patch.split('_')
+    patchno = split[0]
+    basename = split[1]
+    chain = split[2]
+    patch_pdb = "{}_{}.pdb".format(
+            patchno, basename, chain
+            )
+    patch_pose = pose_from_file(patch_pdb)
+    patch_sequence = patch_pose.sequence()
 
-        print('FILES IN FOLDER')
-        print(os.listdir())
+    print('FILES IN FOLDER')
+    print(os.listdir())
 
-        with open(matchlist, 'r') as f:
-            latest_pdbid = None
-            nline = 0
-            line_idx = 0
-            for line in f:
-                nline += 1
-                position_string = line[line.find('['):line.find(']') + 1]
-                position_list = ast.literal_eval(position_string)
-                filename = line.strip().split(' ')[1].split('/')[-1]
-                match_pdbid = filename.split('_')[0]
-                match_chain = filename.split('.')[0].split('_')[1]
+    latest_pdbid = None
+    nline = 0
+    line_idx = 0
+    for match in matches:
+        nline += 1
+        position_list = match[7]
+        # filename = line.strip().split(' ')[1].split('/')[-1]
+        # match_pdbid = filename.split('_')[0]
+        # match_chain = filename.split('.')[0].split('_')[1]
+        match_pdbid = match[1]
+        match_chain = match[6]
 
-                complexes = []
-                # if match_pdbid.lower() != '1m6y':
-                    # continue
-                # print("GLOBSTR")
-                # print("{}_{}_{}_*.pdb".format(patchno,
-                    # match_pdbid.lower(), line_idx))
-                for comp in glob.glob('{}_{}_{}_*.pdb'.format(patchno,
-                    match_pdbid.lower(), line_idx)):
-                    complexes.append(os.path.join(
-                        folder, 'docked_full', comp
-                        ))
-                if len(complexes) < 1:
-                    # print('No complexes for this match; skipping')
-                    line_idx += 1
+        complexes = []
+        # if match_pdbid.lower() != '1m6y':
+            # continue
+        # print("GLOBSTR")
+        # print("{}_{}_{}_*.pdb".format(patchno,
+            # match_pdbid.lower(), line_idx))
+        for comp in glob.glob('{}_{}_{}_*.pdb'.format(patchno,
+            match_pdbid.lower(), line_idx)):
+            complexes.append(os.path.join(
+                folder, 'docked_full', comp
+                ))
+        if len(complexes) < 1:
+            # print('No complexes for this match; skipping')
+            line_idx += 1
+            continue
+        else:
+            print('PDBID')
+            print(match_pdbid)
+            print('The following complexes were found:')
+            print(complexes)
+
+        # All this try/except nonsense is probably not necessary
+        if not match_pdbid == latest_pdbid:
+            try:
+                match_pose = utils.pose_from_wynton(match_pdbid)
+            except:
+                try:
+                    if match_pdbid.lower() == '4k0f':
+                        match_pose = utils.pose_from_wynton('5eqb')
+                except:
+                    print('Could not find PDB {}'.format(match_pdbid))
                     continue
-                else:
-                    print('FILENAME')
-                    print(filename)
-                    print('The following complexes were found:')
-                    print(complexes)
+        match_pose = utils.pose_get_chain(match_pose, match_chain)
+        match_sequence = ''
+        for pos in position_list:
+            print(pos)
+            match_sequence += match_pose.sequence(pos[0]+1,
+                    pos[1]+1) 
+        # MASTER output is apparently 0-indexed
 
-                # All this try/except nonsense is probably not necessary
-                if not match_pdbid == latest_pdbid:
-                    try:
-                        match_pose = utils.pose_from_wynton(match_pdbid)
-                    except:
-                        try:
-                            if match_pdbid.lower() == '4k0f':
-                                match_pose = utils.pose_from_wynton('5eqb')
-                        except:
-                            print('Could not find PDB {}'.format(match_pdbid))
-                            continue
-                match_pose = utils.pose_get_chain(match_pose, match_chain)
-                match_sequence = ''
-                for pos in position_list:
-                    print(pos)
-                    match_sequence += match_pose.sequence(pos[0]+1,
-                            pos[1]+1) 
-                # MASTER output is apparently 0-indexed
+        print('Aligning the following sequences')
+        print(patch_sequence)
+        print(match_sequence)
+        score = score_sequences(patch_sequence, match_sequence)
+        print('SCORE: {}'.format(score))
+        # alignments = pairwise2.align.globalds(patch_sequence,
+                # match_sequence, matrix, -1, -0.3)
+        # print(format_alignment(*alignments[0]))
+        # print(alignments[0].score)
+        for cmplx in complexes:
+            pdb_save = os.path.relpath(cmplx,
+                    start=workspace.root_dir)
+            dict_list.append({
+                'patch': patchno,
+                'complex': pdb_save,
+                'target_pdb': basename,
+                'patch_pdb': os.path.join(folder, patch_pdb),
+                'patch_sequence': patch_sequence,
+                'match_pdb': match_pdbid,
+                'match_chain': match_chain,
+                'match_resis': position_list,
+                'match_sequence': match_sequence,
+                'alignment_score': score,
+                })
+        print('Finished {} lines'.format(nline))
+        line_idx += 1
+        # if match_pdbid.lower() == '4m8r':
+        # if match_pdbid.lower() == '1m6y':
+            # print(dict_list)
+            # sys.exit()
 
-                print('Aligning the following sequences')
-                print(patch_sequence)
-                print(match_sequence)
-                score = score_sequences(patch_sequence, match_sequence)
-                print('SCORE: {}'.format(score))
-                # alignments = pairwise2.align.globalds(patch_sequence,
-                        # match_sequence, matrix, -1, -0.3)
-                # print(format_alignment(*alignments[0]))
-                # print(alignments[0].score)
-                for cmplx in complexes:
-                    pdb_save = os.path.relpath(cmplx,
-                            start=workspace.root_dir)
-                    dict_list.append({
-                        'patch': patchno,
-                        'complex': pdb_save,
-                        'target_pdb': basename,
-                        'patch_pdb': os.path.join(folder, patch_pdb),
-                        'patch_sequence': patch_sequence,
-                        'match_pdb': match_pdbid,
-                        'match_chain': match_chain,
-                        'match_resis': position_list,
-                        'match_sequence': match_sequence,
-                        'alignment_score': score,
-                        })
-                print('Finished {} lines'.format(nline))
-                line_idx += 1
-                # if match_pdbid.lower() == '4m8r':
-                # if match_pdbid.lower() == '1m6y':
-                    # print(dict_list)
-                    # sys.exit()
-
-        print('Got through {} lines total'.format(line_idx))
+    print('Got through {} lines total'.format(line_idx))
 
     return pd.DataFrame(dict_list)
 
@@ -291,6 +290,7 @@ def main():
 
     # Extract templates and thread the peptide sequence
     length = os.path.basename(folder).split('_')[-1]
+    all_matches = []
     with open('motif_list', 'r') as f:
         for line in f:
             line = line.strip('\n')
@@ -306,12 +306,14 @@ def main():
                     'target.ppk.pdb', '--patch', line, '-l',
                     str(length)])
             extracted_args = extract_peps_for_motif.arg_parser().parse_args(motif_args)
-            final_matches = extract_peps_for_motif.main(extracted_args)
+            all_matches.append(extract_peps_for_motif.main(extracted_args))
 
-    # Create a list of input structures for refinement
+            # Create a list of input structures for refinement
+
+            alignment_df = align_matches(tempdir, all_matches,
+                    workspace, line)
+
     os.makedirs('docked_full/', exist_ok=True)
-
-    alignment_df = align_matches(tempdir, workspace)
     alignment_df.to_pickle('alignment_scores.pkl')
 
     # Run FlexPepDock refinement

@@ -59,7 +59,7 @@ def extract_templates_for_motif(matches, pepseq, plen, patch, receptor_pose, scr
     with open(log_name, 'w') as log:
         log.write('Patch: %s\n'%patch_name)
 
-    print(matches)
+    # print(matches)
     match_idx = 0
     for match in matches:
         match_idx += 1
@@ -306,6 +306,7 @@ def elongate_stretch(stretch, peplen, tot_res, chain_breaks):
 
 def parse_matches(match_file):
     """Parse MASTER output, extract patch/motif res numbers and RT matrices"""
+    import ast
     with open(match_file.strip(), 'r') as m:
         all_all_matches = m.readlines()
 
@@ -323,8 +324,10 @@ def parse_matches(match_file):
         if rmsd < 0.01: # skip identical matches
             continue
         pdb = line.split()[1].split('/')[-1][:-4]
+        chain = line.split()[2]
         stretches = []
         match_ranges = line[line.find('[') + 1:line.find(']')]
+        position_list = ast.literal_eval(position_string)
         match_res = match_ranges.split(',')
         for k in range(0, len(match_res), 2):
             stretches.append(list(range(int(match_res[k].lstrip().lstrip('(')), int(match_res[k + 1].rstrip(')')))))
@@ -340,7 +343,8 @@ def parse_matches(match_file):
                 u3.append(v)
         u = [u1, u2, u3]
 
-        matches.append((rmsd, pdb, stretches, t, u, line_idx))
+        matches.append((rmsd, pdb, stretches, t, u, line_idx, chain,
+            position_list))
         line_idx += 1
 
     return matches
@@ -387,7 +391,7 @@ def main(args=None):
     extract_templates_for_motif(all_matches, pepseq, plen, patch, receptor_pose, scrfxn, args.design)
 
     print('All templates were generated in %s min'%(str((time.time()-start_all)/60)))
-    # return all_matches
+    return all_matches
 
 
 if __name__ == "__main__":
