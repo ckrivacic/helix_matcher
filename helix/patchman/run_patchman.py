@@ -85,6 +85,8 @@ def align_matches(folder, matches, workspace, patch):
     latest_pdbid = None
     nline = 0
     for match in matches:
+        print('Looking for match:')
+        print(match)
         nline += 1
         position_list = match[7]
         # filename = line.strip().split(' ')[1].split('/')[-1]
@@ -97,7 +99,8 @@ def align_matches(folder, matches, workspace, patch):
         complexes = []
         # if match_pdbid.lower() != '1m6y':
             # continue
-        # print("GLOBSTR")
+        print("GLOBSTR")
+        print('{}_{}_{}_*.pdb'.format(patchno, match_pdbid.lower(), line_idx))
         # print("{}_{}_{}_*.pdb".format(patchno,
             # match_pdbid.lower(), line_idx))
         for comp in glob.glob('{}_{}_{}_*.pdb'.format(patchno,
