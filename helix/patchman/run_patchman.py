@@ -124,7 +124,7 @@ def align_matches(folder, matches, workspace, patch):
                         match_pose = utils.pose_from_wynton('5eqb')
                 except:
                     print('Could not find PDB {}'.format(match_pdbid))
-                    with open('failed', 'a') as f:
+                    with open('docked_full/failed.txt', 'a') as f:
                         f.write(match_pdbid)
                     continue
         match_pose = utils.pose_get_chain(match_pose, match_chain)
