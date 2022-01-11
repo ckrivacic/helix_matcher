@@ -326,7 +326,7 @@ def parse_matches(match_file):
         if rmsd < 0.01: # skip identical matches
             continue
         pdb = line.split()[1].split('/')[-1][:-4]
-        chain = line.split()[2]
+        chain = os.path.basename(line.split()[1]).split('.')[0].split('_')[-1]
         stretches = []
         match_ranges = line[line.find('[') + 1:line.find(']')]
         position_string = line[line.find('['):line.find(']') + 1]

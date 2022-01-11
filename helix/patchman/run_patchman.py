@@ -94,7 +94,7 @@ def align_matches(folder, matches, workspace, patch):
         # match_chain = filename.split('.')[0].split('_')[1]
         match_pdbid = match[1].split('_')[0]
         match_chain = match[1].split('_')[1]
-        line_idx = match[6]
+        line_idx = match[5]
 
         complexes = []
         # if match_pdbid.lower() != '1m6y':
