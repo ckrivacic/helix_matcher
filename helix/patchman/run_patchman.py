@@ -84,15 +84,15 @@ def align_matches(folder, matches, workspace, patch):
 
     latest_pdbid = None
     nline = 0
-    line_idx = 0
     for match in matches:
         nline += 1
         position_list = match[7]
         # filename = line.strip().split(' ')[1].split('/')[-1]
         # match_pdbid = filename.split('_')[0]
         # match_chain = filename.split('.')[0].split('_')[1]
-        match_pdbid = match[1]
-        match_chain = match[6]
+        match_pdbid = match[1].split('_')[0]
+        match_chain = match[1].split('_')[1]
+        line_idx = match[6]
 
         complexes = []
         # if match_pdbid.lower() != '1m6y':
@@ -106,8 +106,8 @@ def align_matches(folder, matches, workspace, patch):
                 folder, 'docked_full', comp
                 ))
         if len(complexes) < 1:
-            # print('No complexes for this match; skipping')
-            line_idx += 1
+            print('No complexes for this match; skipping')
+            # line_idx += 1
             continue
         else:
             print('PDBID')
