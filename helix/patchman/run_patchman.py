@@ -97,12 +97,8 @@ def align_matches(folder, matches, workspace, patch):
         line_idx = match[5]
 
         complexes = []
-        # if match_pdbid.lower() != '1m6y':
-            # continue
-        print("GLOBSTR")
-        print('{}_{}_{}_*.pdb'.format(patchno, match_pdbid.lower(), line_idx))
-        # print("{}_{}_{}_*.pdb".format(patchno,
-            # match_pdbid.lower(), line_idx))
+        # print("GLOBSTR")
+        # print('{}_{}_{}_*.pdb'.format(patchno, match_pdbid.lower(), line_idx))
         for comp in glob.glob('{}_{}_{}_*.pdb'.format(patchno,
             match_pdbid.lower(), line_idx)):
             complexes.append(os.path.join(
@@ -128,6 +124,8 @@ def align_matches(folder, matches, workspace, patch):
                         match_pose = utils.pose_from_wynton('5eqb')
                 except:
                     print('Could not find PDB {}'.format(match_pdbid))
+                    with open('failed', 'a') as f:
+                        f.write(match_pdbid)
                     continue
         match_pose = utils.pose_get_chain(match_pose, match_chain)
         match_sequence = ''
@@ -167,7 +165,7 @@ def align_matches(folder, matches, workspace, patch):
             # print(dict_list)
             # sys.exit()
 
-    print('Got through {} lines total'.format(line_idx))
+    print('Scored {} matches total'.format(line_idx))
 
     return pd.DataFrame(dict_list)
 
@@ -393,13 +391,13 @@ def main():
                 '-flexPepDocking:flexpep_score_only', '-ex1', '-ex2aro',
                 '-use_input_sc', 'unboundrot', target]
         utils.run_command(cmd)
-        os.system('mv alignment_scores.pkl docked_full/')
+        # os.system('mv alignment_scores.pkl docked_full/')
     else:
         # os.system('mv alignment_scores.pkl docked_full/')
         os.system('mv ???_*_*_*.pdb docked_full/')
-        os.system('mv db_list docked_full/')
+        # os.system('mv db_list docked_full/')
         os.system('mv removed_psds docked_full/')
-        os.system('mv *_matches docked_full/')
+        # os.system('mv *_matches docked_full/')
         os.system('gzip docked_full/*.pdb')
 
     # Copy back to main folder
