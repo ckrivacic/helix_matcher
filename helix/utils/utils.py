@@ -29,15 +29,23 @@ def pose_from_rcsb(pdbid, prefix=None):
 
 
 def pose_from_wynton(pdbid,
-        prefix='/wynton/home/database/pdb/remediated/pdb/'):
+        prefix='/wynton/home/database/pdb/remediated/pdb/', clean=False):
+    from pyrosetta import toolbox
     pdbid = pdbid.lower()
     folder = os.path.join(prefix, pdbid[1:3])
     fname = 'pdb{}.ent.gz'.format(pdbid)
     fpath = os.path.join(folder, fname)
+
     print('HELIX opening following from Wynton:')
     print(pdbid)
     print(fpath)
-    return pose_from_file(fpath)
+
+    if args(clean):
+        print('Cleaning PDB file')
+        toolbox.cleanATOM(fpath, out_file=f'{pdbid}.clean.pdb')
+        return  pose_from_file(f'{pdbid}.clean.pdb')
+    else:
+        return pose_from_file(fpath)
 
 
 def download_and_clean_pdb(pdbid, prefix=None):
@@ -203,15 +211,17 @@ def run_command(cmd, environment=None):
 
 def pose_get_chain(pose, chain):
     from pyrosetta.rosetta.core.pose import append_pose_to_pose
+    from pyrosetta.rosetta.core.pose import remove_nonprotein_residues
     '''
     Given a Rosetta pose and a chain letter, get only the relevant chain
     pose.
     '''
+    remove_nonprotein_residues(pose)
     poses = []
     for i in range(1, pose.num_chains() + 1):
         chainpose = pose.split_by_chain(i)
         info = chainpose.pdb_info().pose2pdb(1)
-        if info.split(' ')[1] in chain and chainpose.residue(1).is_protein():
+        if info.split(' ')[1] in chain:
             # if chainpose.size() < 5:
                 # raise('Error: chain {} too small.'.format(chain))
             # else:
