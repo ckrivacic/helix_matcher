@@ -738,13 +738,10 @@ class RIFWorkspace(Workspace):
     def unfinished_inputs(self):
         inputs = []
         for patch in set(self.patches):
-            print(patch)
             if len(glob.glob(
-                os.path.join(patch, '*.pdb.gz')
+                os.path.join(patch, 'docked_full', '*.pdb.gz')
                 )) < 1:
                 inputs.append(patch)
-            else:
-                print('Skipping {}, files already exist'.format(patch))
         return sorted(inputs)
 
 
