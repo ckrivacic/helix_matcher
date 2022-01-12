@@ -44,6 +44,8 @@ def main():
         rif_workspace = ws.RIFWorkspace(workspace.root_dir, target)
         if args['--keep-existing']:
             inputs = rif_workspace.unfinished_inputs
+            print('Existing inputs')
+            print(inputs)
         else:
             inputs = rif_workspace.unclaimed_inputs
         ntasks = len(inputs)
