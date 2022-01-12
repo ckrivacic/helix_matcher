@@ -20,6 +20,8 @@ Options:
         The runtime limit for each job.
     --max-memory MEM       [default: 2G]
         The memory limit for each job.
+    --hold, -h  Keep the job on hold after submitting (to be released
+        manually later)
 """
 import helix.workspace as ws
 import os
@@ -92,6 +94,7 @@ def main():
                     max_memory=args['--max-memory'],
                     job_name = 'PatchMAN',
                     inputs = inputs,
+                    hold=args['--hold'],
                     )
             # submit.submit(rif_workspace, cmd, distributor='sge',
                     # make_dirs=args['--make-dirs'],

@@ -121,6 +121,8 @@ def submit(workspace, cmd, create_job_info=True, **params):
     max_runtime = params.get('max_runtime', '6:00:00')
     max_memory = params.get('max_memory', '1G')
 
+    hold = params.get('hold', False)
+
     if test_run:
         max_runtime = '0:30:00'
 
@@ -160,9 +162,10 @@ def submit(workspace, cmd, create_job_info=True, **params):
 
     # Release the hold on the job.
 
-    qrls_command = 'qrls', job_id
-    process.check_output(qrls_command)
-    print(status, end=' ')
+    if not hold:
+        qrls_command = 'qrls', job_id
+        process.check_output(qrls_command)
+        print(status, end=' ')
 
 def initiate():
 
