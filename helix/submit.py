@@ -99,7 +99,7 @@ def execute(cmd):
 @scripting.catch_and_print_errors()
 def submit(workspace, cmd, distributor='local', clear=False,
         test_run=False, make_dirs=False, ntasks=None, nstruct=1,
-        max_runtime='10:00:00', max_memory='5G'):
+        max_runtime='10:00:00', max_memory='5G', inputs=None):
     # args = docopt.docopt(__doc__)
     # if not args['--local'] and not args['--slurm'] and not args['--make-dirs']:
     if distributor=='sge':
@@ -143,9 +143,10 @@ def submit(workspace, cmd, distributor='local', clear=False,
     if clear or test_run:
         workspace.clear_outputs()
 
-    inputs = [
-            x for x in workspace.unclaimed_inputs
-            ]
+    if not inputs:
+        inputs = [
+                x for x in workspace.unclaimed_inputs
+                ]
 
     if len(inputs)==0:
         num_inputs = 1
