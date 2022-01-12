@@ -30,6 +30,10 @@ def pose_from_rcsb(pdbid, prefix=None):
 
 def pose_from_wynton(pdbid,
         prefix='/wynton/home/database/pdb/remediated/pdb/', clean=False):
+    '''
+    Import a pose from the Wynton database. Assumes PDB is stored with
+    the format <base_pdb_folder>/<pdbid[1:3]>/pdb<pdbid>.ent.gz
+    '''
     from pyrosetta import toolbox
     pdbid = pdbid.lower()
     folder = os.path.join(prefix, pdbid[1:3])
