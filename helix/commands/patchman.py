@@ -11,11 +11,15 @@ Options:
     --test-run  Mark as test run. Does nothing for now.
     --task=INT  Only run a specific task
     --clear, -o  Overwrite a prevoius run. Gets rid of docked outputs,
-    log files, and job info files.
+        log files, and job info files.
     --flexpepdock  Run flexpepdock at the end of the PatchMAN run
     --relax  Run relax on target
     --keep-existing, -k  Keep existing results; only run for patches
-    that do not have results.
+        that do not have results.
+    --max-runtime TIME     [default: 12:00:00]
+        The runtime limit for each job.
+    --max-memory MEM       [default: 2G]
+        The memory limit for each job.
 """
 import helix.workspace as ws
 import os
@@ -42,13 +46,21 @@ def main():
 
     for target in targets:
         rif_workspace = ws.RIFWorkspace(workspace.root_dir, target)
+        rif_workspace.make_dirs()
+        if args['--make-dirs']:
+            continue
+        if args['--clear']:
+            workspace.clear_outputs
         if args['--keep-existing']:
             inputs = rif_workspace.unfinished_inputs
-            print('Existing inputs')
+            print('Unfinished inputs')
             print(inputs)
         else:
             inputs = rif_workspace.unclaimed_inputs
         ntasks = len(inputs)
+        if ntasks == 0:
+            print('No inputs for target {}'.format(target))
+            continue
 
         cmd = workspace.python_path, script_path
         cmd += target,
@@ -73,8 +85,15 @@ def main():
 
         else:
             print('Submitting jobs for {}'.format(target))
-            submit.submit(rif_workspace, cmd, distributor='sge',
-                    make_dirs=args['--make-dirs'],
-                    test_run=args['--test-run'], clear=args['--clear'],
-                    max_runtime='24:00:00', max_memory='6G',
-                    inputs=inputs)
+            big_jobs.submit(
+                    rif_workspace, cmd, nstruct=ntasks, 
+                    max_runtime = args['--max-runtime'],
+                    max_memory=args['--max-memory'],
+                    job_name = 'PatchMAN',
+                    inputs = inputs,
+                    )
+            # submit.submit(rif_workspace, cmd, distributor='sge',
+                    # make_dirs=args['--make-dirs'],
+                    # test_run=args['--test-run'], clear=args['--clear'],
+                    # max_runtime='24:00:00', max_memory='6G',
+                    # inputs=inputs)
