@@ -738,6 +738,7 @@ class RIFWorkspace(Workspace):
     def unfinished_inputs(self):
         inputs = []
         for patch in set(self.patches):
+            print(patch)
             if len(glob.glob(
                 os.path.join(patch, '*.pdb.gz')
                 )) < 1:
