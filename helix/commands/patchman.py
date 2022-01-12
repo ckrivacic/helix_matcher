@@ -14,6 +14,8 @@ Options:
     log files, and job info files.
     --flexpepdock  Run flexpepdock at the end of the PatchMAN run
     --relax  Run relax on target
+    --keep-existing, -k  Keep existing results; only run for patches
+    that do not have results.
 """
 import helix.workspace as ws
 import os
@@ -40,7 +42,10 @@ def main():
 
     for target in targets:
         rif_workspace = ws.RIFWorkspace(workspace.root_dir, target)
-        inputs = rif_workspace.unclaimed_inputs
+        if args['--keep-existing']:
+            inputs = rif_workspace.unfinished_inputs
+        else:
+            inputs = rif_workspace.unclaimed_inputs
         ntasks = len(inputs)
 
         cmd = workspace.python_path, script_path

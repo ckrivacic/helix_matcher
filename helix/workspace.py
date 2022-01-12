@@ -727,12 +727,23 @@ class RIFWorkspace(Workspace):
             for f in design_files:
                 os.remove(f)
 
-
     @property
     def unclaimed_inputs(self):
         inputs = set(self.patches)
         for params in self.all_job_info:
             inputs -= set(params['inputs'])
+        return sorted(inputs)
+
+    @property
+    def unfinished_inputs(self):
+        inputs = []
+        for patch in set(self.patches):
+            if len(glob.glob(
+                os.path.join(patch, '*.pdb.gz')
+                )) < 1:
+                inputs.append(patch)
+            else:
+                print('Skipping {}, files already exist'.format(patch))
         return sorted(inputs)
 
 
