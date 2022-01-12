@@ -199,7 +199,8 @@ def main():
     if not os.path.exists(outdir_temp):
         os.makedirs(outdir_temp, exist_ok=True)
 
-    folders = workspace.patches
+    # folders = workspace.patches
+    folders = job_info['inputs']
     folder = folders[task_id]
 
     print("Running PatchMAN for {}".format(folder))
