@@ -25,6 +25,7 @@ import helix.workspace as ws
 import os
 import docopt
 from helix.utils import utils
+from helix import big_jobs
 from helix import submit
 from copy import deepcopy
 
