@@ -121,6 +121,7 @@ def align_matches(folder, matches, workspace, patch):
                         clean=True)
             except:
                 try:
+                    print('Obsolete PDB found: {}'.format(match_pdbid))
                     if match_pdbid.lower() == '4k0f':
                         match_pose = utils.pose_from_wynton('5eqb')
                 except:
@@ -128,6 +129,7 @@ def align_matches(folder, matches, workspace, patch):
                     with open('docked_full/failed.txt', 'a') as f:
                         f.write(match_pdbid)
                     continue
+        latest_pdbid = match_pdbid
         match_pose = utils.pose_get_chain(match_pose, match_chain)
         match_sequence = ''
         for pos in position_list:
