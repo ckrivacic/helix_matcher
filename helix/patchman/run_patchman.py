@@ -117,8 +117,7 @@ def align_matches(folder, matches, workspace, patch):
         # All this try/except nonsense is probably not necessary
         if not match_pdbid == latest_pdbid:
             try:
-                match_pose = utils.pose_from_wynton(match_pdbid,
-                        clean=True)
+                match_pose = utils.pose_from_wynton(match_pdbid)
             except:
                 try:
                     print('Obsolete PDB found: {}'.format(match_pdbid))
