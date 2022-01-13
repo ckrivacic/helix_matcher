@@ -44,7 +44,7 @@ def pose_from_wynton(pdbid,
     print(pdbid)
     print(fpath)
 
-    if args(clean):
+    if clean:
         print('Cleaning PDB file')
         toolbox.cleanATOM(fpath, out_file=f'{pdbid}.clean.pdb')
         return  pose_from_file(f'{pdbid}.clean.pdb')
