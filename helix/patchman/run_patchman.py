@@ -161,13 +161,11 @@ def align_matches(folder, matches, workspace, patch):
                 'alignment_score': score,
                 })
         print('Finished {} lines'.format(nline))
-        line_idx += 1
         # if match_pdbid.lower() == '4m8r':
         # if match_pdbid.lower() == '1m6y':
             # print(dict_list)
             # sys.exit()
 
-    print('Scored {} matches total'.format(line_idx))
 
     return pd.DataFrame(dict_list)
 

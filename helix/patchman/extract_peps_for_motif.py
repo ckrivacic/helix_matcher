@@ -181,7 +181,12 @@ def create_complex(receptor, pose_to_cut, pep, complex_name):
     complex_pose = Pose()
     complex_pose.assign(receptor)
 
-    core.pose.append_subpose_to_pose(complex_pose, pose_to_cut, int(pep[0]), int(pep[-1]), True)
+    try:
+        core.pose.append_subpose_to_pose(complex_pose, pose_to_cut, int(pep[0]), int(pep[-1]), True)
+    except Exception as e:
+        print('Error appending subpose for {}:'.format(complex_name))
+        print(e)
+        return False
 
     complex_pose.dump_pdb(complex_name)
 
