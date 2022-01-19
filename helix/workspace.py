@@ -739,7 +739,7 @@ class RIFWorkspace(Workspace):
         inputs = []
         for patch in set(self.patches):
             if len(glob.glob(
-                os.path.join(patch, 'docked_full', '*.pdb.gz')
+                os.path.join(patch, 'docked_full', '*')
                 )) < 1:
                 inputs.append(patch)
         return sorted(inputs)
