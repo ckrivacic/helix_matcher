@@ -54,16 +54,6 @@ def get_alignment_score(df, path):
     return score, length
 
 
-def safe_load(pickledf):
-    try:
-        dataframe = pd.read_pickle(pickledf)
-    except:
-        with open(pickledf, 'rb') as f:
-            dataframe = pickle.load(f)
-
-    return dataframe
-
-
 def main():
     dalphaball = os.path.join('/wynton', 'home', 'kortemme', 'krivacic',
             'rosetta', 'source', 'external', 'DAlpahBall',
@@ -127,7 +117,7 @@ def main():
     print('Starting in directory {}'.format(latest_patchdir))
 
     alignment_path = os.path.join(latest_patchdir, 'alignment_scores.pkl')
-    alignment_df = safe_load(alignment_path)
+    alignment_df = utils.safe_load(alignment_path)
     alignment_df['complex_basename'] = alignment_df.apply(lambda x:\
             os.path.basename(x['complex']), axis=1)
     for input_idx in range(start, stop):
@@ -136,7 +126,7 @@ def main():
         if current_patchdir != latest_patchdir:
             alignment_path = os.path.join(current_patchdir,
                     'alignment_scores.pkl')
-            alignment_df = safe_load(alignment_path)
+            alignment_df = utils.safe_load(alignment_path)
             latest_patchdir = current_patchdir
             alignment_df['complex_basename'] = alignment_df.apply(lambda x:\
                     os.path.basename(x['complex']), axis=1)

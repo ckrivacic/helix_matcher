@@ -5,6 +5,17 @@ import os, wget, sys
 import networkx as nx
 
 
+def safe_load(pickledf):
+    try:
+        dataframe = pd.read_pickle(pickledf)
+    except:
+        import pickle5 as pickle
+        with open(pickledf, 'rb') as f:
+            dataframe = pickle.load(f)
+
+    return dataframe
+
+
 def get_pdb_list(pdbid=True):
     import glob
     prefix = '/wynton/home/database/pdb/remediated/pdb/'
