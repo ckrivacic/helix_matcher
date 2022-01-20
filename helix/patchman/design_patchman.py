@@ -326,6 +326,17 @@ def main():
         use_jobname="false" 
         interface="A_B" />
         '''
+        contact = \
+        '''
+        <RESIDUE_SELECTORS>
+            <Chain name="chA" chains="A"/>
+            <Chain name="chB" chains="B"/>
+        </RESIDUE_SELECTORS>
+        <FILTERS>
+            <ContactMolecularSurface name="contact" target_selector="chA"
+            binder_selector="chB" />
+        </FILTERS>
+        '''
         ia_mover = XmlObjects.static_get_mover(ia)
         ia_mover.apply(flexpep_pose)
 
@@ -340,6 +351,7 @@ def main():
         exposed_obj = XmlObjects.static_get_filter(exposed_hydrophobics)
         packstat_obj = XmlObjects.static_get_filter(packstat)
         sc_obj = XmlObjects.static_get_filter(sc)
+        contact_obj = XmlObjects.create_from_string(contact).get_filter('contact')
 
         # Calculate delta NPSA
         npsa_complex = npsa_obj.report_sm(flexpep_pose)
@@ -355,6 +367,7 @@ def main():
         exposed_score = exposed_obj.report_sm(flexpep_pose)
         packstat_score = packstat_obj.report_sm(flexpep_pose)
         sc_score = sc_obj.report_sm(flexpep_pose)
+        contact_score = contact_obj.report_sm(flexpep_pose)
 
         score = ref(flexpep_pose)
         interface_scorer = interface.InterfaceScore(flexpep_pose)
@@ -373,6 +386,7 @@ def main():
                 'interface_score': interface_score,
                 'n_hbonds': n_hbonds,
                 'shape_complementarity': sc_score,
+                'contact_molecular_surface': contact_score,
                 'buns_all': buns_all_score,
                 'buns_sc': buns_sc_score,
                 # Buried NPSA applies only to helix
