@@ -197,7 +197,7 @@ def main():
         pdbpaths = [pdbpath]
     else:
         idx = int(os.environ['SGE_TASK_ID']) - 1
-        num = int(args['<num>'])
+        num = int(args['<nstruct>'])
         start = idx * num
         stop = idx * num -+ num - 1
         
