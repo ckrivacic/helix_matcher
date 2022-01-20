@@ -89,13 +89,16 @@ def list_to_res_selector(l):
     return residue_selector.ResidueIndexSelector(list_to_str(l))
 
 
-def res_selector_to_size_list(resselector):
+def res_selector_to_size_list(resselector, pylist=False):
     size_list = []
     for i, boolean in enumerate(resselector):
         if boolean == True:
             size_list.append(int(i + 1))
 
-    return intlist_to_vector1_size(size_list)
+    if pylist:
+        return size_list
+    else:
+        return intlist_to_vector1_size(size_list)
 
 
 def reslist_to_pdb_numbers(reslist, pose, chain=None):
