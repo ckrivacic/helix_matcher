@@ -13,7 +13,7 @@ os.makedirs(logdir, exist_ok=True)
 qsub_command = 'qsub', '-h', '-cwd'
 qsub_command += '-o', logdir 
 qsub_command += '-e', logdir
-qsub_command += '-t', '1-{}'.format(nstruct)
+qsub_command += '-t', '1-{}'.format(ntasks)
 qsub_command += '-l', 'h_rt={}'.format(max_runtime)
 qsub_command += '-l', 'mem_free={}'.format(max_memory)
 qsub_command += '-b', 'y'
