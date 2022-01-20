@@ -79,7 +79,15 @@ class PDBInterface(object):
 
             scoretypes = [ScoreType.fa_atr, ScoreType.fa_rep, 
                     ScoreType.fa_sol, ScoreType.fa_elec, 
-                    ScoreType.hbond_bb_sc, ScoreType.hbond_sc]
+                    ScoreType.hbond_bb_sc, ScoreType.hbond_sc,
+                    ]
+            scoretypes_full = scoretypes.copy()
+            scoretypes_full.extend([
+                ScoreType.pro_close, ScoreType.fa_intra_rep,
+                ScoreType.dslf_fa13, ScoreType.rama, ScoreType.omega,
+                ScoreType.fa_dun, ScoreType.p_aa_pp, ScoreType.ref,
+                ScoreType.hbond_sr_bb
+                ])
 
             egraph = self.pose.energies().energy_graph()
 
@@ -118,23 +126,29 @@ class PDBInterface(object):
                     }
             # Fill scoretype columns
             for scoretype in scoretypes:
-                row[str(scoretype).split('.')[1]] = 0
+                row[str(scoretype).split('.')[1] + '_cc'] = 0
             # Iterate through contacts, adding scoretypes and getting
             # total cross-chain energy
+            total_crosschain = 0
             for contact in contacts[resi]:
                 edge = egraph.find_energy_edge(resi,
                         contact).fill_energy_map()
                 filled = edge * weights
+                total_crosschain += filled.sum()
                 for scoretype in scoretypes:
                     sc = edge.get(scoretype)
-                    row[str(scoretype).split('.')[1]] += sc
+                    row[str(scoretype).split('.')[1] + '_cc'] += sc
+            row['total_crosschain'] = total_crosschain
+            for scoretype in scoretypes_full:
+                sc = pose.energies().residue_total_energies(resi).get(scoretype)
+                row[str(scoretype).split('.')[1] + '_tot'] = sc
+            row['total_energy'] = self.pose.energies().residue_total_energy()
             if resi in self.buried:
                 row['burial'] = 'buried'
             elif resi in self.boundary:
                 row['burial'] = 'boundary'
             else:
                 row['burial'] = 'surface'
-            row['total_crosschain'] = filled.sum()
             row['secstruct'] = self.ss_str[resi - 1]
             if len(contacts[resi]) > 0:
                 row['contacts'] = len(contacts[resi])
