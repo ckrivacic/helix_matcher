@@ -1,6 +1,5 @@
 '''
-Find average score of a number of structures in the PDB for each buried
-amino acid. Possibly all interface amino acids as well.
+Find score (and each scoreterm) for all interface residues in the PDB.
 
 Usage:
     score_pdb.py <nstruct> [options]
