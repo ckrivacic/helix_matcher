@@ -75,8 +75,8 @@ class PDBInterface(object):
             # so I'll give it a few tries to be safe. Yes I know how
             # ugly this is.
             setup_foldtree(self.pose, chains, movable_jumps, True)
-            print('NEW FOLD TREE')
-            print(self.pose.fold_tree())
+            # print('NEW FOLD TREE')
+            # print(self.pose.fold_tree())
 
             scoretypes = [ScoreType.fa_atr, ScoreType.fa_rep, 
                     ScoreType.fa_sol, ScoreType.fa_elec, 
