@@ -68,9 +68,11 @@ class PDBInterface(object):
         print('SETTING UP FOLD TREE FOR INTERFACE {}'.format(chains))
         tries = 0
         while tries < 3:
-            # It's possible to have the jump go to a ligand by accident.
+            # It's possible to have the jump go to a ligand, which would
+            # cause the Interface to look for ligand-interacting
+            # residues.
             # Can be avoided by choosing a random residue to jump to for
-            # the 2nd partner, but it could still go to a ligand,
+            # the 2nd partner (rather than COM), but it could still go to a ligand,
             # so I'll give it a few tries to be safe. Yes I know how
             # ugly this is.
             setup_foldtree(self.pose, chains, movable_jumps, True)
