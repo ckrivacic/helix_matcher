@@ -140,9 +140,9 @@ class PDBInterface(object):
                     row[str(scoretype).split('.')[1] + '_cc'] += sc
             row['total_crosschain'] = total_crosschain
             for scoretype in scoretypes_full:
-                sc = pose.energies().residue_total_energies(resi).get(scoretype)
+                sc = self.pose.energies().residue_total_energies(resi).get(scoretype)
                 row[str(scoretype).split('.')[1] + '_tot'] = sc
-            row['total_energy'] = self.pose.energies().residue_total_energy()
+            row['total_energy'] = self.pose.energies().residue_total_energy(resi)
             if resi in self.buried:
                 row['burial'] = 'buried'
             elif resi in self.boundary:
