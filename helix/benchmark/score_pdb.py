@@ -179,7 +179,7 @@ class PDBInterface(object):
 
 
 def main():
-    init()
+    init('-ignore_unrecognized_res')
     args = docopt.docopt(__doc__)
     if args['--test']:
         pdbid = args['--test']
