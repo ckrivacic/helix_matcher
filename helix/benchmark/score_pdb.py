@@ -1,7 +1,14 @@
 '''
 Find average score of a number of structures in the PDB for each buried
 amino acid. Possibly all interface amino acids as well.
+
+Usage:
+    score_pdb.py <nstruct> [options]
+
+Options:
+    --test=PDB  Test on a certain pdb
 '''
+import docopt
 from pyrosetta import *
 from pyrosetta.rosetta.core.scoring import ScoreType
 from helix.utils import utils
@@ -104,16 +111,24 @@ class PDBInterface(object):
 
 def main():
     init()
-    idx = int(os.environ['SGE_TASK_ID']) - 1
-    num = int(args['<num>'])
+    args = docopt.docopt(__doc__)
+    if args['--test']:
+        pdbid = args['--test']
+        pdbpath = os.path.join('/wynton/home/database/pdb/remediated/pdb', 
+                pdbid[1:3], 'pdb{}.ent.gz'.format(pdbid))
+        pdbpaths = [pdbpath]
+    else:
+        idx = int(os.environ['SGE_TASK_ID']) - 1
+        num = int(args['<num>'])
+        start = idx * num
+        stop = idx * num -+ num - 1
+        
+        all_pdbpaths = utils.get_all_pdbs(pdbid=False)
+        if stop > len(all_pdbids):
+            stop = len(all_pdbids)
+        pdbpaths = all_pdbpaths[start:stop]
+
     df = pd.DataFrame()
-    start = idx * num
-    stop = idx * num -+ num - 1
-    
-    all_pdbpaths = utils.get_all_pdbs(pdbid=False)
-    if stop > len(all_pdbids):
-        stop = len(all_pdbids)
-    pdbpaths = all_pdbpaths[start:stop]
 
     errors = []
     sfxn = create_score_function('ref2015')
