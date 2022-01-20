@@ -202,8 +202,8 @@ def main():
         stop = idx * num -+ num - 1
         
         all_pdbpaths = utils.get_pdb_list(pdbid=False)
-        if stop > len(all_pdbids):
-            stop = len(all_pdbids)
+        if stop > len(all_pdbpaths):
+            stop = len(all_pdbpaths)
         pdbpaths = all_pdbpaths[start:stop]
 
     df = pd.DataFrame()
