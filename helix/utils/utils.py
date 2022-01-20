@@ -4,6 +4,20 @@ from helix.utils.numeric import intlist_to_vector1_size
 import os, wget, sys
 import networkx as nx
 
+
+def get_pdb_list(pdbid=True):
+    import glob
+    prefix = '/wynton/home/database/pdb/remediated/pdb/'
+    all_pdbs = glob.glob(os.path.join(prefix, '*', '*.ent.gz'))
+    if pdbid:
+        pdbids = []
+        for f in all_pdbs:
+            pdbids.append(os.path.basename(f)[3:7])
+        return sorted(pdbids)
+    else:
+        return sorted(all_pdbs)
+
+
 def three_to_one(restype):
     three_to_one = {
             'ala':'a', 'arg':'r', 'asn':'n', 'asp':'d', 'cys':'c',
