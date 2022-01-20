@@ -3,7 +3,7 @@ from klab import process
 from helix.utils import utils
 
 nstruct = len(utils.get_pdb_list(pdbid=False))
-num=2000
+num=20000
 ntasks = nstruct / num + 1
 max_runtime = '24:00:00'
 max_memory = '6G'
