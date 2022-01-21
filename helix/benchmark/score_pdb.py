@@ -31,7 +31,7 @@ class PDBInterface(object):
             self.sfxn = sfxn
         self.pose = pose_from_file(pdbpath)
         minmover_str = '''
-        <MinMover name='minimize' jump='all' />
+        <MinMover name='minimize' jump='all' bb='true' chi='true'/>
         '''
         minmover = XmlObjects.static_get_mover(minmover_str)
         minmover.apply(self.pose)
