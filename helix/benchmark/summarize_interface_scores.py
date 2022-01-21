@@ -7,15 +7,17 @@ Usage:
 
 Options:
     --dataframe=PATH, -d  Path to the dataframe containing all interface
-    residue information.  [default: residue_scores/final.pkl]
+        residue information.  [default: residue_scores/final.pkl]
     --by=COMMA_SEP_LIST  Which columns the data should be grouped by
-    prior to summarization. For multiple columns, input a
-    comma-separated list (no spaces), i.e. restype,burial  [default: restype]
+        prior to summarization. For multiple columns, input a
+        comma-separated list (no spaces), i.e. restype,burial  [default: restype]
     --plot=DATATYPE, -p  Plot data of a particular type (column)
-    [default: total_energy]
+        [default: total_energy]
     --plot-by=COMMA_SEP_LIST  Which column should go into separate
-    plots of plotting  [default: restype]
+        plots of plotting  [default: restype]
     --cat=CATEGORY  Color by this category  [default: burial]
+    --crosschain  Plot crosschain summary
+    --fa  Plot fullatom summary
 '''
 
 import pickle5 as pickle
@@ -67,7 +69,7 @@ def plot_dist(df, args):
     plot_by = args['--plot-by'].split(',')
     # df = df[(np.abs(stats.zscore(df[args['--plot']])) < 3)]
     # df = df[(np.abs(stats.zscore(df[args['--plot']])) < 3)]
-    df = df[df[args['--plot']] < 10]
+    # df = df[df[args['--plot']] < 10]
     groups = df.groupby(plot_by)
     if plot_by[0]=='restype':
         fig, axes = plt.subplots(4, 5, sharey='all',)
@@ -103,6 +105,27 @@ def plot_summarized(df, args):
     plt.show()
 
 
+def plot_all_scores(df, args):
+    cc_scoretypes = [
+            'fa_atr_cc', 'fa_rep_cc', 'fa_sol_cc', 'fa_elec_cc',
+            'hbond_bb_sc_cc', 'hbond_sc_cc', 'total_crosschain',]
+    fa_scoretypes = [
+            'fa_atr_tot', 'fa_rep_tot', 'fa_sol_tot', 'fa_elec_tot',
+            'hbond_bb_sc_tot', 'hbond_sc_tot', 'pro_close_tot',
+            'fa_intra_rep_tot', 'dslf_fa13_tot', 'rama_tot',
+            'omega_tot', 'fa_dun_tot', 'p_aa_pp_tot', 'ref_tot',
+            'hbond_sr_bb_tot', 'total_energy',
+            ]
+    if args['--crosschain']:
+        df = df[df['scoretype'].isin(cc_scoretypes)]
+    if args['--fa']:
+        df = df[df['scoretype'].isin(fa_scoretypes)]
+    # for scoretype in scoretypes:
+        # df = df[(np.abs(stats.zscore(df[scoretype])) < 3)]
+    sns.barplot(data=df, x='restype', y='mean', hue='scoretype')
+    plt.show()
+
+
 def main():
     canonical_aas = ['GLU', 'CYS', 'HIS', 'GLY', 'GLN', 'ALA', 'ASN', 'PRO', 'MET', 'TYR', 'PHE', 'ASP', 'TRP', 'LEU', 'SER', 'THR', 'LYS', 'ILE', 'VAL', 'ARG']
     mpl.use('tkagg')
@@ -119,6 +142,7 @@ def main():
     print(summarized)
     # plot_summarized(df, args)
     plot_dist(df, args)
+    # plot_all_scores(summarized, args)
 
 
 if __name__=='__main__':
