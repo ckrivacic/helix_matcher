@@ -244,7 +244,7 @@ def main():
             print(e)
             print(traceback.format_exc())
 
-    outfolder = 'residue_scores/'
+    outfolder = 'residue_scores_min/'
     if args['--test']:
         df.to_csv(os.path.join(outfolder,
             'min_pdb_interface_scores_{}.csv'.format(idx)))
