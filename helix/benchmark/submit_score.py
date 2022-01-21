@@ -7,7 +7,7 @@ num=100
 ntasks = (nstruct // num) + 1
 max_runtime = '24:00:00'
 max_memory = '6G'
-logdir = 'residue_scores/logs/'
+logdir = 'residue_scores_min/logs/'
 os.makedirs(logdir, exist_ok=True)
 
 qsub_command = 'qsub', '-h', '-cwd'
