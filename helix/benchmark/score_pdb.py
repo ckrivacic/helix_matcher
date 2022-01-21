@@ -17,6 +17,7 @@ from pyrosetta.rosetta.core.scoring import ScoreType
 from pyrosetta.rosetta.core.scoring.dssp import Dssp
 from pyrosetta.rosetta.protocols.scoring import Interface
 from pyrosetta.rosetta.core.select import residue_selector
+from pyrosetta.rosetta.protocols.rosetta_scripts import XmlObjects
 from helix.utils import utils
 import pandas as pd
 import os
@@ -29,6 +30,11 @@ class PDBInterface(object):
         else:
             self.sfxn = sfxn
         self.pose = pose_from_file(pdbpath)
+        minmover_str = '''
+        <MinMover name='minimize' jump='all' />
+        '''
+        minmover = XmlObjects.static_get_mover(minmover_str)
+        minmover.apply(self.pose)
         self.ss_str = Dssp(self.pose).get_dssp_secstruct()
         self.dist = dist
         if pdbid:
@@ -241,12 +247,12 @@ def main():
     outfolder = 'residue_scores/'
     if args['--test']:
         df.to_csv(os.path.join(outfolder,
-            'pdb_interface_scores_{}.csv'.format(idx)))
+            'min_pdb_interface_scores_{}.csv'.format(idx)))
         df.to_pickle(os.path.join(outfolder,
-            'pdb_interface_scores_{}.pkl'.format(idx)))
+            'min_pdb_interface_scores_{}.pkl'.format(idx)))
     else:
         df.to_pickle(os.path.join(outfolder,
-            'pdb_interface_scores_{}.pkl'.format(idx)))
+            'min_pdb_interface_scores_{}.pkl'.format(idx)))
 
 if __name__=='__main__':
     main()
