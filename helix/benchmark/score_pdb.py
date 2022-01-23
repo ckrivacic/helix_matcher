@@ -24,17 +24,19 @@ import os
 
 
 class PDBInterface(object):
-    def __init__(self, pdbpath, sfxn=None, pdbid=None, dist=8.0):
+    def __init__(self, pdbpath, sfxn=None, pdbid=None, dist=8.0,
+            minimize=True):
         if not sfxn:
             self.sfxn = create_score_function('ref2015')
         else:
             self.sfxn = sfxn
         self.pose = pose_from_file(pdbpath)
-        minmover_str = '''
-        <MinMover name='minimize' jump='all' bb='true' chi='true'/>
-        '''
-        minmover = XmlObjects.static_get_mover(minmover_str)
-        minmover.apply(self.pose)
+        if minimize:
+            minmover_str = '''
+            <MinMover name='minimize' jump='all' bb='true' chi='true'/>
+            '''
+            minmover = XmlObjects.static_get_mover(minmover_str)
+            minmover.apply(self.pose)
         self.ss_str = Dssp(self.pose).get_dssp_secstruct()
         self.dist = dist
         if pdbid:
@@ -235,7 +237,7 @@ def main():
         if not args['--test']:
             pdbid = os.path.basename(pdbpath)[3:7]
         try:
-            pdb_obj = PDBInterface(pdbpath, sfxn=sfxn)
+            pdb_obj = PDBInterface(pdbpath, sfxn=sfxn, pdbid=pdbid)
             df = pd.concat([df, pdb_obj.interface_all_chains()],
                     ignore_index=True)
         except Exception as e:
