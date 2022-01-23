@@ -132,7 +132,8 @@ class PDBInterface(object):
                     'pdb_resnum': pdbinfo.split(' ')[0],
                     'chain': chain,
                     'pdb': self.pdbid,
-                    'restype': self.pose.residue(resi).name3()
+                    'restype': self.pose.residue(resi).name1(),
+                    'task': os.environ['SGE_TASK_ID'],
                     }
             # Fill scoretype columns
             for scoretype in scoretypes:
