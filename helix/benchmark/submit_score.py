@@ -4,11 +4,10 @@ from helix.utils import utils
 import sys
 
 nstruct = len(utils.get_pdb_list(pdbid=False))
+minimize = False
 if len(sys.argv) > 1:
     if sys.argv[1] == '--min':
         minimize=True
-    else:
-        minimize=False
 
 if minimize:
     num=100
