@@ -1,9 +1,19 @@
 import glob, re, os
 from klab import process
 from helix.utils import utils
+import sys
 
 nstruct = len(utils.get_pdb_list(pdbid=False))
-num=100
+if len(sys.argv) > 1:
+    if sys.argv[1] == '--min':
+        minimize=True
+    else:
+        minimize=False
+
+if minimize:
+    num=100
+else:
+    num=250
 ntasks = (nstruct // num) + 1
 max_runtime = '24:00:00'
 max_memory = '6G'
@@ -20,6 +30,8 @@ qsub_command += '-b', 'y'
 qsub_command += '-N', 'pdb_score'
 qsub_command += '/wynton/home/kortemme/krivacic/software/anaconda3/bin/python',
 qsub_command += 'score_pdb.py', str(num)
+if minimize:
+    qsub_command += '--min',
 
 status = process.check_output(qsub_command).decode('utf-8')
 status_pattern = re.compile(r'Your job-array (\d+).[0-9:-]+ \(".*"\) has been submitted')

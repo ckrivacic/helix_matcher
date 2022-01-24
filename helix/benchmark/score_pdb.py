@@ -7,6 +7,7 @@ Usage:
 Options:
     --test=PDB  Test on a certain pdb
     --local, -l  Run a test run off wynton
+    --min  Run minimized
 '''
 import docopt
 import traceback
@@ -133,8 +134,9 @@ class PDBInterface(object):
                     'chain': chain,
                     'pdb': self.pdbid,
                     'restype': self.pose.residue(resi).name1(),
-                    'task': os.environ['SGE_TASK_ID'],
                     }
+            if 'SGE_TASK_ID' in os.environ:
+                row['task'] = os.environ['SGE_TASK_ID']
             # Fill scoretype columns
             for scoretype in scoretypes:
                 row[str(scoretype).split('.')[1] + '_cc'] = 0
@@ -206,6 +208,7 @@ class PDBInterface(object):
 def main():
     init('-ignore_unrecognized_res')
     args = docopt.docopt(__doc__)
+    minimize=args['--min']
     if args['--test']:
         pdbid = args['--test']
         if not args['--local']:
@@ -238,7 +241,8 @@ def main():
         if not args['--test']:
             pdbid = os.path.basename(pdbpath)[3:7]
         try:
-            pdb_obj = PDBInterface(pdbpath, sfxn=sfxn, pdbid=pdbid)
+            pdb_obj = PDBInterface(pdbpath, sfxn=sfxn, pdbid=pdbid,
+                    minimize=minimize)
             df = pd.concat([df, pdb_obj.interface_all_chains()],
                     ignore_index=True)
         except Exception as e:
@@ -247,15 +251,18 @@ def main():
             print(e)
             print(traceback.format_exc())
 
-    outfolder = 'residue_scores_min/'
+    if minimize:
+        outfolder = 'residue_scores_min/'
+    else:
+        outfolder = 'residue_scores/'
     if args['--test']:
         df.to_csv(os.path.join(outfolder,
-            'min_pdb_interface_scores_{}.csv'.format(idx)))
+            'pdb_interface_scores_{}.csv'.format(idx)))
         df.to_pickle(os.path.join(outfolder,
-            'min_pdb_interface_scores_{}.pkl'.format(idx)))
+            'pdb_interface_scores_{}.pkl'.format(idx)))
     else:
         df.to_pickle(os.path.join(outfolder,
-            'min_pdb_interface_scores_{}.pkl'.format(idx)))
+            'pdb_interface_scores_{}.pkl'.format(idx)))
 
 if __name__=='__main__':
     main()
