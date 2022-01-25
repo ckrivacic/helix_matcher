@@ -6,6 +6,7 @@ import networkx as nx
 
 
 def safe_load(pickledf):
+    import pandas as pd
     try:
         dataframe = pd.read_pickle(pickledf)
     except:
