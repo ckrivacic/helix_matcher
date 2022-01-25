@@ -68,8 +68,14 @@ class PDBInterface(object):
         boundary = residue_selector.LayerSelector()
         boundary.set_layers(False, True, False)
 
-        buried_selector = buried.apply(self.pose)
-        boundary_selector = boundary.apply(self.pose)
+        try:
+            buried_selector = buried.apply(self.pose)
+        except:
+            buried_selector = []
+        try:
+            boundary_selector = boundary.apply(self.pose)
+        except:
+            boundary_selector = []
 
         self.buried = utils.res_selector_to_size_list(buried_selector,
                 pylist=True)
