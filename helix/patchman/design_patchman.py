@@ -8,8 +8,8 @@ Options:
     --task=INT  Only run a specific task
     --delete  Delete target structures
     --designs_per_task=INT  How many designs per task  [default: 20]
-    --align_thresh=FLOAT  Per-residue alignment score above 
-    which favor native residue task operation will be added  [default: 5]
+    --align_thresh=FLOAT  Sequence identity score above 
+        which favor native residue task operation will be added  [default: 70]
 
 """
 
@@ -18,6 +18,8 @@ from pyrosetta.rosetta.core.pack.task import operation
 from pyrosetta.rosetta.core.select import residue_selector
 from pyrosetta.rosetta.core.scoring.dssp import Dssp
 from pyrosetta.rosetta.core.kinematics import MoveMap
+from pyrosetta.rosetta.core.scoring import ScoreType
+from pyrosetta.rosetta.protocols import constraint_generator
 from pyrosetta import init
 from pyrosetta import pose_from_file
 from pyrosetta import create_score_function
@@ -46,12 +48,72 @@ def strlist_to_vector1_str(strlist):
     return vector
 
 
-def get_alignment_score(df, path):
+def get_alignment_info(df, path):
     fname = os.path.basename(path)
     row = df[df['complex_basename'] == fname.strip('.gz')]
     length = len(row.iloc[0]['patch_sequence'])
     score = row.iloc[0]['alignment_score']
-    return score, length
+    patch_seq = row.iloc[0]['patch_sequence'] 
+    match_seq = row.iloc[0]['match_sequence']
+    matches = 0
+    for idx, res in enumerate(patch_seq):
+        if res == match_seq[idx]:
+            matches += 1
+    percent_identity = 100 * (matches / length)
+    return score, length, percent_identity
+
+
+def count_buried_unsat(pose, resnums):
+    '''
+    See if there are any buried unsatisfied hbonds in a subset of
+    residues
+    '''
+    sele = utils.list_to_res_selector(resnums)
+    buns_all = '''
+    <BuriedUnsatHbonds 
+        name="Buried Unsat [[-]]"
+        report_all_heavy_atom_unsats="true" scorefxn="ref2015"
+        cutoff="4" residue_surface_cutoff="20.0"
+        ignore_surface_res="true" print_out_info_to_pdb="true"
+        dalphaball_sasa="1" probe_radius="1.1" confidence="0" />
+    '''
+    buns_all_obj = XmlObjects.static_get_filter(buns_all)
+    buns_all_obj.set_residue_selector(sele)
+
+    return buns_all_obj.report_sm(pose)
+
+
+def select_good_residues(pdbpath, score_df):
+    '''
+    Select residues which have similar crosschain scores to natural
+    interfaces and which don't have or interact with any buried
+    unsatisfied hydrogen bonds. Return a list these resnums,
+    with the intent of turning packing off for these residues.
+    '''
+    from helix.benchmark import score_pdb
+    interface = score_pdb.PDBInterface(pdbpath, minimize=True, cst=True)
+    interface_scores = interface.interface_all_chains()
+    interface_scores = interface_scores[interface_scores['chain'] == 'B']
+    nopack = []
+    for idx, row in interface_scores.iterrows():
+        restype = row['restype']
+        burial = row['burial']
+        secstruct = row['secstruct']
+        score_row = score_df[
+                (score_df['restype']==restype) &
+                (score_df['burial']==burial) &
+                (score_df['secstruct']==secstruct) &
+                (score_df['scoretype']=='total_crosschain')
+                ]
+        difference = row['total_crosschain'] - score_row.iloc[0]['median']
+        resnums = [row['resnum']]
+        for contact in interface.contacts:
+            resnums.append(contact)
+        if difference < 0:
+            if count_buried_unsat(pose, resnums) < 1:
+                nopack.append(row['resnum'])
+
+        return nopack
 
 
 def main():
@@ -108,8 +170,14 @@ def main():
         task_id = int(job_info['task_id'])
     start = task_id * nstruct
     stop = task_id * nstruct + nstruct
+    print(start)
+    print(inputs[start])
 
     target = pymol.cmd.load(workspace.target_path_clean)
+
+    summarized_residue_scores = utils.safe_load(workspace.find_path(
+        'summarized_res_scores.pkl'
+        ))
 
     print('TASK: {}'.format(task_id))
     rowlist = []
@@ -137,6 +205,9 @@ def main():
         pdb = os.path.abspath(inputs[input_idx])
         designed = False
 
+        # Look for residues that have good scores and no BUNS
+        nopack = find_good_residues(pdb, summarized_residue_scores)
+
         # Check if PDB has a score, if so it has been designed already
         # and we can skip
         with gzip.open(pdb, 'rt') as f:
@@ -160,6 +231,8 @@ def main():
         # Load pose and score function
         pose = pose_from_file(pdb)
         ref = create_score_function('ref2015')
+        ref_cst = create_score_function('ref2015')
+        ref_cst.set_weight(ScoreType.coordinate_constraint, 1.0)
 
         # Select chain B for selection
         selector = residue_selector.ChainSelector('B')
@@ -171,10 +244,17 @@ def main():
         </InterfaceByVector>
         '''
         interface_selector = XmlObjects.static_get_residue_selector(interface_selector_str)
-        align_score, patchlength = get_alignment_score(alignment_df, pdb)
+        align_score, patchlength, identity = get_alignment_info(alignment_df, pdb)
         if not designed:
-            fastdes = pyrosetta.rosetta.protocols.denovo_design.movers.FastDesign(ref)
-            fastdes.set_scorefxn(ref)
+            # Set coordinate constraints for backbone
+            coord_cst = constraint_generator.CoordinateConstraintGenerator()
+            coord_cst.set_sidechain(False)
+            constraints = coord_cst.apply(pose)
+            for cst in constraints:
+                pose.add_constraint(cst)
+
+            fastdes = pyrosetta.rosetta.protocols.denovo_design.movers.FastDesign(ref_cst)
+            fastdes.set_scorefxn(ref_cst)
 
             movemap = MoveMap()
             movemap.set_bb_true_range(pose.chain_begin(2),
@@ -202,7 +282,7 @@ def main():
             notdesign = operation.OperateOnResidueSubset(no_design,
                     interface_selector)
 
-            if align_score > align_threshold:
+            if identity > align_threshold:
                 favornative = \
                 '''
                 <FavorNativeResidue name="favornative" bonus="1.5"/>
@@ -220,34 +300,10 @@ def main():
             fastdes.set_task_factory(tf)
             fastdes.apply(pose)
             score = ref(pose)
+            # Temp change of PDB filename
             pose.dump_pdb(pdb)
 
-        # import platform
-        # ostype = platform.system()
-        # if ostype == 'Linux':
-            # suffix = 'linuxgccrelease'
-        # elif ostype == 'Darwin':
-            # suffix = 'macosclangrelease'
-
-        # exe = os.path.join(
-                # workspace.rosetta_dir, 'source', 'bin',
-                # 'FlexPepDocking.{}'.format(suffix)
-                # )
-        # if not os.path.exists('docked_full/'):
-            # os.path.makedirs('docked_full', exist_ok=True)
-
-        # cmd = [exe, '-in:file:s', pdb, '-scorefile',
-                # 'score.sc',
-                # '-out:pdb_gz', '-lowres_preoptimize',
-                # '-flexPepDocking:pep_refine',
-                # '-flexPepDocking:flexpep_score_only', '-ex1', '-ex2aro',
-                # '-use_input_sc', '-unboundrot', target]
-                # # '-out:prefix', 'docked_full/',
-        # utils.run_command(cmd)
-
-        pdb_basename = pdb.split('.')[0]
-        # flexpep_file = pdb_basename + '_0001.pdb.gz'
-        # flexpep_pose = pose_from_file(flexpep_file)
+        # Get metrics
         flexpep_file = pdb
         flexpep_pose = pose
         chainB = pose.split_by_chain(2)
@@ -395,7 +451,9 @@ def main():
                 'interface_dG': ia_mover.get_interface_dG(),
                 'interfac_residues': int_set,
                 'alignment_score': align_score,
+                'sequence_identity': identity,
                 'patch_length': patchlength,
+                'residues_witheld': nopack,
                 }
         rowlist.append(row)
 

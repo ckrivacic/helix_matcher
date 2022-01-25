@@ -19,6 +19,7 @@ from pyrosetta.rosetta.core.scoring.dssp import Dssp
 from pyrosetta.rosetta.protocols.scoring import Interface
 from pyrosetta.rosetta.core.select import residue_selector
 from pyrosetta.rosetta.protocols.rosetta_scripts import XmlObjects
+from pyrosetta.rosetta.protocols import constraint_generator
 from helix.utils import utils
 import pandas as pd
 import os
@@ -26,12 +27,21 @@ import os
 
 class PDBInterface(object):
     def __init__(self, pdbpath, sfxn=None, pdbid=None, dist=8.0,
-            minimize=True):
+            minimize=True, cst=False):
         if not sfxn:
             self.sfxn = create_score_function('ref2015')
+            if cst:
+                self.sfxn.set_weight(ScoreType.coordinate_constraint,
+                        1.0)
         else:
             self.sfxn = sfxn
         self.pose = pose_from_file(pdbpath)
+        if cst:
+            coord_cst = constraint_generator.CoordinateConstraintGenerator()
+            coord_cst.set_sidechain(False)
+            constraints = coord_cst.apply(self.pose)
+            for cst in constraints:
+                self.pose.add_constraint(cst)
         if minimize:
             minmover_str = '''
             <MinMover name='minimize' jump='all' bb='true' chi='true'/>
@@ -107,6 +117,7 @@ class PDBInterface(object):
             interface.distance(self.dist)
             interface.calculate(self.pose)
             contacts = interface.contact_list()
+            self.contacts = contacts
             interface_list = []
 
             # Get all residues in interface from the chain of interest

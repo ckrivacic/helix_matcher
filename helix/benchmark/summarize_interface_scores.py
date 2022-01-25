@@ -28,10 +28,11 @@ import seaborn as sns
 import docopt
 import numpy as np
 from scipy import stats
+import os
 from helix.utils import utils
 
 
-def summarize_data(df, group_cols):
+def summarize_data(df, group_cols, purge=True):
     '''Get mean, median, and SD for each group'''
     scoretypes = [
             'fa_atr_cc', 'fa_rep_cc', 'fa_sol_cc', 'fa_elec_cc',
@@ -44,6 +45,9 @@ def summarize_data(df, group_cols):
             ]
     if 'contacts' not in group_cols:
         scoretypes.append('contacts')
+    if purge:
+        df = df[(df['total_crosschain'] > -30) & (df['total_crosschain']
+            < 100)]
     groups = df.groupby(group_cols)
     outrows = []
     for name, group in groups:
@@ -127,7 +131,8 @@ def plot_all_scores(df, args):
 
 
 def main():
-    canonical_aas = ['GLU', 'CYS', 'HIS', 'GLY', 'GLN', 'ALA', 'ASN', 'PRO', 'MET', 'TYR', 'PHE', 'ASP', 'TRP', 'LEU', 'SER', 'THR', 'LYS', 'ILE', 'VAL', 'ARG']
+    canonical_aas = ['E', 'C', 'H', 'G', 'Q', 'A', 'N', 'P', 'M', 'Y',
+            'F', 'D', 'W', 'L', 'S', 'T', 'K', 'I', 'V', 'R']
     mpl.use('tkagg')
     args = docopt.docopt(__doc__)
     print('Loading dataframe...')
@@ -140,8 +145,12 @@ def main():
     summarized = summarize_data(df, group_cols)
     print('Dataframe summarized.')
     print(summarized)
+    summarized.to_pickle(os.path.join(
+        os.path.dirname(args['--dataframe']),
+            'summarized.pkl')
+        )
     # plot_summarized(df, args)
-    plot_dist(df, args)
+    # plot_dist(df, args)
     # plot_all_scores(summarized, args)
 
 
