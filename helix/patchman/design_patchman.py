@@ -7,9 +7,13 @@ Usage:
 Options:
     --task=INT  Only run a specific task
     --delete  Delete target structures
-    --designs_per_task=INT  How many designs per task  [default: 20]
-    --align_thresh=FLOAT  Sequence identity score above 
+    --designs-per-task=INT  How many designs per task  [default: 20]
+    --align-thresh=FLOAT  Sequence identity score above 
         which favor native residue task operation will be added  [default: 70]
+    --buns-penalty  Include a penalty for buried unsat hbonds
+    --keep-good-rotamers  Run through positions on docked helix and if
+        it is better than the average crosschains core for that residue in
+        that environment, keep that rotamer.
 
 """
 
@@ -68,17 +72,24 @@ def count_buried_unsat(pose, resnums):
     See if there are any buried unsatisfied hbonds in a subset of
     residues
     '''
-    sele = utils.list_to_res_selector(resnums)
+    # sele = utils.list_to_res_selector(resnums)
     buns_all = '''
+    <RESIDUE_SELECTORS>
+        <Index name="indices" resnums="{}" />
+    </RESIDUE_SELECTORS>
+    <FILTERS>
     <BuriedUnsatHbonds 
-        name="Buried Unsat [[-]]"
+        name="buns_few"
         report_all_heavy_atom_unsats="true" scorefxn="ref2015"
         cutoff="4" residue_surface_cutoff="20.0"
         ignore_surface_res="true" print_out_info_to_pdb="true"
-        dalphaball_sasa="1" probe_radius="1.1" confidence="0" />
-    '''
-    buns_all_obj = XmlObjects.static_get_filter(buns_all)
-    buns_all_obj.set_residue_selector(sele)
+        dalphaball_sasa="1" probe_radius="1.1" confidence="0" 
+        residue_selector="indices" />
+    </FILTERS>
+    '''.format(','.join(resnums))
+    # buns_all_obj = XmlObjects.static_get_filter(buns_all)
+    buns_all_obj = XmlObjects.create_from_string(buns_all).get_filter('buns_few')
+    # buns_all_obj.set_residue_selector(sele)
 
     return buns_all_obj.report_sm(pose)
 
@@ -106,11 +117,12 @@ def select_good_residues(pdbpath, score_df):
                 (score_df['scoretype']=='total_crosschain')
                 ]
         difference = row['total_crosschain'] - score_row.iloc[0]['median']
-        resnums = [row['resnum']]
-        for contact in interface.contacts:
-            resnums.append(contact)
+        resnum = row['resnum']
+        resnums = [str(resnum)]
+        for contact in interface.contacts[resnum]:
+            resnums.append(str(contact))
         if difference < 0:
-            if count_buried_unsat(pose, resnums) < 1:
+            if count_buried_unsat(interface.pose, resnums) < 1:
                 nopack.append(row['resnum'])
                 print("PASSED ALL FILTERS:")
                 print(row)
@@ -119,13 +131,8 @@ def select_good_residues(pdbpath, score_df):
 
 
 def main():
-    dalphaball = os.path.join('/wynton', 'home', 'kortemme', 'krivacic',
-            'rosetta', 'source', 'external', 'DAlpahBall',
-            'DAlphaBall.gcc')
-    init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro'\
-            ' -holes:dalphaball {}'.format(dalphaball))
     args = docopt.docopt(__doc__)
-    align_threshold = int(args['--align_thresh'])
+    align_threshold = int(args['--align-thresh'])
     try:
         workspace, job_info = big_jobs.initiate()
         # job_info['task_id'] = int(args['--task'])
@@ -150,6 +157,11 @@ def main():
                         '*.pdb.gz'),
             ))
                 }
+    dalphaball = os.path.join(workspace.rosetta_dir,
+            'source', 'external', 'DAlpahBall',
+            'DAlphaBall.gcc')
+    init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro'\
+            ' -holes:dalphaball {}'.format(dalphaball))
 
     if not hasattr(workspace, 'docking_directory'):
         raise Exception("Error: design_patchman.py requires RIFWorkspaces as input. You "\
@@ -157,7 +169,7 @@ def main():
                 "somehow.")
 
     inputs = job_info['inputs']
-    nstruct = int(args['--designs_per_task'])
+    nstruct = int(args['--designs-per-task'])
     total_jobs = len(inputs)
     print('TOTAL JOBS: {}'.format(total_jobs))
 
@@ -248,6 +260,8 @@ def main():
         interface_selector = XmlObjects.static_get_residue_selector(interface_selector_str)
         align_score, patchlength, identity = get_alignment_info(alignment_df, pdb)
         if not designed:
+            tf = TaskFactory()
+
             # Set coordinate constraints for backbone
             coord_cst = constraint_generator.CoordinateConstraintGenerator()
             coord_cst.set_sidechain(False)
@@ -255,8 +269,34 @@ def main():
             for cst in constraints:
                 pose.add_constraint(cst)
 
-            fastdes = pyrosetta.rosetta.protocols.denovo_design.movers.FastDesign(ref_cst)
-            fastdes.set_scorefxn(ref_cst)
+            # Initialize fastdesign object
+            fastdes = pyrosetta.rosetta.protocols.denovo_design.movers.FastDesign()
+
+            if args['--buns-penalty']:
+                # If buried unsat penalty, use this sfxn
+                buns_sfxn = '''
+                <ScoreFunction name="sfxn" weights="ref2015" >
+                    <Reweight scoretype="approximate_buried_unsat_penalty" weight="5.0" />
+                    <Set approximate_buried_unsat_penalty_hbond_energy_threshold="-0.5" />
+                    <Set approximate_buried_unsat_penalty_burial_atomic_depth="4.0" />
+                    # Set this to false if you don't know where you might want prolines
+                    <Set approximate_buried_unsat_penalty_assume_const_backbone="true" />
+                </ScoreFunction>
+                '''
+                prune_str = '''
+                 <PruneBuriedUnsats name="prune"
+                 allow_even_trades="false" atomic_depth_probe_radius="2.3" atomic_depth_resolution="0.5" atomic_depth_cutoff="4.5" minimum_hbond_energy="-0.2" />
+
+                '''
+                tf.push_back(XmlObjects.static_get_task_operation(prune_str))
+                # init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro'\
+                        # ' -holes:dalphaball {} -corrections::beta_nov16'.format(dalphaball))
+                sfxn = XmlObjects.static_get_score_function(buns_sfxn)
+                sfxn.set_weight(ScoreType.coordinate_constraint, 1.0)
+                # Set the sfxn
+                fastdes.set_scorefxn(sfxn)
+            else:
+                fastdes.set_scorefxn(ref_cst)
 
             movemap = MoveMap()
             movemap.set_bb_true_range(pose.chain_begin(2),
@@ -268,7 +308,6 @@ def main():
             or_selector = residue_selector.OrResidueSelector(selector,
                     interface_selector)
             not_selector = residue_selector.NotResidueSelector(or_selector)
-            tf = TaskFactory()
             no_packing = operation.PreventRepackingRLT()
             no_design = operation.RestrictToRepackingRLT()
             upweight = \
@@ -293,6 +332,11 @@ def main():
                 favornative_mvr = XmlObjects.static_get_mover(favornative)
                 favornative_mvr.apply(pose)
 
+            if args['--keep-good-rotamers']:
+                nopack_selector = utils.list_to_res_selector(nopack)
+                good_rots = operation.OperateOnResidueSubset(no_packing,
+                        nopack_selector)
+
             tf.push_back(static)
             tf.push_back(notaa)
             tf.push_back(notdesign)
@@ -306,13 +350,15 @@ def main():
             pose.dump_pdb(pdb)
 
         # Get metrics
+
+        # Align & save (just in case - should not be necessary)
+        chainB = pose.split_by_chain(2)
+        # pymol_mobile = pymol.cmd.load(pdb, 'mobile')
+        # pymol.cmd.align('mobile and chain A', 'target')
+        # pymol.cmd.save(pdb, 'mobile')
+        # pymol.cmd.delete('mobile')
         flexpep_file = pdb
         flexpep_pose = pose
-        chainB = pose.split_by_chain(2)
-        pymol_mobile = pymol.cmd.load(pdb, 'mobile')
-        pymol.cmd.align('mobile and chain A', 'target')
-        pymol.cmd.save(pdb, 'mobile')
-        pymol.cmd.delete('mobile')
 
         # Determine helical propensity
         ss_str = Dssp(chainB).get_dssp_secstruct()

@@ -15,9 +15,16 @@ Options:
     --flexpepdock  Run flexpepdock at the end of the PatchMAN run
     --relax  Run relax on target
     --delete  Delete non-designed structures
+    --buns-penalty  Include a penalty for buried unsat hbonds
     --max-memory=GB  How much memory to allocate  [default: 6G]
     --max-runtime=HH:MM:SS  How long to allocate the CPUs  [default: 36:00:00]
-    --designs_per_task=INT  How many designs per task  [default: 60]
+    --designs-per-task=INT  How many designs per task  [default: 60]
+    --keep-good-rotamers  Keep rotamers on docked helix that beat the
+        average score for its environment in the PDB as long as it does not
+        cause buried unsatisfied hbonds.
+    --align-thresh=PERCENT  When the match has above this threshold
+        sequence identity to the patch, add a favornative bonus.
+        [default: 100]
 """
 import helix.workspace as ws
 from helix import big_jobs
@@ -56,11 +63,12 @@ def main():
                 workspace.scaffold_prefix + '*', 'docked_full', '*.pdb.gz')
             ))
         # ntasks = len(inputs)
-        des_per_task = int(args['--designs_per_task'])
+        des_per_task = int(args['--designs-per-task'])
         ntasks = math.ceil(len(inputs) / des_per_task)
 
         cmd = workspace.python_path, script_path
         cmd += rif_workspace.focus_dir,
+        cmd += '--align-thresh', args['--align-thresh']
 
         if args['--flexpepdock']:
             cmd += '--flexpepdock',
@@ -71,11 +79,17 @@ def main():
         if args['--delete']:
             cmd += '--delete',
 
+        if args['--buns-penalty']:
+            cmd += '--buns-penalty',
+
+        if args['--keep-good-rotamers']:
+            cmd += '--keep-good-rotamers',
+
         if args['--task']:
             cmd += '--task', args['--task']
             ntasks = 1
 
-        cmd += '--designs_per_task', str(des_per_task)
+        cmd += '--designs-per-task', str(des_per_task)
 
         if args['--local']:
             print('Runinng locally')
