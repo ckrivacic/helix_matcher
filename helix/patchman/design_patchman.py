@@ -117,6 +117,10 @@ def select_good_residues(pdbpath, score_df):
                     (score_df['secstruct']==secstruct) &
                     (score_df['scoretype']=='total_crosschain')
                     ]
+            if score_row.shape[0] == 0:
+                print('No matching restype/environment found for the following row:')
+                print(row)
+                continue
             difference = row['total_crosschain'] - score_row.iloc[0]['median']
             resnum = row['resnum']
             resnums = [str(resnum)]
