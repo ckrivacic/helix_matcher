@@ -104,30 +104,33 @@ def select_good_residues(pdbpath, score_df):
     from helix.benchmark import score_pdb
     interface = score_pdb.PDBInterface(pdbpath, minimize=True, cst=True)
     interface_scores = interface.interface_all_chains()
-    interface_scores = interface_scores[interface_scores['chain'] == 'B']
     nopack = []
-    for idx, row in interface_scores.iterrows():
-        restype = row['restype']
-        burial = row['burial']
-        secstruct = row['secstruct']
-        score_row = score_df[
-                (score_df['restype']==restype) &
-                (score_df['burial']==burial) &
-                (score_df['secstruct']==secstruct) &
-                (score_df['scoretype']=='total_crosschain')
-                ]
-        difference = row['total_crosschain'] - score_row.iloc[0]['median']
-        resnum = row['resnum']
-        resnums = [str(resnum)]
-        for contact in interface.contacts[resnum]:
-            resnums.append(str(contact))
-        if difference < 0:
-            if count_buried_unsat(interface.pose, resnums) < 1:
-                nopack.append(row['resnum'])
-                print("PASSED ALL FILTERS:")
-                print(row)
+    if interface_scores.shape[0] > 0:
+        interface_scores = interface_scores[interface_scores['chain'] == 'B']
+        for idx, row in interface_scores.iterrows():
+            restype = row['restype']
+            burial = row['burial']
+            secstruct = row['secstruct']
+            score_row = score_df[
+                    (score_df['restype']==restype) &
+                    (score_df['burial']==burial) &
+                    (score_df['secstruct']==secstruct) &
+                    (score_df['scoretype']=='total_crosschain')
+                    ]
+            difference = row['total_crosschain'] - score_row.iloc[0]['median']
+            resnum = row['resnum']
+            resnums = [str(resnum)]
+            for contact in interface.contacts[resnum]:
+                resnums.append(str(contact))
+            if difference < 0:
+                if count_buried_unsat(interface.pose, resnums) < 1:
+                    nopack.append(row['resnum'])
+                    print("PASSED ALL FILTERS:")
+                    print(row)
+    else:
+        print('No interface found for {}'.format(pdbpath))
 
-        return nopack
+    return nopack
 
 
 def main():
