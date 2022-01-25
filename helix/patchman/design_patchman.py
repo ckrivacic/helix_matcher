@@ -112,6 +112,8 @@ def select_good_residues(pdbpath, score_df):
         if difference < 0:
             if count_buried_unsat(pose, resnums) < 1:
                 nopack.append(row['resnum'])
+                print("PASSED ALL FILTERS:")
+                print(row)
 
         return nopack
 
@@ -206,7 +208,7 @@ def main():
         designed = False
 
         # Look for residues that have good scores and no BUNS
-        nopack = find_good_residues(pdb, summarized_residue_scores)
+        nopack = select_good_residues(pdb, summarized_residue_scores)
 
         # Check if PDB has a score, if so it has been designed already
         # and we can skip
