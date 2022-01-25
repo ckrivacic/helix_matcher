@@ -49,6 +49,8 @@ class PDBInterface(object):
             minmover = XmlObjects.static_get_mover(minmover_str)
             minmover.apply(self.pose)
             print('MINMOVER APPLIED')
+        print('POSE SIZE:')
+        print(self.pose.size())
         self.ss_str = Dssp(self.pose).get_dssp_secstruct()
         self.dist = dist
         if pdbid:
