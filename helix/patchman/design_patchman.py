@@ -220,6 +220,8 @@ def main():
         pdb_save = os.path.relpath(inputs[input_idx],
                 start=workspace.root_dir)
         pdb = os.path.abspath(inputs[input_idx])
+        print('OPENING PDB:')
+        print(pdb)
         designed = False
 
         # Look for residues that have good scores and no BUNS
