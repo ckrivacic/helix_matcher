@@ -204,6 +204,10 @@ def main():
         task_id = int(job_info['task_id'])
     start = task_id * nstruct
     stop = task_id * nstruct + nstruct
+    if stop > len(inputs) - 1:
+        stop = len(inputs) - 1
+    if stop < start:
+        sys.exit('Nothing to do here')
     print(start)
     print(inputs[start])
 
