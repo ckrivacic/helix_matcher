@@ -326,7 +326,7 @@ def main():
                  allow_even_trades="false" atomic_depth_probe_radius="2.3" atomic_depth_resolution="0.5" atomic_depth_cutoff="4.5" minimum_hbond_energy="-0.2" />
 
                 '''
-                tf.push_back(XmlObjects.static_get_task_operation(prune_str))
+                # tf.push_back(XmlObjects.static_get_task_operation(prune_str))
                 # init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro'\
                         # ' -holes:dalphaball {} -corrections::beta_nov16'.format(dalphaball))
                 sfxn = XmlObjects.static_get_score_function(buns_sfxn)
