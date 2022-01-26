@@ -26,12 +26,14 @@ import os
 
 
 class PDBInterface(object):
+    '''Retrieves scoring information from an interface.'''
     def __init__(self, pdbpath, sfxn=None, pdbid=None, dist=8.0,
             minimize=True, cst=False):
         if not sfxn:
             self.sfxn = create_score_function('ref2015')
             if cst:
-                self.sfxn.set_weight(ScoreType.coordinate_constraint,
+                self.sfxn_cst = create_score_function('ref2015')
+                self.sfxn_cst.set_weight(ScoreType.coordinate_constraint,
                         1.0)
         else:
             self.sfxn = sfxn
@@ -47,6 +49,10 @@ class PDBInterface(object):
             <MinMover name='minimize' jump='all' bb='true' chi='true'/>
             '''
             minmover = XmlObjects.static_get_mover(minmover_str)
+            if cst:
+                minmover.score_function(self.sfxn_cst)
+            else:
+                minmover.score_function(self.sfxn)
             minmover.apply(self.pose)
             print('MINMOVER APPLIED')
         print('POSE SIZE:')

@@ -58,6 +58,9 @@ def strlist_to_vector1_str(strlist):
 
 
 def get_alignment_info(df, path):
+    '''Retrieve sequence alignment scores (BLOSUM62 score, sequence length, and
+    sequence identity) between the patch and its MASTER match. Alignment
+    dataframe is created during run_patchman.'''
     fname = os.path.basename(path)
     row = df[df['complex_basename'] == fname.strip('.gz')]
     length = len(row.iloc[0]['patch_sequence'])
@@ -75,7 +78,9 @@ def get_alignment_info(df, path):
 def count_buried_unsat(pose, resnums):
     '''
     See if there are any buried unsatisfied hbonds in a subset of
-    residues
+    residues. There may be a more efficient way to do this - rerunning
+    BUNS for each position adds a significant amount of runtime, but
+    unforunately there is no getter for buried unsat positions.
     '''
     # sele = utils.list_to_res_selector(resnums)
     buns_all = '''
@@ -259,9 +264,14 @@ def main():
                 # inputs.append(line.strip())
         # for pdb in inputs:
 
-        # Load pose and score function
-        # pose = pose_from_file(pdb)
-        pose = min_pose
+        # Load pose and score functions
+        if args['--keep-good-rotamers']:
+            # If using special rotamers or freezing them based on score
+            # compared to PDB, that should be done in the same context
+            # in which they were scored, i.e. the minimized pose.
+            pose = min_pose
+        else:
+            pose = pose_from_file(pdb)
         ref = create_score_function('ref2015')
         ref_cst = create_score_function('ref2015')
         ref_cst.set_weight(ScoreType.coordinate_constraint, 1.0)
@@ -286,12 +296,16 @@ def main():
         if not designed:
             tf = TaskFactory()
 
-            # Set coordinate constraints for backbone
-            coord_cst = constraint_generator.CoordinateConstraintGenerator()
-            coord_cst.set_sidechain(False)
-            constraints = coord_cst.apply(pose)
-            for cst in constraints:
-                pose.add_constraint(cst)
+            # Set backbone coordinate constraints
+            # Only do this if not using --keep-good-rotamers, because
+            # otherwise the structure should already have constraints from
+            # its original pose.
+            if not args['--keep-good-rotamers']:
+                coord_cst = constraint_generator.CoordinateConstraintGenerator()
+                coord_cst.set_sidechain(False)
+                constraints = coord_cst.apply(pose)
+                for cst in constraints:
+                    pose.add_constraint(cst)
 
             # Initialize fastdesign object
             fastdes = pyrosetta.rosetta.protocols.denovo_design.movers.FastDesign()
@@ -331,6 +345,7 @@ def main():
             movemap.set_chi_true_range(pose.chain_begin(2),
                     pose.chain_end(2))
             fastdes.set_movemap(movemap)
+            fastdes.ramp_down_constraints(False)
 
             or_selector = residue_selector.OrResidueSelector(selector,
                     interface_selector)
@@ -543,7 +558,7 @@ def main():
                 'sequence_identity': identity,
                 'patch_length': patchlength,
                 'residues_witheld': nopack,
-                'cst_score': ref_cst,
+                'cst_score': ref_cst(flexpep_pose),
                 }
         if special_rot:
             row['specialrot_score'] = ref_specialrot(flexpep_pose)
