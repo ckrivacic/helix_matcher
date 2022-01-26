@@ -14,9 +14,14 @@ Options:
     --keep-good-rotamers  Run through positions on docked helix and if
         it is better than the average crosschains core for that residue in
         that environment, keep that rotamer.
+    --special-rot  If using keep-good-rotamers, treat them as special
+        rotamers with a score bonus instead of fixing them.
+    --special-rot-weight=FLOAT  How much to weigh special rotamers
+        [default: 3.0]
 
 """
 
+from pyrosetta import rosetta
 from pyrosetta.rosetta.core.pack.task import TaskFactory
 from pyrosetta.rosetta.core.pack.task import operation
 from pyrosetta.rosetta.core.select import residue_selector
@@ -134,12 +139,15 @@ def select_good_residues(pdbpath, score_df):
     else:
         print('No interface found for {}'.format(pdbpath))
 
-    return nopack
+    return nopack, interface.pose
 
 
 def main():
     args = docopt.docopt(__doc__)
+    special_rot=args['--special-rot']
+    special_rot_weight = float(args['--special-rot-weight'])
     align_threshold = int(args['--align-thresh'])
+
     try:
         workspace, job_info = big_jobs.initiate()
         # job_info['task_id'] = int(args['--task'])
@@ -229,7 +237,7 @@ def main():
         designed = False
 
         # Look for residues that have good scores and no BUNS
-        nopack = select_good_residues(pdb, summarized_residue_scores)
+        nopack, min_pose = select_good_residues(pdb, summarized_residue_scores)
 
         # Check if PDB has a score, if so it has been designed already
         # and we can skip
@@ -252,10 +260,17 @@ def main():
         # for pdb in inputs:
 
         # Load pose and score function
-        pose = pose_from_file(pdb)
+        # pose = pose_from_file(pdb)
+        pose = min_pose
         ref = create_score_function('ref2015')
         ref_cst = create_score_function('ref2015')
         ref_cst.set_weight(ScoreType.coordinate_constraint, 1.0)
+        if special_rot:
+            ref_specialrot = create_score_function('ref2015')
+            ref_specialrot.set_weight(rosetta.core.scoring.special_rot,
+                    special_rot_weight)
+            ref_cst.set_weight(rosetta.core.scoring.special_rot,
+                    special_rot_weight)
 
         # Select chain B for selection
         selector = residue_selector.ChainSelector('B')
@@ -302,6 +317,9 @@ def main():
                         # ' -holes:dalphaball {} -corrections::beta_nov16'.format(dalphaball))
                 sfxn = XmlObjects.static_get_score_function(buns_sfxn)
                 sfxn.set_weight(ScoreType.coordinate_constraint, 1.0)
+                if special_rot:
+                    sfxn.set_weight(rosetta.core.scoring.special_rot,
+                            special_rot_weight)
                 # Set the sfxn
                 fastdes.set_scorefxn(sfxn)
             else:
@@ -343,9 +361,21 @@ def main():
 
             if args['--keep-good-rotamers']:
                 nopack_selector = utils.list_to_res_selector(nopack)
-                good_rots = operation.OperateOnResidueSubset(no_packing,
-                        nopack_selector)
-                tf.push_back(good_rots)
+                if special_rot:
+                    print('Assigning the following positions as special rotamers:')
+                    print(nopack)
+                    # Thanks to James Lucas
+                    for position in nopack:
+                        current_rsd_type_ptr = pose.residue_type_ptr(position)
+                        new_rsd_type_mutable = rosetta.core.chemical.MutableResidueType(current_rsd_type_ptr)
+                        new_rsd_type_mutable.add_variant_type(rosetta.core.chemical.SPECIAL_ROT)
+                        new_rsd_type = rosetta.core.chemical.ResidueType.make(new_rsd_type_mutable)
+                        rosetta.core.pose.replace_pose_residue_copying_existing_coordinates(pose,
+                                position, new_rsd_type)
+                else:
+                    good_rots = operation.OperateOnResidueSubset(no_packing,
+                            nopack_selector)
+                    tf.push_back(good_rots)
 
             tf.push_back(static)
             tf.push_back(notaa)
@@ -513,6 +543,8 @@ def main():
                 'patch_length': patchlength,
                 'residues_witheld': nopack,
                 }
+        if special_rot:
+            row['specialrot_score'] = ref_specialrot(flexpep_pose)
         rowlist.append(row)
 
     df = pd.DataFrame(rowlist)

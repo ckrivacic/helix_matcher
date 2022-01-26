@@ -25,6 +25,10 @@ Options:
     --align-thresh=PERCENT  When the match has above this threshold
         sequence identity to the patch, add a favornative bonus.
         [default: 100]
+    --special-rot  If using keep-good-rotamers, treat them as special
+        rotamers with a score bonus instead of fixing them.
+    --special-rot-weight=FLOAT  How much to weigh special rotamers
+        [default: 3]
 """
 import helix.workspace as ws
 from helix import big_jobs
@@ -84,6 +88,11 @@ def main():
 
         if args['--keep-good-rotamers']:
             cmd += '--keep-good-rotamers',
+
+        if args['--special-rot']:
+            cmd += '--special-rot',
+        if args['--special-rot-weight']:
+            cmd += '--special-rot-weight', args['--special-rot-weight']
 
         if args['--task']:
             cmd += '--task', args['--task']
