@@ -345,6 +345,7 @@ def main():
                 nopack_selector = utils.list_to_res_selector(nopack)
                 good_rots = operation.OperateOnResidueSubset(no_packing,
                         nopack_selector)
+                tf.push_back(good_rots)
 
             tf.push_back(static)
             tf.push_back(notaa)

@@ -66,10 +66,14 @@ def summarize_data(df, group_cols, purge=True):
     return pd.DataFrame(outrows)
 
 
-def plot_dist(df, args):
+def plot_dist(df, args, purge=True):
     '''
     Plot distributions (not summarized data)
     '''
+    if purge:
+        print('purging')
+        df = df[(df['total_crosschain'] > -30) & (df['total_crosschain']
+            < 30)]
     plot_by = args['--plot-by'].split(',')
     # df = df[(np.abs(stats.zscore(df[args['--plot']])) < 3)]
     # df = df[(np.abs(stats.zscore(df[args['--plot']])) < 3)]
@@ -92,7 +96,8 @@ def plot_dist(df, args):
                     ax=ax, bins=int(datrange / 0.5), label=subname)
     plt.legend()
     plt.tight_layout()
-    plt.show()
+    plt.savefig('minmimized_res_distributions.png')
+    # plt.show()
 
 
 def plot_summarized(df, args):
@@ -142,15 +147,15 @@ def main():
     print('Noncanonical AAs trimmed. Grouping dataframe.')
     group_cols = args['--by'].split(',')
     print('Dataframe grouped. Summarizing dataframe.')
-    summarized = summarize_data(df, group_cols)
+    # summarized = summarize_data(df, group_cols)
     print('Dataframe summarized.')
-    print(summarized)
-    summarized.to_pickle(os.path.join(
-        os.path.dirname(args['--dataframe']),
-            'summarized.pkl')
-        )
+    # print(summarized)
+    # summarized.to_pickle(os.path.join(
+        # os.path.dirname(args['--dataframe']),
+            # 'summarized.pkl')
+        # )
     # plot_summarized(df, args)
-    # plot_dist(df, args)
+    plot_dist(df, args)
     # plot_all_scores(summarized, args)
 
 
