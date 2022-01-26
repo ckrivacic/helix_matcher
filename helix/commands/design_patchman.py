@@ -28,7 +28,7 @@ Options:
     --special-rot  If using keep-good-rotamers, treat them as special
         rotamers with a score bonus instead of fixing them.
     --special-rot-weight=FLOAT  How much to weigh special rotamers
-        [default: 3]
+        [default: -1.5]
 """
 import helix.workspace as ws
 from helix import big_jobs

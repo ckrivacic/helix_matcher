@@ -363,9 +363,10 @@ def main():
                 nopack_selector = utils.list_to_res_selector(nopack)
                 if special_rot:
                     print('Assigning the following positions as special rotamers:')
-                    print(nopack)
                     # Thanks to James Lucas
                     for position in nopack:
+                        print('{} ({})'.format(position,
+                            pose.residue(position).name3()))
                         current_rsd_type_ptr = pose.residue_type_ptr(position)
                         new_rsd_type_mutable = rosetta.core.chemical.MutableResidueType(current_rsd_type_ptr)
                         new_rsd_type_mutable.add_variant_type(rosetta.core.chemical.SPECIAL_ROT)
@@ -542,6 +543,7 @@ def main():
                 'sequence_identity': identity,
                 'patch_length': patchlength,
                 'residues_witheld': nopack,
+                'cst_score': ref_cst,
                 }
         if special_rot:
             row['specialrot_score'] = ref_specialrot(flexpep_pose)
