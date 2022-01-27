@@ -21,7 +21,7 @@ cst_bb = args['--cst-bb']
 cst_sc = args['--cst-sc']
 
 if minimize:
-    num=100
+    num=50
 else:
     num=250
 ntasks = (nstruct // num) + 1
