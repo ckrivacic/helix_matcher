@@ -66,21 +66,21 @@ def summarize_data(df, group_cols, purge=True):
     return pd.DataFrame(outrows)
 
 
-def plot_dist(df, args, purge=True):
+def plot_dist(df, args):
     '''
     Plot distributions (not summarized data)
     '''
-    if purge:
-        print('purging')
-        df = df[(df['total_crosschain'] > -30) & (df['total_crosschain']
-            < 30)]
+    # if purge:
+        # print('purging')
+        # df = df[(df[args['--plot']] > -20) & (df[args['--plot']]
+            # < 20)]
     plot_by = args['--plot-by'].split(',')
     # df = df[(np.abs(stats.zscore(df[args['--plot']])) < 3)]
     # df = df[(np.abs(stats.zscore(df[args['--plot']])) < 3)]
     # df = df[df[args['--plot']] < 10]
     groups = df.groupby(plot_by)
     if plot_by[0]=='restype':
-        fig, axes = plt.subplots(4, 5, sharey='all',)
+        fig, axes = plt.subplots(4, 5 )
         fig.set_figheight(15)
         fig.set_figwidth(15)
         # plt.ylim(0, 1)
@@ -96,7 +96,8 @@ def plot_dist(df, args, purge=True):
                     ax=ax, bins=int(datrange / 0.5), label=subname)
     plt.legend()
     plt.tight_layout()
-    plt.savefig('minmimized_res_distributions.png')
+    plt.savefig('minmimized_res_distributions_{}_by_{}.png'.format(args['--plot'], 
+        args['--cat']))
     # plt.show()
 
 
@@ -115,6 +116,10 @@ def plot_summarized(df, args):
 
 
 def plot_all_scores(df, args):
+    # if purge:
+        # print('purging')
+        # df = df[(df[args['--plot']] > -20) & (df[args['--plot']]
+            # < 20)]
     cc_scoretypes = [
             'fa_atr_cc', 'fa_rep_cc', 'fa_sol_cc', 'fa_elec_cc',
             'hbond_bb_sc_cc', 'hbond_sc_cc', 'total_crosschain',]
@@ -125,12 +130,22 @@ def plot_all_scores(df, args):
             'omega_tot', 'fa_dun_tot', 'p_aa_pp_tot', 'ref_tot',
             'hbond_sr_bb_tot', 'total_energy',
             ]
+    # if plot_by[0]=='restype':
+        # fig, axes = plt.subplots(4, 5 )
+        # fig.set_figheight(15)
+        # fig.set_figwidth(15)
+        # # plt.ylim(0, 1)
+    # else:
+        # fig, axes = plt.subplots(groups.ngroups)
     if args['--crosschain']:
         df = df[df['scoretype'].isin(cc_scoretypes)]
     if args['--fa']:
         df = df[df['scoretype'].isin(fa_scoretypes)]
     # for scoretype in scoretypes:
         # df = df[(np.abs(stats.zscore(df[scoretype])) < 3)]
+    # groups = df.groupby(plot_by)
+    # for (name, group), ax in zip(groups, axes.flatten()):
+        # ax.set_title(name)
     sns.barplot(data=df, x='restype', y='mean', hue='scoretype')
     plt.show()
 
@@ -147,7 +162,7 @@ def main():
     print('Noncanonical AAs trimmed. Grouping dataframe.')
     group_cols = args['--by'].split(',')
     print('Dataframe grouped. Summarizing dataframe.')
-    # summarized = summarize_data(df, group_cols)
+    summarized = summarize_data(df, group_cols)
     print('Dataframe summarized.')
     # print(summarized)
     # summarized.to_pickle(os.path.join(
@@ -155,8 +170,8 @@ def main():
             # 'summarized.pkl')
         # )
     # plot_summarized(df, args)
-    plot_dist(df, args)
-    # plot_all_scores(summarized, args)
+    # plot_dist(df, args)
+    plot_all_scores(summarized, args)
 
 
 if __name__=='__main__':
