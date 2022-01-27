@@ -8,6 +8,9 @@ Options:
     --test=PDB  Test on a certain pdb
     --local, -l  Run a test run off wynton
     --min  Run minimized
+    --buried  Get buried residues instead of interface
+    --cst-bb  Constrain backbone coordinates
+    --cst-sc  Constrain sidechain coordinates
 '''
 import docopt
 import traceback
@@ -28,7 +31,7 @@ import os
 class PDBInterface(object):
     '''Retrieves scoring information from an interface.'''
     def __init__(self, pdbpath, sfxn=None, pdbid=None, dist=8.0,
-            minimize=True, cst=False):
+            minimize=True, cst=False, cst_sc=False):
         if not sfxn:
             self.sfxn = create_score_function('ref2015')
             if cst:
@@ -40,7 +43,10 @@ class PDBInterface(object):
         self.pose = pose_from_file(pdbpath)
         if cst:
             coord_cst = constraint_generator.CoordinateConstraintGenerator()
-            coord_cst.set_sidechain(False)
+            if not cst_sc:
+                coord_cst.set_sidechain(False)
+            else:
+                coord_cst.set_sidechain(True)
             constraints = coord_cst.apply(self.pose)
             for cst in constraints:
                 self.pose.add_constraint(cst)
@@ -65,6 +71,17 @@ class PDBInterface(object):
             self.pdbid='0000'
 
         self.setup_selectors()
+        self.scoretypes = [ScoreType.fa_atr, ScoreType.fa_rep, 
+                ScoreType.fa_sol, ScoreType.fa_elec, 
+                ScoreType.hbond_bb_sc, ScoreType.hbond_sc,
+                ]
+        self.scoretypes_full = scoretypes.copy()
+        self.scoretypes_full.extend([
+            ScoreType.pro_close, ScoreType.fa_intra_rep,
+            ScoreType.dslf_fa13, ScoreType.rama, ScoreType.omega,
+            ScoreType.fa_dun, ScoreType.p_aa_pp, ScoreType.ref,
+            ScoreType.hbond_sr_bb
+            ])
 
     def setup_selectors(self):
         '''Setup some layer selectors and determine boundary and buried
@@ -87,6 +104,37 @@ class PDBInterface(object):
                 pylist=True)
         self.boundary = utils.res_selector_to_size_list(boundary_selector, 
                 pylist=True)
+
+
+    def score_buried(self):
+        '''For each residue, get all scoretypes, also sum all 2body
+        scoretypes'''
+        self.sfxn(self.pose)
+        weights = self.sfxn.weights()
+        egraph = self.pose.energies().energy_graph()
+        pdbinfo = self.pose.pdb_info()
+        score_list = []
+
+        for resi in range(1, pose.size() + 1):
+            if not pose.residue(resi).is_protein():
+                continue
+            if not resi in self.buried:
+                continue
+            row = {
+                    'resnum': resi,
+                    'pdb_resnum': pdbinfo.split(' ')[0],
+                    'chain': pdbinfo.split(' ')[1],
+                    'pdb': self.pdbid,
+                    'restype': self.pose.residue(resi).name1(),
+                    }
+            for two_body in self.scoretypes_full:
+                sc = self.pose.energies().residue_total_energies(resi).get(scoretype)
+                row[str(scoretype).split('.')[1]] = sc
+            row['total_energy'] = self.pose.energies().residue_total_energy(resi)
+            score_list.append(row)
+
+        return pd.DataFrame(score_list)
+
 
     def get_scores(self, chains):
         '''For a residue, get the cross-chain scores'''
@@ -113,17 +161,6 @@ class PDBInterface(object):
             # print('NEW FOLD TREE')
             # print(self.pose.fold_tree())
 
-            scoretypes = [ScoreType.fa_atr, ScoreType.fa_rep, 
-                    ScoreType.fa_sol, ScoreType.fa_elec, 
-                    ScoreType.hbond_bb_sc, ScoreType.hbond_sc,
-                    ]
-            scoretypes_full = scoretypes.copy()
-            scoretypes_full.extend([
-                ScoreType.pro_close, ScoreType.fa_intra_rep,
-                ScoreType.dslf_fa13, ScoreType.rama, ScoreType.omega,
-                ScoreType.fa_dun, ScoreType.p_aa_pp, ScoreType.ref,
-                ScoreType.hbond_sr_bb
-                ])
 
             egraph = self.pose.energies().energy_graph()
 
@@ -164,7 +201,7 @@ class PDBInterface(object):
             if 'SGE_TASK_ID' in os.environ:
                 row['task'] = os.environ['SGE_TASK_ID']
             # Fill scoretype columns
-            for scoretype in scoretypes:
+            for scoretype in self.scoretypes:
                 row[str(scoretype).split('.')[1] + '_cc'] = 0
             # Iterate through contacts, adding scoretypes and getting
             # total cross-chain energy
@@ -174,11 +211,11 @@ class PDBInterface(object):
                         contact).fill_energy_map()
                 filled = edge * weights
                 total_crosschain += filled.sum()
-                for scoretype in scoretypes:
+                for scoretype in self.scoretypes:
                     sc = edge.get(scoretype)
                     row[str(scoretype).split('.')[1] + '_cc'] += sc
             row['total_crosschain'] = total_crosschain
-            for scoretype in scoretypes_full:
+            for scoretype in self.scoretypes_full:
                 sc = self.pose.energies().residue_total_energies(resi).get(scoretype)
                 row[str(scoretype).split('.')[1] + '_tot'] = sc
             row['total_energy'] = self.pose.energies().residue_total_energy(resi)
@@ -234,7 +271,11 @@ class PDBInterface(object):
 def main():
     init('-ignore_unrecognized_res')
     args = docopt.docopt(__doc__)
-    minimize=args['--min']
+    minimize = args['--min']
+    buried = args['--buried']
+    cst_bb = args['--cst-bb']
+    cst_sc = args['--cst-sc']
+
     if args['--test']:
         pdbid = args['--test']
         if not args['--local']:
@@ -268,19 +309,25 @@ def main():
             pdbid = os.path.basename(pdbpath)[3:7]
         try:
             pdb_obj = PDBInterface(pdbpath, sfxn=sfxn, pdbid=pdbid,
-                    minimize=minimize)
-            df = pd.concat([df, pdb_obj.interface_all_chains()],
-                    ignore_index=True)
+                    minimize=minimize, cst=cst_bb, cst_sc=cst_sc)
+            if buried:
+                df = pd.concat([df, pdb_obj.score_buried()],
+                        ignore_index=True)
+            else:
+                df = pd.concat([df, pdb_obj.interface_all_chains()],
+                        ignore_index=True)
         except Exception as e:
             print('Error analyzing interface of {}'.format(pdbpath))
             print('Error was:')
             print(e)
             print(traceback.format_exc())
 
-    if minimize:
-        outfolder = 'residue_scores_min/'
+    if buried:
+        outfolder = 'residue_scores_buried'
     else:
-        outfolder = 'residue_scores/'
+        outfolder = 'residue_scores'
+    if minimize:
+        outfolder += '_min'
     if args['--test']:
         df.to_csv(os.path.join(outfolder,
             'pdb_interface_scores_{}.csv'.format(idx)))
