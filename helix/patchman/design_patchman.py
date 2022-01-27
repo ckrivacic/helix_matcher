@@ -393,7 +393,7 @@ def main():
                         rosetta.core.pose.replace_pose_residue_copying_existing_coordinates(pose,
                                 position, new_rsd_type)
                 else:
-                    if len(no_packing) > 0:
+                    if len(nopack) > 0:
                         good_rots = operation.OperateOnResidueSubset(no_packing,
                                 nopack_selector)
                         tf.push_back(good_rots)
