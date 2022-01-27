@@ -322,6 +322,7 @@ def main():
             print('Error was:')
             print(e)
             print(traceback.format_exc())
+        del pdb_obj
 
     if buried:
         outfolder = 'residue_scores_buried'
