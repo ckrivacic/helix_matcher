@@ -75,7 +75,7 @@ class PDBInterface(object):
                 ScoreType.fa_sol, ScoreType.fa_elec, 
                 ScoreType.hbond_bb_sc, ScoreType.hbond_sc,
                 ]
-        self.scoretypes_full = scoretypes.copy()
+        self.scoretypes_full = self.scoretypes.copy()
         self.scoretypes_full.extend([
             ScoreType.pro_close, ScoreType.fa_intra_rep,
             ScoreType.dslf_fa13, ScoreType.rama, ScoreType.omega,
@@ -115,21 +115,22 @@ class PDBInterface(object):
         pdbinfo = self.pose.pdb_info()
         score_list = []
 
-        for resi in range(1, pose.size() + 1):
-            if not pose.residue(resi).is_protein():
+        for resi in range(1, self.pose.size() + 1):
+            if not self.pose.residue(resi).is_protein():
                 continue
             if not resi in self.buried:
                 continue
+            resinfo = pdbinfo.pose2pdb(resi)
             row = {
                     'resnum': resi,
-                    'pdb_resnum': pdbinfo.split(' ')[0],
-                    'chain': pdbinfo.split(' ')[1],
+                    'pdb_resnum': resinfo.split(' ')[0],
+                    'chain': resinfo.split(' ')[1],
                     'pdb': self.pdbid,
                     'restype': self.pose.residue(resi).name1(),
                     }
             for two_body in self.scoretypes_full:
-                sc = self.pose.energies().residue_total_energies(resi).get(scoretype)
-                row[str(scoretype).split('.')[1]] = sc
+                sc = self.pose.energies().residue_total_energies(resi).get(two_body)
+                row[str(two_body).split('.')[1]] = sc
             row['total_energy'] = self.pose.energies().residue_total_energy(resi)
             score_list.append(row)
 
@@ -308,7 +309,7 @@ def main():
         if not args['--test']:
             pdbid = os.path.basename(pdbpath)[3:7]
         try:
-            pdb_obj = PDBInterface(pdbpath, sfxn=sfxn, pdbid=pdbid,
+            pdb_obj = PDBInterface(pdbpath, pdbid=pdbid,
                     minimize=minimize, cst=cst_bb, cst_sc=cst_sc)
             if buried:
                 df = pd.concat([df, pdb_obj.score_buried()],
@@ -328,6 +329,7 @@ def main():
         outfolder = 'residue_scores'
     if minimize:
         outfolder += '_min'
+    os.makedirs(outfolder, exist_ok=True)
     if args['--test']:
         df.to_csv(os.path.join(outfolder,
             'pdb_interface_scores_{}.csv'.format(idx)))
