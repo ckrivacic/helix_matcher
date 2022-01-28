@@ -1100,6 +1100,7 @@ def push_data(directory, remote_url=None, recursive=True, dry_run=False):
             '--exclude', 'rsync_url',
             '--exclude', 'logs',
             '--exclude', 'python',
+            '--exclude', 'standard_params/database',
             directory + '/', remote_dir,
     ]
 

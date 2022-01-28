@@ -69,6 +69,7 @@ setuptools.setup(
             # define_command('violin_plot'),
             # define_command('generate_fragments'),
             define_command('setup_workspace'),
+            define_command('analyze_designs'),
             define_command('build_database'),
             define_command('scan_pdb_folder'),
             define_command('bin_database'),

@@ -18,6 +18,7 @@ Options:
     --cat=CATEGORY  Color by this category  [default: burial]
     --crosschain  Plot crosschain summary
     --fa  Plot fullatom summary
+    --burial  Set flag is this is not an interface dataframe
 '''
 
 import pickle5 as pickle
@@ -32,7 +33,7 @@ import os
 from helix.utils import utils
 
 
-def summarize_data(df, group_cols, purge=True):
+def summarize_data(df, group_cols, args, purge=True):
     '''Get mean, median, and SD for each group'''
     scoretypes = [
             'fa_atr_cc', 'fa_rep_cc', 'fa_sol_cc', 'fa_elec_cc',
@@ -43,11 +44,19 @@ def summarize_data(df, group_cols, purge=True):
             'omega_tot', 'fa_dun_tot', 'p_aa_pp_tot', 'ref_tot',
             'hbond_sr_bb_tot', 'total_energy',
             ]
+    scoretype_burial = ['fa_atr', 'fa_rep', 'fa_sol', 'fa_elec',
+            'hbond_bb_sc', 'hbond_sc', 'pro_close', 'fa_intra_rep',
+            'dslf_fa13', 'rama', 'omega', 'fa_dun', 'p_aa_pp', 'ref',
+            'hbond_sr_bb', 'total_energy']
     if 'contacts' not in group_cols:
         scoretypes.append('contacts')
+    if args['--burial']:
+        scoretypes = scoretype_burial
     if purge:
-        df = df[(df['total_crosschain'] > -30) & (df['total_crosschain']
-            < 100)]
+        # df = df[(df['total_crosschain'] > -30) & (df['total_crosschain']
+            # < 100)]
+        df = df[(df['total_energy'] > -30) & (df['total_energy']
+            < 30)]
     groups = df.groupby(group_cols)
     outrows = []
     for name, group in groups:
@@ -66,7 +75,7 @@ def summarize_data(df, group_cols, purge=True):
     return pd.DataFrame(outrows)
 
 
-def plot_dist(df, args):
+def plot_dist(df, args, purge=True):
     '''
     Plot distributions (not summarized data)
     '''
@@ -78,6 +87,10 @@ def plot_dist(df, args):
     # df = df[(np.abs(stats.zscore(df[args['--plot']])) < 3)]
     # df = df[(np.abs(stats.zscore(df[args['--plot']])) < 3)]
     # df = df[df[args['--plot']] < 10]
+    if purge:
+        print('purging')
+        df = df[(df['total_energy'] > -10) & (df['total_energy']
+            < 10)]
     groups = df.groupby(plot_by)
     if plot_by[0]=='restype':
         fig, axes = plt.subplots(4, 5 )
@@ -96,7 +109,7 @@ def plot_dist(df, args):
                     ax=ax, bins=int(datrange / 0.5), label=subname)
     plt.legend()
     plt.tight_layout()
-    plt.savefig('minmimized_res_distributions_{}_by_{}.png'.format(args['--plot'], 
+    plt.savefig('burial_minmimized_res_distributions_{}_by_{}.png'.format(args['--plot'], 
         args['--cat']))
     # plt.show()
 
@@ -115,7 +128,7 @@ def plot_summarized(df, args):
     plt.show()
 
 
-def plot_all_scores(df, args):
+def plot_all_scores(df, args, total_only=True):
     # if purge:
         # print('purging')
         # df = df[(df[args['--plot']] > -20) & (df[args['--plot']]
@@ -130,6 +143,15 @@ def plot_all_scores(df, args):
             'omega_tot', 'fa_dun_tot', 'p_aa_pp_tot', 'ref_tot',
             'hbond_sr_bb_tot', 'total_energy',
             ]
+    fa_scoretypes = [
+            'fa_atr_tot', 'fa_rep_tot', 'fa_sol_tot', 'fa_elec_tot',
+            'hbond_bb_sc_tot', 'hbond_sc_tot', 'fa_dun_tot',
+            'hbond_sr_bb_tot', 'total_energy'
+            ]
+    scoretype_burial = ['fa_atr', 'fa_rep', 'fa_sol', 'fa_elec',
+            'hbond_bb_sc', 'hbond_sc', 'fa_intra_rep',
+            'rama', 'omega', 'fa_dun', 
+            'hbond_sr_bb', 'total_energy']
     # if plot_by[0]=='restype':
         # fig, axes = plt.subplots(4, 5 )
         # fig.set_figheight(15)
@@ -141,6 +163,11 @@ def plot_all_scores(df, args):
         df = df[df['scoretype'].isin(cc_scoretypes)]
     if args['--fa']:
         df = df[df['scoretype'].isin(fa_scoretypes)]
+    if args['--burial']:
+        df = df[df['scoretype'].isin(scoretype_burial)]
+    if total_only:
+        df = df[df['scoretype'] == 'total_energy']
+    df = df[df['burial']=='buried']
     # for scoretype in scoretypes:
         # df = df[(np.abs(stats.zscore(df[scoretype])) < 3)]
     # groups = df.groupby(plot_by)
@@ -157,12 +184,14 @@ def main():
     args = docopt.docopt(__doc__)
     print('Loading dataframe...')
     df = utils.safe_load(args['--dataframe']) 
+    if args['--burial']:
+        df['burial'] = 'buried'
     print('Dataframe loaded. Triming noncanonical AAs.')
     df = df[df['restype'].isin(canonical_aas)]
     print('Noncanonical AAs trimmed. Grouping dataframe.')
     group_cols = args['--by'].split(',')
     print('Dataframe grouped. Summarizing dataframe.')
-    summarized = summarize_data(df, group_cols)
+    summarized = summarize_data(df, group_cols, args)
     print('Dataframe summarized.')
     # print(summarized)
     # summarized.to_pickle(os.path.join(
