@@ -19,6 +19,10 @@ Options:
 
     --focus-dir=STR, -f  Only plot for a specific focus dir or list of focus
         dirs (ex. 1b33_K,1b33_K_specialrot)
+
+    --size=COLUMN, -s  Size scatter plot points by this column
+
+    --hue=COLUMN, -h  Color by a column  [default: focus_dir]
 '''
 import docopt
 import os
@@ -59,8 +63,13 @@ def plot_sequence_recovery(df, args):
 
 
 def scatterplot(df, args):
-    sns.scatterplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
-            hue='focus_dir')
+    if args['--size']:
+        size = args['--size']
+        sns.scatterplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
+                hue=args['--hue'], size=size, sizes=(50,150))
+    else:
+        sns.scatterplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
+                hue=args['--hue'])
     plt.show()
 
 
