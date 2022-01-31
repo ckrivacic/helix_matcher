@@ -55,7 +55,7 @@ def plot_sequence_recovery(df, args):
         # print(df.sort_values(by=printcol)[printcol])
     order = ['1b33_K', '1b33_K_buns_noprune', '1b33_K_buns_penalty',
             '1b33_K_nativelike', '1b33_K_specialrot']
-    sns.swarmplot(data=df, x='focus_dir', y=args['--yaxis'],
+    sns.stripplot(data=df, x='focus_dir', y=args['--yaxis'],
             order=order, color='.5', alpha=0.5)
     sns.violinplot(data=df, x='focus_dir', y=args['--yaxis'],
             order=order)
