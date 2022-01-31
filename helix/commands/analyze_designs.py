@@ -66,10 +66,16 @@ def scatterplot(df, args):
     if args['--size']:
         size = args['--size']
         sns.scatterplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
-                hue=args['--hue'], size=size, sizes=(50,150))
+                hue=args['--hue'], size=size, sizes=(50,300))
     else:
         sns.scatterplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
                 hue=args['--hue'])
+    plt.show()
+
+
+def barplot(df, args):
+    sns.barplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
+            hue=args['--hue'])
     plt.show()
 
 
@@ -100,6 +106,8 @@ def main():
         plot_sequence_recovery(df, args)
     if plot_type == 'scatter':
         scatterplot(df, args) 
+    if plot_type == 'bar':
+        barplot(df, args)
 
 
 if __name__=='__main__':
