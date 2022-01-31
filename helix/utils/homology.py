@@ -10,6 +10,7 @@ import requests
 import yaml
 import prody
 import helix.workspace as ws
+from helix.utils import utils
 
 query_template = {
     "query":{
@@ -25,19 +26,13 @@ query_template = {
 }
 
 
-def find_homologs(workspace, target, id_cutoff):
-    tarpath = workspace.target_path_clean
-    pymol.cmd.load(tarpath, 'complex')
-    fastaseq = pymol.cmd.get_fastastr()
-    seqlist = fastaseq.split('\n')
+def find_homologs(pdbid, id_cutoff, chain=None):
+    atoms = utils.pose_from_wynton(pdbid, prody=True)
+    if chain:
+        atoms = atoms.select('chain {}'.format(chain))
+    atoms = atoms.select('name CA')
+    seq = atoms.getSequence()
 
-    print('Finding homologs for {}'.format(tarpath))
-    print(fastaseq)
-    seq = ''
-
-    for subseq in seqlist:
-        if not subseq.startswith('>'):
-            seq += subseq
     query['query']['parameters']['value'] = seq
     query['query']['parameters']['identity_cutoff'] = id_cutoff
 

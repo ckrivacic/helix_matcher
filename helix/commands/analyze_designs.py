@@ -23,11 +23,15 @@ Options:
     --size=COLUMN, -s  Size scatter plot points by this column
 
     --hue=COLUMN, -h  Color by a column
+
+    --id-cutoff=FLOAT  Filter out results that have a sequence identity
+        within this #
 '''
 import docopt
 import os
 import pandas as pd
 from helix.utils import utils
+from helix.utils import homology
 import helix.workspace as ws
 import seaborn as sns
 import matplotlib as mpl
@@ -87,6 +91,10 @@ def barplot(df, args):
     plt.show()
 
 
+def get_patchman_pdbid(row):
+    return os.path.basename(row['patchman_file']).split('_')[1]
+
+
 def main():
     mpl.use('tkagg')
     args = docopt.docopt(__doc__)
@@ -94,7 +102,23 @@ def main():
     plot_type = args['<plot_type>']
     dfpath = os.path.join(workspace.rifdock_outdir,
             'combined_benchmark_rev', 'final.pkl')
-    df = utils.safe_load(dfpath)
+    df_temp = utils.safe_load(dfpath)
+
+    if args['--id-cutoff']:
+        id_cutoff = float(args['--id-cutoff'])
+        df = pd.DataFrame()
+        for name, group in df.groupby(['name_x', 'chain']):
+            pdbid = name[0]
+            chain = name[1]
+            homologs = homology.find_homologs(pdbid, id_cutoff,
+                    chain=chain)
+            group['patchman_pdbid'] = group.apply(get_patchman_pdbid,
+                    axis=1)
+            group = group[~group['patchman_pdbid'].isin(homologs)]
+            df = pd.concat([df, group])
+    else:
+        df = df_temp
+
     if args['--focus-dir']:
         focusdirs = args['--focus-dir'].split(',')
         df = df[df['focus_dir'].isin(focusdirs)]
