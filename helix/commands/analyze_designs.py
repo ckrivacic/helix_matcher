@@ -22,7 +22,7 @@ Options:
 
     --size=COLUMN, -s  Size scatter plot points by this column
 
-    --hue=COLUMN, -h  Color by a column  [default: focus_dir]
+    --hue=COLUMN, -h  Color by a column
 '''
 import docopt
 import os
@@ -63,19 +63,27 @@ def plot_sequence_recovery(df, args):
 
 
 def scatterplot(df, args):
+    if args['--hue']:
+        hue = args['--hue']
+    else:
+        hue = None
     if args['--size']:
         size = args['--size']
         sns.scatterplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
-                hue=args['--hue'], size=size, sizes=(50,300))
+                hue=hue, size=size, sizes=(50,300))
     else:
         sns.scatterplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
-                hue=args['--hue'])
+                hue=hue)
     plt.show()
 
 
 def barplot(df, args):
+    if args['--hue']:
+        hue = args['--hue']
+    else:
+        hue = None
     sns.barplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
-            hue=args['--hue'])
+            hue=hue)
     plt.show()
 
 
