@@ -3,6 +3,7 @@ from pyrosetta.rosetta.core.select import residue_selector
 from helix.utils.numeric import intlist_to_vector1_size
 import os, wget, sys
 import networkx as nx
+import prody
 
 
 def safe_load(pickledf):
@@ -40,7 +41,7 @@ def three_to_one(restype):
 
     return three_to_one[restype.lower()].upper()
 
-def pose_from_rcsb(pdbid, prefix=None):
+def pose_from_rcsb(pdbid, prefix=None, use_prody=False):
     if prefix:
         path = os.path.join(prefix,pdbid)
     else:
@@ -48,21 +49,22 @@ def pose_from_rcsb(pdbid, prefix=None):
     if not os.path.exists(path + '.pdb'):
         url = 'https://files.rcsb.org/download/' + pdbid + '.pdb'
         wget.download(url, path + '.pdb')
-    pyrosetta.toolbox.cleanATOM(path + '.pdb')
-    pose = rosetta.core.import_pose.get_pdb_and_cleanup(path + '.clean.pdb')
-
-    return pose
+    if use_prody:
+        return prody.parsePDB(path + '.pdb')
+    else:
+        pyrosetta.toolbox.cleanATOM(path + '.pdb')
+        pose = rosetta.core.import_pose.get_pdb_and_cleanup(path + '.clean.pdb')
+        return pose
 
 
 def pose_from_wynton(pdbid,
         prefix='/wynton/home/database/pdb/remediated/pdb/', clean=False,
-        prody=False):
+        use_prody=False):
     '''
     Import a pose from the Wynton database. Assumes PDB is stored with
     the format <base_pdb_folder>/<pdbid[1:3]>/pdb<pdbid>.ent.gz
     '''
     from pyrosetta import toolbox
-    import prody
     pdbid = pdbid.lower()
     folder = os.path.join(prefix, pdbid[1:3])
     fname = 'pdb{}.ent.gz'.format(pdbid)
@@ -76,7 +78,7 @@ def pose_from_wynton(pdbid,
         print('Cleaning PDB file')
         toolbox.cleanATOM(fpath, out_file=f'{pdbid}.clean.pdb')
         return  pose_from_file(f'{pdbid}.clean.pdb')
-    elif prody:
+    elif use_prody:
         return prody.parsePDB(fpath)
     else:
         return pose_from_file(fpath)

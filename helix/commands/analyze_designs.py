@@ -92,7 +92,7 @@ def barplot(df, args):
 
 
 def get_patchman_pdbid(row):
-    return os.path.basename(row['patchman_file']).split('_')[1]
+    return os.path.basename(row['patchman_file']).split('_')[1].upper()
 
 
 def main():
@@ -107,7 +107,7 @@ def main():
     if args['--id-cutoff']:
         id_cutoff = float(args['--id-cutoff'])
         df = pd.DataFrame()
-        for name, group in df.groupby(['name_x', 'chain']):
+        for name, group in df_temp.groupby(['name_x', 'chain']):
             pdbid = name[0]
             chain = name[1]
             homologs = homology.find_homologs(pdbid, id_cutoff,
