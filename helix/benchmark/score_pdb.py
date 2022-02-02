@@ -11,6 +11,7 @@ Options:
     --buried  Get buried residues instead of interface
     --cst-bb  Constrain backbone coordinates
     --cst-sc  Constrain sidechain coordinates
+    --task=INT  Run a certain task  [default: 1]
 '''
 import docopt
 import traceback
@@ -201,6 +202,8 @@ class PDBInterface(object):
                     }
             if 'SGE_TASK_ID' in os.environ:
                 row['task'] = os.environ['SGE_TASK_ID']
+            else:
+                row['task'] = int(args['--task'])
             # Fill scoretype columns
             for scoretype in self.scoretypes:
                 row[str(scoretype).split('.')[1] + '_cc'] = 0
@@ -291,7 +294,10 @@ def main():
         idx = 1
         pdbpaths = [pdbpath]
     else:
-        idx = int(os.environ['SGE_TASK_ID']) - 1
+        if 'SGE_TASK_ID' in os.environ:
+            idx = int(os.environ['SGE_TASK_ID']) - 1
+        else:
+            idx = int(args['--task'])
         num = int(args['<nstruct>'])
         start = idx * num
         stop = idx * num + num - 1
