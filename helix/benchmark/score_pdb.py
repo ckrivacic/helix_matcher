@@ -33,7 +33,7 @@ import os
 def get_resolution(pdbid):
     '''Figure out the resolution of a PDB from the Wynton database'''
     atoms, header = utils.pose_from_wynton(pdbid, use_prody=True, header=True)
-    if resolution in header:
+    if 'resolution' in header:
         resl = header['resolution']
         del atoms
         del header
