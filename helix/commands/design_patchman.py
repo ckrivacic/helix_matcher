@@ -11,11 +11,10 @@ Options:
     --test-run  Mark as test run. Does nothing for now.
     --task=INT  Only run a specific task
     --clear, -o  Overwrite a prevoius run. Gets rid of docked outputs,
-    log files, and job info files.
-    --flexpepdock  Run flexpepdock at the end of the PatchMAN run
-    --relax  Run relax on target
+        log files, and job info files.
     --delete  Delete non-designed structures
     --buns-penalty  Include a penalty for buried unsat hbonds
+    --prune-buns  Prune rotamers that cause BUNS
     --max-memory=GB  How much memory to allocate  [default: 6G]
     --max-runtime=HH:MM:SS  How long to allocate the CPUs  [default: 36:00:00]
     --designs-per-task=INT  How many designs per task  [default: 60]
@@ -29,6 +28,8 @@ Options:
         rotamers with a score bonus instead of fixing them.
     --special-rot-weight=FLOAT  How much to weigh special rotamers
         [default: -1.5]
+    --benchmark  Run the design benchmark (figure out what options to
+        pass based on folder name)
 """
 import helix.workspace as ws
 from helix import big_jobs
@@ -86,6 +87,9 @@ def main():
         if args['--buns-penalty']:
             cmd += '--buns-penalty',
 
+        if args['--prune-buns']:
+            cmd += '--prune-buns',
+
         if args['--keep-good-rotamers']:
             cmd += '--keep-good-rotamers',
 
@@ -99,6 +103,26 @@ def main():
             ntasks = 1
 
         cmd += '--designs-per-task', str(des_per_task)
+        
+        if args['--benchmark']:
+            print('DESIGN TYPE')
+            designtype = '_'.join(os.path.basename(target).split('.')[0].split('_')[2:])
+            print(designtype)
+            if designtype == 'buns_penalty':
+                cmd += '--buns-penalty',
+            elif designtype == 'buns_penalty_pruned':
+                cmd += '--buns-penalty', 
+                cmd += '--prune-buns',
+
+            elif designtype == 'residue_lock':
+                cmd += '--keep-good-rotamers',
+            elif designtype == 'specialrot',
+                cmd += '--keep-good-rotamers',
+                cmd += '--special-rot',
+            
+            elif designtype == 'combined':
+                cmd += '--special-rot',
+                cmd += '--buns-penalty',
 
         if args['--local']:
             print('Runinng locally')

@@ -11,6 +11,7 @@ Options:
     --align-thresh=FLOAT  Sequence identity score above 
         which favor native residue task operation will be added  [default: 70]
     --buns-penalty  Include a penalty for buried unsat hbonds
+    --prune-buns  Prune rotamers that cause BUNS
     --keep-good-rotamers  Run through positions on docked helix and if
         it is better than the average crosschains core for that residue in
         that environment, keep that rotamer.
@@ -269,13 +270,13 @@ def main():
         # for pdb in inputs:
 
         # Load pose and score functions
-        if args['--keep-good-rotamers']:
+        # if args['--keep-good-rotamers']:
             # If using special rotamers or freezing them based on score
             # compared to PDB, that should be done in the same context
             # in which they were scored, i.e. the minimized pose.
-            pose = min_pose
-        else:
-            pose = pose_from_file(pdb)
+        pose = min_pose
+        # else:
+            # pose = pose_from_file(pdb)
         ref = create_score_function('ref2015')
         ref_cst = create_score_function('ref2015')
         ref_cst.set_weight(ScoreType.coordinate_constraint, 1.0)
@@ -325,12 +326,13 @@ def main():
                     <Set approximate_buried_unsat_penalty_assume_const_backbone="true" />
                 </ScoreFunction>
                 '''
-                prune_str = '''
-                 <PruneBuriedUnsats name="prune"
-                 allow_even_trades="false" atomic_depth_probe_radius="2.3" atomic_depth_resolution="0.5" atomic_depth_cutoff="4.5" minimum_hbond_energy="-0.2" />
+                if args['--prune-buns']:
+                    prune_str = '''
+                     <PruneBuriedUnsats name="prune"
+                     allow_even_trades="false" atomic_depth_probe_radius="2.3" atomic_depth_resolution="0.5" atomic_depth_cutoff="4.5" minimum_hbond_energy="-0.2" />
 
-                '''
-                # tf.push_back(XmlObjects.static_get_task_operation(prune_str))
+                    '''
+                    tf.push_back(XmlObjects.static_get_task_operation(prune_str))
                 # init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro'\
                         # ' -holes:dalphaball {} -corrections::beta_nov16'.format(dalphaball))
                 sfxn = XmlObjects.static_get_score_function(buns_sfxn)
@@ -529,6 +531,9 @@ def main():
         interface_score = interface_scorer.apply()
         n_hbonds = interface_scorer.n_hbonds
 
+        # Temp - only for benchmarking
+        designtype = '_'.join(os.path.basename(workspace.focus_dir).split('_')[2:])
+
         # Can't pickle a C++ set, so put it in a Python list
         int_set = []
         for interface_resi in ia_mover.get_interface_set():
@@ -536,6 +541,7 @@ def main():
 
         row = {'patchman_file': pdb_save,
                 'name': os.path.basename(flexpep_file),
+                'protocol': designtype,
                 'size': flexpep_pose.size(),
                 'pose_score': score,
                 'interface_score': interface_score,
