@@ -138,7 +138,7 @@ class PDBInterface(object):
         return pd.DataFrame(score_list)
 
 
-    def get_scores(self, chains):
+    def get_scores(self, chains, args=None):
         '''For a residue, get the cross-chain scores'''
         # We are going to only change jump 1, so we know which jump to look at
         # in the Interface class
@@ -237,7 +237,7 @@ class PDBInterface(object):
         return interface_list
 
 
-    def interface_all_chains(self):
+    def interface_all_chains(self, args):
         pose_chains = []
         # Figure out what all the chains of the pose are
         for i in range(1, self.pose.num_chains() + 1):
@@ -264,7 +264,7 @@ class PDBInterface(object):
             # function.
             other_chains = ''.join(left + right)
             interface_str = '{}_{}'.format(query_chain, other_chains)
-            this_interface = self.get_scores(interface_str)
+            this_interface = self.get_scores(interface_str, args)
             for row in this_interface:
                 interfaces.append(row)
 
@@ -321,7 +321,7 @@ def main():
                 df = pd.concat([df, pdb_obj.score_buried()],
                         ignore_index=True)
             else:
-                df = pd.concat([df, pdb_obj.interface_all_chains()],
+                df = pd.concat([df, pdb_obj.interface_all_chains(args)],
                         ignore_index=True)
         except Exception as e:
             print('Error analyzing interface of {}'.format(pdbpath))
