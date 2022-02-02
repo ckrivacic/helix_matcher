@@ -12,6 +12,7 @@ Options:
     --cst-bb  Constrain backbone coordinates
     --cst-sc  Constrain sidechain coordinates
     --task=INT  Run a certain task  [default: 1]
+    --resl=FLOAT  Resolution cutoff  [default: 2]
 '''
 import docopt
 import traceback
@@ -27,6 +28,20 @@ from pyrosetta.rosetta.protocols import constraint_generator
 from helix.utils import utils
 import pandas as pd
 import os
+
+
+def get_resolution(pdbid):
+    '''Figure out the resolution of a PDB from the Wynton database'''
+    atoms, header = utils.pose_from_wynton(pdbid, use_prody=True, header=True)
+    if resolution in header:
+        resl = header['resolution']
+        del atoms
+        del header
+        return resl
+    else:
+        del atoms
+        del header
+        return 9999.9
 
 
 class PDBInterface(object):
@@ -315,20 +330,21 @@ def main():
         if not args['--test']:
             pdbid = os.path.basename(pdbpath)[3:7]
         try:
-            pdb_obj = PDBInterface(pdbpath, pdbid=pdbid,
-                    minimize=minimize, cst=cst_bb, cst_sc=cst_sc)
-            if buried:
-                df = pd.concat([df, pdb_obj.score_buried()],
-                        ignore_index=True)
-            else:
-                df = pd.concat([df, pdb_obj.interface_all_chains(args)],
-                        ignore_index=True)
+            if get_resolution(pdbid) < float(args['--resl']):
+                pdb_obj = PDBInterface(pdbpath, pdbid=pdbid,
+                        minimize=minimize, cst=cst_bb, cst_sc=cst_sc)
+                if buried:
+                    df = pd.concat([df, pdb_obj.score_buried()],
+                            ignore_index=True)
+                else:
+                    df = pd.concat([df, pdb_obj.interface_all_chains(args)],
+                            ignore_index=True)
+                del pdb_obj
         except Exception as e:
             print('Error analyzing interface of {}'.format(pdbpath))
             print('Error was:')
             print(e)
             print(traceback.format_exc())
-        del pdb_obj
 
     if buried:
         outfolder = 'residue_scores_buried'

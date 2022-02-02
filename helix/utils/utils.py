@@ -59,7 +59,7 @@ def pose_from_rcsb(pdbid, prefix=None, use_prody=False):
 
 def pose_from_wynton(pdbid,
         prefix='/wynton/home/database/pdb/remediated/pdb/', clean=False,
-        use_prody=False):
+        use_prody=False, header=False):
     '''
     Import a pose from the Wynton database. Assumes PDB is stored with
     the format <base_pdb_folder>/<pdbid[1:3]>/pdb<pdbid>.ent.gz
@@ -79,7 +79,7 @@ def pose_from_wynton(pdbid,
         toolbox.cleanATOM(fpath, out_file=f'{pdbid}.clean.pdb')
         return  pose_from_file(f'{pdbid}.clean.pdb')
     elif use_prody:
-        return prody.parsePDB(fpath)
+        return prody.parsePDB(fpath, header=header)
     else:
         return pose_from_file(fpath)
 
