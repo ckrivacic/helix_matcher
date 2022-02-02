@@ -116,7 +116,7 @@ def main():
 
             elif designtype == 'residue_lock':
                 cmd += '--keep-good-rotamers',
-            elif designtype == 'specialrot',
+            elif designtype == 'specialrot':
                 cmd += '--keep-good-rotamers',
                 cmd += '--special-rot',
             

@@ -173,7 +173,7 @@ def plot_all_scores(df, args, total_only=True):
     # groups = df.groupby(plot_by)
     # for (name, group), ax in zip(groups, axes.flatten()):
         # ax.set_title(name)
-    sns.barplot(data=df, x='restype', y='mean', hue='scoretype')
+    sns.barplot(data=df, x='restype', y='median', hue='scoretype')
     plt.show()
 
 
@@ -191,16 +191,17 @@ def main():
     print('Noncanonical AAs trimmed. Grouping dataframe.')
     group_cols = args['--by'].split(',')
     print('Dataframe grouped. Summarizing dataframe.')
-    summarized = summarize_data(df, group_cols, args)
+    summarized = summarize_data(df, group_cols, args, purge=True)
     print('Dataframe summarized.')
     # print(summarized)
-    # summarized.to_pickle(os.path.join(
-        # os.path.dirname(args['--dataframe']),
-            # 'summarized.pkl')
-        # )
+    summarized.to_pickle(os.path.join(
+        os.path.dirname(args['--dataframe']),
+            'summarized_nopurge.pkl')
+        )
     # plot_summarized(df, args)
-    # plot_dist(df, args)
-    plot_all_scores(summarized, args)
+    # plot_dist(df, args, purge=False)
+    summarized = summarized[summarized['burial']=='buried']
+    plot_all_scores(summarized, args, total_only=True)
 
 
 if __name__=='__main__':
