@@ -75,12 +75,6 @@ def main():
         cmd += rif_workspace.focus_dir,
         cmd += '--align-thresh', args['--align-thresh']
 
-        if args['--flexpepdock']:
-            cmd += '--flexpepdock',
-
-        if args['--relax']:
-            cmd += '--relax',
-
         if args['--delete']:
             cmd += '--delete',
 
