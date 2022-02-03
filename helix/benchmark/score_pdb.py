@@ -252,7 +252,7 @@ class PDBInterface(object):
         return interface_list
 
 
-    def interface_all_chains(self, args):
+    def interface_all_chains(self, args=None):
         pose_chains = []
         # Figure out what all the chains of the pose are
         for i in range(1, self.pose.num_chains() + 1):
