@@ -59,6 +59,8 @@ def main():
 
     for target in targets:
         rif_workspace = ws.RIFWorkspace(workspace.root_dir, target)
+        if not os.path.exists(rif_workspace.log_dir):
+            os.makedirs(rif_workspace.log_dir, exist_ok=True)
 
         if args['--clear']:
             rif_workspace.clear_patchman_designs()
