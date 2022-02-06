@@ -53,7 +53,7 @@ def main():
         if args['--make-dirs']:
             continue
         if args['--clear']:
-            workspace.clear_outputs
+            rif_workspace.clear_outputs
         if args['--keep-existing']:
             inputs = rif_workspace.unfinished_inputs
             print('Unfinished inputs')
