@@ -41,6 +41,8 @@ def find_homologs(pdbid, id_cutoff, chain=None):
     query['query']['parameters']['identity_cutoff'] = id_cutoff / 100
     print('Sequence:')
     print(query['query']['parameters']['value'])
+    print('ID cutoff:')
+    print(query['query']['parameters']['identity_cutoff'])
 
     response = requests.get("https://search.rcsb.org/rcsbsearch/v1/query",
             {"json": json.dumps(query)})
