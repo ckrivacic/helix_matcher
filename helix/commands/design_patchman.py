@@ -30,6 +30,7 @@ Options:
         [default: -1.5]
     --benchmark  Run the design benchmark (figure out what options to
         pass based on folder name)
+    --suffix=STR  Add a suffix to saved designs
 """
 import helix.workspace as ws
 from helix import big_jobs
@@ -98,6 +99,9 @@ def main():
             cmd += '--task', args['--task']
             ntasks = 1
 
+        if args['--suffix']:
+            cmd += '--suffix', args['--suffix']
+
         cmd += '--designs-per-task', str(des_per_task)
         
         if args['--benchmark']:
@@ -117,6 +121,7 @@ def main():
                 cmd += '--special-rot',
             
             elif designtype == 'combined':
+                cmd += '--keep-good-rotamers',
                 cmd += '--special-rot',
                 cmd += '--buns-penalty',
 

@@ -19,6 +19,7 @@ Options:
         rotamers with a score bonus instead of fixing them.
     --special-rot-weight=FLOAT  How much to weigh special rotamers
         [default: -1.5]
+    --suffix=STR  Add a suffix to designs
 
 """
 
@@ -275,6 +276,7 @@ def main():
             # compared to PDB, that should be done in the same context
             # in which they were scored, i.e. the minimized pose.
         pose = min_pose
+        pose.remove_constraints()
         # else:
             # pose = pose_from_file(pdb)
         ref = create_score_function('ref2015')
@@ -410,7 +412,14 @@ def main():
             fastdes.apply(pose)
             score = ref(pose)
             # Temp change of PDB filename
-            pose.dump_pdb(pdb)
+            if args['--suffix']:
+                basename = os.path.basename(pdb).split('.')[0] +\
+                        args['--suffix'] + '.pdb.gz'
+                outdir = os.path.dirname(pdb)
+                outpdb = os.path.join(outdir, basename)
+                pose.dump_pdb(outpdb)
+            else:
+                pose.dump_pdb(pdb)
 
         # Get metrics
 
