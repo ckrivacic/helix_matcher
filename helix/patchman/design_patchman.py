@@ -394,7 +394,7 @@ def main():
             if args['--keep-good-rotamers']:
                 nopack_selector = utils.list_to_res_selector(nopack)
                 if special_rot:
-                    print('Assigning the following positions as special rotamers:', fluish=True)
+                    print('Assigning the following positions as special rotamers:', flush=True)
                     # Thanks to James Lucas
                     for position in nopack:
                         print('{} ({})'.format(position,
