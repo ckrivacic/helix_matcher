@@ -163,11 +163,16 @@ def main():
                 # workspace.scaffold_prefix + '*', 'docked_full',
                 # '*.pdb.gz'),
             # ))
-        job_info['inputs'] = sorted(glob.glob(
+        temp_inputs = sorted(glob.glob(
             os.path.join(workspace.focus_dir, 'patch_*',
                 workspace.scaffold_prefix + '*', 'docked_full',
                 '*.pdb.gz')
             ))
+        final_inputs = []
+        for inp in temp_inputs:
+            if not args['--sufix'] in os.path.basename(inp):
+                final_inputs.append(inp)
+        job_info['inputs'] = sorted(final_inputs)
     except:
         print('Maybe this is local?')
         workspace = ws.workspace_from_dir(args['<workspace>'])
