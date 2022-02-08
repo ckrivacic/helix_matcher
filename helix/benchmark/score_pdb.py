@@ -215,10 +215,10 @@ class PDBInterface(object):
                     'pdb': self.pdbid,
                     'restype': self.pose.residue(resi).name1(),
                     }
-            if 'SGE_TASK_ID' in os.environ:
-                row['task'] = os.environ['SGE_TASK_ID']
-            else:
-                row['task'] = int(args['--task'])
+            # if 'SGE_TASK_ID' in os.environ:
+                # row['task'] = os.environ['SGE_TASK_ID']
+            # else:
+                # row['task'] = int(args['--task'])
             # Fill scoretype columns
             for scoretype in self.scoretypes:
                 row[str(scoretype).split('.')[1] + '_cc'] = 0

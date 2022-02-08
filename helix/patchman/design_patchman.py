@@ -59,6 +59,26 @@ def strlist_to_vector1_str(strlist):
     return vector
 
 
+def get_buried_indices(pose):
+    '''Get the indices of chain B that are buried'''
+    buried = residue_selector.LayerSelector()
+    buried.set_layers(True, False, False)
+    try:
+        buried_selector = buried.apply(pose)
+        buried_list = utils.res_selector_to_size_list(buried_selector,
+                pylist=True)
+    except:
+        buried_list = []
+
+    indices = []
+    chainB_start = pose.chain_begin(2)
+    for buried_res in buried_list:
+        if buried_res >= chainB_start:
+            indices.append(buried_res - chainB_start)
+
+    return indices
+
+
 def get_alignment_info(df, path):
     '''Retrieve sequence alignment scores (BLOSUM62 score, sequence length, and
     sequence identity) between the patch and its MASTER match. Alignment
@@ -309,6 +329,14 @@ def main():
         '''
         interface_selector = XmlObjects.static_get_residue_selector(interface_selector_str)
         align_score, patchlength, identity = get_alignment_info(alignment_df, pdb)
+
+        if args['--suffix']:
+            basename = os.path.basename(pdb).split('.')[0] +\
+                    args['--suffix'] + '.pdb.gz'
+            outdir = os.path.dirname(pdb)
+            outpdb = os.path.join(outdir, basename)
+        else:
+            outpdb = pdb
         if not designed:
             tf = TaskFactory()
 
@@ -589,6 +617,7 @@ def main():
                 'patch_length': patchlength,
                 'residues_witheld': nopack,
                 'cst_score': ref_cst(flexpep_pose),
+                'buried_indices': get_buried_indices(pose),
                 }
         if special_rot:
             row['specialrot_score'] = ref_specialrot(flexpep_pose)
