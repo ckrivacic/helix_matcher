@@ -172,7 +172,7 @@ def main():
         final_inputs = []
         if args['--suffix']:
             for inp in temp_inputs:
-                if not args['--sufix'] in os.path.basename(inp):
+                if not args['--suffix'] in os.path.basename(inp):
                     print('{} not designed, appending'.format(inp),
                             flush=True)
                     final_inputs.append(inp)
