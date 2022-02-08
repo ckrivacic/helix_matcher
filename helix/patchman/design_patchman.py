@@ -130,8 +130,9 @@ def select_good_residues(pdbpath, score_df):
                     (score_df['scoretype']=='total_crosschain')
                     ]
             if score_row.shape[0] == 0:
-                print('No matching restype/environment found for the following row:')
-                print(row)
+                print('No matching restype/environment found for the following row:', 
+                        flush=True)
+                print(row, flush=True)
                 continue
             difference = row['total_crosschain'] - score_row.iloc[0]['median']
             resnum = row['resnum']
@@ -141,10 +142,10 @@ def select_good_residues(pdbpath, score_df):
             if difference < 0:
                 if count_buried_unsat(interface.pose, resnums) < 1:
                     nopack.append(row['resnum'])
-                    print("PASSED ALL FILTERS:")
-                    print(row)
+                    print("PASSED ALL FILTERS:", flush=True)
+                    print(row, flush=True)
     else:
-        print('No interface found for {}'.format(pdbpath))
+        print('No interface found for {}'.format(pdbpath), flush=True)
 
     return nopack, interface.pose
 
@@ -169,12 +170,17 @@ def main():
                 '*.pdb.gz')
             ))
         final_inputs = []
-        for inp in temp_inputs:
-            if not args['--sufix'] in os.path.basename(inp):
-                final_inputs.append(inp)
+        if args['--suffix']:
+            for inp in temp_inputs:
+                if not args['--sufix'] in os.path.basename(inp):
+                    print('{} not designed, appending'.format(inp),
+                            flush=True)
+                    final_inputs.append(inp)
+        else:
+            final_inputs = temp_inputs
         job_info['inputs'] = sorted(final_inputs)
     except:
-        print('Maybe this is local?')
+        print('Maybe this is local?', flush=True)
         workspace = ws.workspace_from_dir(args['<workspace>'])
         job_info = {
                 'task_id': args['--task'],
@@ -198,7 +204,7 @@ def main():
     inputs = job_info['inputs']
     nstruct = int(args['--designs-per-task'])
     total_jobs = len(inputs)
-    print('TOTAL JOBS: {}'.format(total_jobs))
+    print('TOTAL JOBS: {}'.format(total_jobs), flush=True)
 
     # print('Job info')
     # print(job_info)
@@ -215,8 +221,8 @@ def main():
         stop = len(inputs) - 1
     if stop < start:
         sys.exit('Nothing to do here')
-    print(start)
-    print(inputs[start])
+    print(start, flush=True)
+    print(inputs[start], flush=True)
 
     target = pymol.cmd.load(workspace.target_path_clean)
 
@@ -224,10 +230,10 @@ def main():
         'summarized_res_scores.pkl'
         ))
 
-    print('TASK: {}'.format(task_id))
+    print('TASK: {}'.format(task_id), flush=True)
     rowlist = []
     latest_patchdir = os.path.dirname(inputs[start])
-    print('Starting in directory {}'.format(latest_patchdir))
+    print('Starting in directory {}'.format(latest_patchdir), flush=True)
 
     alignment_path = os.path.join(latest_patchdir, 'alignment_scores.pkl')
     alignment_df = utils.safe_load(alignment_path)
@@ -248,8 +254,8 @@ def main():
         pdb_save = os.path.relpath(inputs[input_idx],
                 start=workspace.root_dir)
         pdb = os.path.abspath(inputs[input_idx])
-        print('OPENING PDB:')
-        print(pdb)
+        print('OPENING PDB:', flush=True)
+        print(pdb, flush=True)
         designed = False
 
         # Look for residues that have good scores and no BUNS
@@ -390,11 +396,11 @@ def main():
             if args['--keep-good-rotamers']:
                 nopack_selector = utils.list_to_res_selector(nopack)
                 if special_rot:
-                    print('Assigning the following positions as special rotamers:')
+                    print('Assigning the following positions as special rotamers:', fluish=True)
                     # Thanks to James Lucas
                     for position in nopack:
                         print('{} ({})'.format(position,
-                            pose.residue(position).name3()))
+                            pose.residue(position).name3()), flush=True)
                         current_rsd_type_ptr = pose.residue_type_ptr(position)
                         new_rsd_type_mutable = rosetta.core.chemical.MutableResidueType(current_rsd_type_ptr)
                         new_rsd_type_mutable.add_variant_type(rosetta.core.chemical.SPECIAL_ROT)
@@ -590,9 +596,9 @@ def main():
         rowlist.append(row)
 
     df = pd.DataFrame(rowlist)
-    print(df)
+    print(df, flush=True)
     pickle_outdir = os.path.join(workspace.focus_dir, 'scores')
-    print('Saving in folder {}'.format(pickle_outdir))
+    print('Saving in folder {}'.format(pickle_outdir), flush=True)
     if not os.path.exists(pickle_outdir):
         os.makedirs(pickle_outdir, exist_ok=True)
     df.to_pickle(os.path.join(pickle_outdir,
