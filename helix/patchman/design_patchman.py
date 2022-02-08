@@ -428,9 +428,9 @@ def main():
                         args['--suffix'] + '.pdb.gz'
                 outdir = os.path.dirname(pdb)
                 outpdb = os.path.join(outdir, basename)
-                pose.dump_pdb(outpdb)
             else:
-                pose.dump_pdb(pdb)
+                outpdb = pdb
+            pose.dump_pdb(outpdb)
 
         # Get metrics
 
@@ -560,6 +560,7 @@ def main():
             int_set.append(interface_resi)
 
         row = {'patchman_file': pdb_save,
+                'design_file': outpdb,
                 'name': os.path.basename(flexpep_file),
                 'protocol': designtype,
                 'size': flexpep_pose.size(),
