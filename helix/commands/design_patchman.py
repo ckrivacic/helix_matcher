@@ -130,7 +130,7 @@ def main():
                 cmd += '--special-rot',
                 cmd += '--buns-penalty',
 
-            elif designtype == 'nomin':
+            elif designtype == 'combined_nomin':
                 cmd += '--keep-good-rotamers',
                 cmd += '--special-rot',
                 cmd += '--buns-penalty',
