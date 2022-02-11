@@ -34,6 +34,8 @@ Options:
         not use without a cutoff... slow.
 
     --target=STR  Only show results for a specific target
+
+    --protocol=STR  Only show results for this protocol
 '''
 import docopt
 import os
@@ -41,6 +43,7 @@ import pandas as pd
 from klab import scripting
 from helix.utils import utils
 from helix.utils import homology
+from helix.utils import plotting
 import helix.workspace as ws
 import seaborn as sns
 import matplotlib as mpl
@@ -50,6 +53,8 @@ from pyrosetta.rosetta.core.select import residue_selector
 
 
 def first3_res_correct(pose, res, seq):
+    print(seq)
+    print(pose.residue(res).name1())
     first = pose.residue(res).name1() == seq[0]
     second = pose.residue(res+1).name1() == seq[1]
     third = pose.residue(res+2).name1() == seq[2]
@@ -179,11 +184,13 @@ def scatterplot(df, args):
         hue = None
     if args['--size']:
         size = args['--size']
-        sns.scatterplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
-                hue=hue, size=size, sizes=(50,300),)
+        ax = sns.scatterplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
+                hue=hue, size=size, sizes=(50,300), picker=True)
     else:
-        sns.scatterplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
-                hue=hue,)
+        ax = sns.scatterplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
+                hue=hue, picker=True)
+    click = plotting.ClickablePlot(ax, df, args, workspace)
+
     plt.show()
 
 
@@ -192,29 +199,89 @@ def barplot(df, args):
             # '1b33_K_nativelike', '1b33_K_specialrot']
     # labels = ['Base', 'BUNS penalty', 'BUNS penalty + prune', 
             # 'Freeze good rotamers', 'Special rotamer bonus']
-    order=None
+    if args['--xaxis'] == 'protocol':
+        order = ['base', 'buns_penalty', 'buns_penalty_pruned',
+                'residue_lock', 'specialrot', 'combined']
+        labels = ['Base', 'BUNS penalty', 'BUNS pen. pruned', 
+                'Residue lock', 'Special rotamer', 'Combined']
+    else:
+        order=None
     if args['--hue']:
         hue = args['--hue']
     else:
         hue = None
     fig, ax = plt.subplots()
-    # sns.stripplot(data=df, x='focus_dir', y=args['--yaxis'],
+    # sns.stripplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
             # order=order, color='.5', alpha=0.5, ax=ax)
     sns.barplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
             hue=hue, order=order, ax=ax)
-    if args['--xaxis'] == 'focus_dir':
+    if args['--xaxis'] == 'protocol':
         ax.set_xticklabels(labels)
+        plt.xticks(rotation=45)
+    fig.tight_layout()
+    plt.xlabel(None)
+    plt.show()
+
+
+def protocol_vs_protocol(df, args):
+    '''Plot a metric of one protocol vs another'''
+    # dfx = df[df['protocol'] == args['--xaxis']]
+    # dfy = df[df['protocol'] == args['--yaxis']]
+    # dfx['patchman_basename'] = dfx.apply(lambda x:
+            # os.path.basename(x['patchman_file']), axis=1)
+    def relative_to_focusdir(row):
+        patchfile = row['patchman_file']
+        return os.path.join(*patchfile.split('/')[2:])
+    print('--------------------------------------------------')
+    df['patchman_basename'] = df.apply(relative_to_focusdir, axis=1)
+    xname = args['--hue'] + '_{}'.format(args['--xaxis'])
+    yname = args['--hue'] + '_{}'.format(args['--yaxis'])
+    dfx = df[df.protocol==args['--xaxis']]
+    # dfx.rename(columns={args['--hue']: xname})
+    dfy = df[df.protocol==args['--yaxis']]
+    # dfy.rename(columns={args['--hue']: yname})
+    dfplot = pd.merge(dfx, dfy, on=['patchman_basename', 'target',
+        'name_y'],
+            suffixes=('_{}'.format(args['--xaxis']),
+                '_{}'.format(args['--yaxis'])))
+    dfplot.to_pickle('test.pkl')
+
+    ax = sns.scatterplot(data=dfplot, x=xname, y=yname, picker=True)
+    clickable = plotting.ClickablePlot(ax, dfplot, args, workspace, pvp=True)
+    minimum = min(min(dfplot[xname]), min(dfplot[yname]))
+    maximum = max(max(dfplot[xname]), max(dfplot[yname]))
+    plt.plot([minimum, maximum], [minimum, maximum], linewidth=2,
+            color='r')
     plt.show()
 
 
 def get_patchman_pdbid(row):
     return os.path.basename(row['patchman_file']).split('_')[1].upper()
 
+def relative_path(path, workspace):
+    pathlist = path.split('/')
+    if os.path.basename(workspace.root_dir) not in pathlist:
+        # If workspace isn't in pathlist, the path is already relative
+        fpath = os.path.join(
+                workspace.root_dir,
+                patchman_file
+                )
+    else:
+        start = pathlist.index(
+                os.path.basename(workspace.root_dir)
+                ) + 1
+        fpath = os.path.join(
+                workspace.root_dir,
+                *pathlist[start:]
+                )
+    return fpath
+
+
 def calc_buried_identity(row):
 
     init()
-    pose = pose_from_file(os.path.join(
-        workspace.root_dir, row['patchman_file']))
+    pose = pose_from_file(relative_path(row['design_file'], workspace))
+    print(relative_path(row['design_file'], workspace))
     buried = residue_selector.LayerSelector()
     buried.set_layers(True, False, False)
     buried_res = buried.apply(pose)
@@ -230,6 +297,7 @@ def calc_buried_identity(row):
     assert len(seq_helix) == len(seq_benchmark)
     identity = 0
     buried_len = 0
+    # print(row)
     for i, res in enumerate(seq_helix):
         if i + start in buried_res:
             buried_len += 1
@@ -240,8 +308,9 @@ def calc_buried_identity(row):
         print(buried_res)
         return 0
 
-    # return 100 * (identity / buried_len)
-    return buried_len
+    # print(buried_len)
+    # print(100 * identity /buried_len)
+    return 100 * (identity / buried_len)
 
 
 def main():
@@ -255,18 +324,26 @@ def main():
     df_temp = utils.safe_load(dfpath)
 
     if args['--id-cutoff']:
-        id_cutoff = float(args['--id-cutoff'])
-        print('Dataframe initial size: {}'.format(df_temp.shape[0]))
-        df = pd.DataFrame()
-        for name, group in df_temp.groupby(['name_x', 'chain']):
-            pdbid = name[0]
-            chain = name[1]
-            homologs = homology.find_homologs(pdbid, id_cutoff,
-                    chain=chain)
-            group['patchman_pdbid'] = group.apply(get_patchman_pdbid,
-                    axis=1)
-            group = group[~group['patchman_pdbid'].isin(homologs)]
-            df = pd.concat([df, group])
+        id_cutoff_path = os.path.join(workspace.rifdock_outdir,
+                'combined_benchmark_rev', 'below_{}_pid.pkl'.format(
+                    args['--id-cutoff']
+                    ))
+        if not os.path.exists(id_cutoff_path):
+            id_cutoff = float(args['--id-cutoff'])
+            print('Dataframe initial size: {}'.format(df_temp.shape[0]))
+            df = pd.DataFrame()
+            for name, group in df_temp.groupby(['name_x', 'chain']):
+                pdbid = name[0]
+                chain = name[1]
+                homologs = homology.find_homologs(pdbid, id_cutoff,
+                        chain=chain)
+                group['patchman_pdbid'] = group.apply(get_patchman_pdbid,
+                        axis=1)
+                group = group[~group['patchman_pdbid'].isin(homologs)]
+                df = pd.concat([df, group])
+            df.to_pickle(id_cutoff_path)
+        else:
+            df = utils.safe_load(id_cutoff_path)
         print('Dataframe final size: {}'.format(df.shape[0]))
     else:
         df = df_temp
@@ -277,7 +354,8 @@ def main():
     print('Possible values for x- and y-axes are:')
     for col in df.columns:
         print(col)
-    if args['--yaxis'] == 'helix_percent_identity':
+    if args['--yaxis'] == 'helix_percent_identity' or args['--hue'] ==\
+            'helix_percent_identity':
         df['helix_percent_identity'] = df.apply(calc_identity, axis=1)
         df.to_pickle('temp.pkl')
         df = pd.read_pickle('temp.pkl')
@@ -294,7 +372,7 @@ def main():
                 'buried_identity_{}A'.format(args['--rmsd-cutoff']) +\
                 '.pkl')
         if not os.path.exists(buried_id_df_name):
-            df['buried_identity'] = df.apply(calc_buried_identity, axis=1)
+            df['buried_len'] = df.apply(calc_buried_identity, axis=1)
             df.to_pickle(buried_id_df_name)
         else:
             df = utils.safe_load(buried_id_df_name)
@@ -306,16 +384,18 @@ def main():
     if not args['--pose-score-cutoff'] == 'False':
         df = df[df['pose_score'] < float(args['--pose-score-cutoff'])]
 
-    df['bench_start'] = df.apply(lambda x: x['rosetta_resis'][0],
-            axis=1)
-
     if args['--target']:
         df = df[(df['name_x'] == args['--target'].split('_')[0]) &
                 (df['target'] == args['--target'].split('_')[1]
             )]
 
+    if args['--protocol']:
+        df = df[df.protocol==args['--protocol']]
+
     if plot_type=='logo':
         import weblogo
+        df['bench_start'] = df.apply(lambda x: x['rosetta_resis'][0],
+                axis=1)
         for name, group in df.groupby([args['--hue'], 'chain',
             'bench_start', 'benchmark_resis']):
             create_web_logo(name, group)
@@ -327,6 +407,8 @@ def main():
         scatterplot(df, args) 
     if plot_type == 'bar':
         barplot(df, args)
+    if plot_type == 'pvp':
+        protocol_vs_protocol(df, args)
 
 
 if __name__=='__main__':

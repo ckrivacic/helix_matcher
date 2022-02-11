@@ -20,6 +20,7 @@ Options:
     --special-rot-weight=FLOAT  How much to weigh special rotamers
         [default: -1.5]
     --suffix=STR  Add a suffix to designs
+    --nocst  Don't constrain during fastdesign
 
 """
 

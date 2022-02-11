@@ -39,6 +39,7 @@ def find_homologs(pdbid, id_cutoff, chain=None):
 
     query['query']['parameters']['value'] = seq
     query['query']['parameters']['identity_cutoff'] = id_cutoff / 100
+    query['query']['parameters']['evalue_cutoff'] = 1
     print('Sequence:')
     print(query['query']['parameters']['value'])
     print('ID cutoff:')

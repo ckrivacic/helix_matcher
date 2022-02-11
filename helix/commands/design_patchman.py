@@ -31,6 +31,7 @@ Options:
     --benchmark  Run the design benchmark (figure out what options to
         pass based on folder name)
     --suffix=STR  Add a suffix to saved designs
+    --nocst  Don't constrain during fastdesign
 """
 import helix.workspace as ws
 from helix import big_jobs
@@ -54,7 +55,8 @@ def main():
     if not os.path.exists(script_path):
         raise Exception("Error: {} does not exist.".format(script_path))
     if args['--target']:
-        targets = [workspace.target_rifdock_path(args['--target'])]
+        targetlist = args['--target'].split(',')
+        targets = [workspace.target_rifdock_path(x) for x in targetlist]
     else:
         targets = workspace.all_rifdock_workspaces
 
