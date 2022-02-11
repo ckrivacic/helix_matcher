@@ -160,8 +160,6 @@ def main():
                     # test_run=args['--test-run'], clear=args['--clear'],
                     # ntasks=ntasks,
                     # )
-            print('Submitting the following command to SGE:')
-            print(' '.join(cmd))
             # Call big_jobs.submit directly, so that it doesn't care
             # about unclaimed inputs
             print(args['--max-runtime'])
