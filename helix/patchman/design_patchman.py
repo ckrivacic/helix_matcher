@@ -338,126 +338,126 @@ def main():
             outpdb = os.path.join(outdir, basename)
         else:
             outpdb = pdb
-        if not designed:
-            tf = TaskFactory()
+        tf = TaskFactory()
 
-            # Set backbone coordinate constraints
-            # Only do this if not using --keep-good-rotamers, because
-            # otherwise the structure should already have constraints from
-            # its original pose.
-            if not args['--nocst']:
-                coord_cst = constraint_generator.CoordinateConstraintGenerator()
-                coord_cst.set_sidechain(False)
-                constraints = coord_cst.apply(pose)
-                for cst in constraints:
-                    pose.add_constraint(cst)
+        # Set backbone coordinate constraints
+        # Only do this if not using --keep-good-rotamers, because
+        # otherwise the structure should already have constraints from
+        # its original pose.
+        if not args['--nocst']:
+            coord_cst = constraint_generator.CoordinateConstraintGenerator()
+            coord_cst.set_sidechain(False)
+            constraints = coord_cst.apply(pose)
+            for cst in constraints:
+                pose.add_constraint(cst)
 
-            # Initialize fastdesign object
-            fastdes = pyrosetta.rosetta.protocols.denovo_design.movers.FastDesign()
+        # Initialize fastdesign object
+        fastdes = pyrosetta.rosetta.protocols.denovo_design.movers.FastDesign()
 
-            if args['--buns-penalty']:
-                # If buried unsat penalty, use this sfxn
-                buns_sfxn = '''
-                <ScoreFunction name="sfxn" weights="ref2015" >
-                    <Reweight scoretype="approximate_buried_unsat_penalty" weight="5.0" />
-                    <Set approximate_buried_unsat_penalty_hbond_energy_threshold="-0.5" />
-                    <Set approximate_buried_unsat_penalty_burial_atomic_depth="4.0" />
-                    # Set this to false if you don't know where you might want prolines
-                    <Set approximate_buried_unsat_penalty_assume_const_backbone="true" />
-                </ScoreFunction>
+        if args['--buns-penalty']:
+            # If buried unsat penalty, use this sfxn
+            buns_sfxn = '''
+            <ScoreFunction name="sfxn" weights="ref2015" >
+                <Reweight scoretype="approximate_buried_unsat_penalty" weight="5.0" />
+                <Set approximate_buried_unsat_penalty_hbond_energy_threshold="-0.5" />
+                <Set approximate_buried_unsat_penalty_burial_atomic_depth="4.0" />
+                # Set this to false if you don't know where you might want prolines
+                <Set approximate_buried_unsat_penalty_assume_const_backbone="true" />
+            </ScoreFunction>
+            '''
+            if args['--prune-buns']:
+                prune_str = '''
+                 <PruneBuriedUnsats name="prune"
+                 allow_even_trades="false" atomic_depth_probe_radius="2.3" atomic_depth_resolution="0.5" atomic_depth_cutoff="4.5" minimum_hbond_energy="-0.2" />
+
                 '''
-                if args['--prune-buns']:
-                    prune_str = '''
-                     <PruneBuriedUnsats name="prune"
-                     allow_even_trades="false" atomic_depth_probe_radius="2.3" atomic_depth_resolution="0.5" atomic_depth_cutoff="4.5" minimum_hbond_energy="-0.2" />
+                tf.push_back(XmlObjects.static_get_task_operation(prune_str))
+            # init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro'\
+                    # ' -holes:dalphaball {} -corrections::beta_nov16'.format(dalphaball))
+            sfxn = XmlObjects.static_get_score_function(buns_sfxn)
+            sfxn.set_weight(ScoreType.coordinate_constraint, 1.0)
+            if special_rot:
+                sfxn.set_weight(rosetta.core.scoring.special_rot,
+                        special_rot_weight)
+            # Set the sfxn
+            fastdes.set_scorefxn(sfxn)
+        else:
+            fastdes.set_scorefxn(ref_cst)
 
-                    '''
-                    tf.push_back(XmlObjects.static_get_task_operation(prune_str))
-                # init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro'\
-                        # ' -holes:dalphaball {} -corrections::beta_nov16'.format(dalphaball))
-                sfxn = XmlObjects.static_get_score_function(buns_sfxn)
-                sfxn.set_weight(ScoreType.coordinate_constraint, 1.0)
-                if special_rot:
-                    sfxn.set_weight(rosetta.core.scoring.special_rot,
-                            special_rot_weight)
-                # Set the sfxn
-                fastdes.set_scorefxn(sfxn)
+        movemap = MoveMap()
+        movemap.set_bb_true_range(pose.chain_begin(2),
+                pose.chain_end(2))
+        movemap.set_chi_true_range(pose.chain_begin(2),
+                pose.chain_end(2))
+        fastdes.set_movemap(movemap)
+        fastdes.ramp_down_constraints(False)
+
+        or_selector = residue_selector.OrResidueSelector(selector,
+                interface_selector)
+
+        clash_selector = rosetta.core.pack.task.residue_selector.ClashBasedShellSelector(or_selector)
+        clash_selector.invert(False)
+        clash_selector.set_include_focus(True)
+        # or_clash = residue_selector.OrResidueSelector(or_selector,
+                # clash_selector)
+        not_selector = residue_selector.NotResidueSelector(clash_selector)
+        no_packing = operation.PreventRepackingRLT()
+        no_design = operation.RestrictToRepackingRLT()
+        upweight = \
+        '''
+        <ProteinLigandInterfaceUpweighter name="upweight_interface" interface_weight="1.5" />
+        '''
+        upweight_taskop = XmlObjects.static_get_task_operation(upweight)
+        static = operation.OperateOnResidueSubset(no_packing,
+                not_selector)
+        notaa = operation.ProhibitSpecifiedBaseResidueTypes(
+                strlist_to_vector1_str(['GLY']),
+                selector)
+        # Shit, woops...
+        # notdesign = operation.OperateOnResidueSubset(no_design,
+                # interface_selector)
+        and_selector = residue_selector.AndResidueSelector(interface_selector,
+                selector)
+        not_interface = residue_selector.NotResidueSelector(and_selector)
+        notdesign = operation.OperateOnResidueSubset(no_design,
+                not_interface)
+
+        if identity > align_threshold:
+            favornative = \
+            '''
+            <FavorNativeResidue name="favornative" bonus="1.5"/>
+
+            '''
+            favornative_mvr = XmlObjects.static_get_mover(favornative)
+            favornative_mvr.apply(pose)
+
+        if args['--keep-good-rotamers']:
+            nopack_selector = utils.list_to_res_selector(nopack)
+            if special_rot:
+                print('Assigning the following positions as special rotamers:', flush=True)
+                # Thanks to James Lucas
+                for position in nopack:
+                    print('{} ({})'.format(position,
+                        pose.residue(position).name3()), flush=True)
+                    current_rsd_type_ptr = pose.residue_type_ptr(position)
+                    new_rsd_type_mutable = rosetta.core.chemical.MutableResidueType(current_rsd_type_ptr)
+                    new_rsd_type_mutable.add_variant_type(rosetta.core.chemical.SPECIAL_ROT)
+                    new_rsd_type = rosetta.core.chemical.ResidueType.make(new_rsd_type_mutable)
+                    rosetta.core.pose.replace_pose_residue_copying_existing_coordinates(pose,
+                            position, new_rsd_type)
             else:
-                fastdes.set_scorefxn(ref_cst)
+                if len(nopack) > 0:
+                    good_rots = operation.OperateOnResidueSubset(no_packing,
+                            nopack_selector)
+                    tf.push_back(good_rots)
 
-            movemap = MoveMap()
-            movemap.set_bb_true_range(pose.chain_begin(2),
-                    pose.chain_end(2))
-            movemap.set_chi_true_range(pose.chain_begin(2),
-                    pose.chain_end(2))
-            fastdes.set_movemap(movemap)
-            fastdes.ramp_down_constraints(False)
+        tf.push_back(notaa)
+        tf.push_back(notdesign)
+        tf.push_back(static)
+        tf.push_back(upweight_taskop)
+        packertask = tf.create_task_and_apply_taskoperations(pose, 1)
 
-            or_selector = residue_selector.OrResidueSelector(selector,
-                    interface_selector)
-
-            clash_selector = rosetta.core.pack.task.residue_selector.ClashBasedShellSelector(or_selector)
-            clash_selector.invert(False)
-            clash_selector.set_include_focus(True)
-            # or_clash = residue_selector.OrResidueSelector(or_selector,
-                    # clash_selector)
-            not_selector = residue_selector.NotResidueSelector(clash_selector)
-            no_packing = operation.PreventRepackingRLT()
-            no_design = operation.RestrictToRepackingRLT()
-            upweight = \
-            '''
-            <ProteinLigandInterfaceUpweighter name="upweight_interface" interface_weight="1.5" />
-            '''
-            upweight_taskop = XmlObjects.static_get_task_operation(upweight)
-            static = operation.OperateOnResidueSubset(no_packing,
-                    not_selector)
-            notaa = operation.ProhibitSpecifiedBaseResidueTypes(
-                    strlist_to_vector1_str(['GLY']),
-                    selector)
-            # Shit, woops...
-            # notdesign = operation.OperateOnResidueSubset(no_design,
-                    # interface_selector)
-            and_selector = residue_selector.AndResidueSelector(interface_selector,
-                    selector)
-            not_interface = residue_selector.NotResidueSelector(and_selector)
-            notdesign = operation.OperateOnResidueSubset(no_design,
-                    not_interface)
-
-            if identity > align_threshold:
-                favornative = \
-                '''
-                <FavorNativeResidue name="favornative" bonus="1.5"/>
-
-                '''
-                favornative_mvr = XmlObjects.static_get_mover(favornative)
-                favornative_mvr.apply(pose)
-
-            if args['--keep-good-rotamers']:
-                nopack_selector = utils.list_to_res_selector(nopack)
-                if special_rot:
-                    print('Assigning the following positions as special rotamers:', flush=True)
-                    # Thanks to James Lucas
-                    for position in nopack:
-                        print('{} ({})'.format(position,
-                            pose.residue(position).name3()), flush=True)
-                        current_rsd_type_ptr = pose.residue_type_ptr(position)
-                        new_rsd_type_mutable = rosetta.core.chemical.MutableResidueType(current_rsd_type_ptr)
-                        new_rsd_type_mutable.add_variant_type(rosetta.core.chemical.SPECIAL_ROT)
-                        new_rsd_type = rosetta.core.chemical.ResidueType.make(new_rsd_type_mutable)
-                        rosetta.core.pose.replace_pose_residue_copying_existing_coordinates(pose,
-                                position, new_rsd_type)
-                else:
-                    if len(nopack) > 0:
-                        good_rots = operation.OperateOnResidueSubset(no_packing,
-                                nopack_selector)
-                        tf.push_back(good_rots)
-
-            tf.push_back(notaa)
-            tf.push_back(notdesign)
-            tf.push_back(static)
-            tf.push_back(upweight_taskop)
-            packertask = tf.create_task_and_apply_taskoperations(pose)
-
+        if not designed:
             fastdes.set_task_factory(tf)
             fastdes.apply(pose)
             score = ref(pose)
@@ -630,7 +630,9 @@ def main():
                 'patch_length': patchlength,
                 'residues_witheld': nopack,
                 'cst_score': ref_cst(flexpep_pose),
-                'buried_indices': get_buried_indices(pose),
+                'designed_residues':\
+                        utils.res_selector_to_size_list(
+                            packertask.designing_residues(), pylist=True)
                 }
         if special_rot:
             row['specialrot_score'] = ref_specialrot(flexpep_pose)

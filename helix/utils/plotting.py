@@ -124,8 +124,6 @@ class ClickablePlot(object):
             if self.pvp:
                 design_file_x =\
                         self.df.iloc[ind[0]]['design_file_{}'.format(self.args['--xaxis'])]
-                print(self.df.iloc[ind[0]]['helix_seq_{}'.format(self.args['--xaxis'])])
-                print(self.df.iloc[ind[0]]['helix_seq_{}'.format(self.args['--yaxis'])])
                 design_file_y =\
                         self.df.iloc[ind[0]]['design_file_{}'.format(self.args['--yaxis'])]
                 fpath_x = self.fetch_file(design_file_x)
