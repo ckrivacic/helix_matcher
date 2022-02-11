@@ -78,7 +78,7 @@ def main():
 
         cmd = workspace.python_path, script_path
         cmd += rif_workspace.focus_dir,
-        cmd += '--align-thresh', args['--align-thresh']
+        # cmd += '--align-thresh', args['--align-thresh']
 
         if args['--delete']:
             cmd += '--delete',

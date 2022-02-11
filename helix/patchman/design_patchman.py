@@ -9,7 +9,7 @@ Options:
     --delete  Delete target structures
     --designs-per-task=INT  How many designs per task  [default: 20]
     --align-thresh=FLOAT  Sequence identity score above 
-        which favor native residue task operation will be added  [default: 70]
+        which favor native residue task operation will be added  [default: 101]
     --buns-penalty  Include a penalty for buried unsat hbonds
     --prune-buns  Prune rotamers that cause BUNS
     --keep-good-rotamers  Run through positions on docked helix and if
