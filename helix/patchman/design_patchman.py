@@ -395,7 +395,13 @@ def main():
 
             or_selector = residue_selector.OrResidueSelector(selector,
                     interface_selector)
-            not_selector = residue_selector.NotResidueSelector(or_selector)
+
+            clash_selector = rosetta.core.pack.task.residue_selector.ClashBasedShellSelector(or_selector)
+            clash_selector.invert(False)
+            clash_selector.set_include_focus(True)
+            # or_clash = residue_selector.OrResidueSelector(or_selector,
+                    # clash_selector)
+            not_selector = residue_selector.NotResidueSelector(clash_selector)
             no_packing = operation.PreventRepackingRLT()
             no_design = operation.RestrictToRepackingRLT()
             upweight = \
@@ -411,7 +417,9 @@ def main():
             # Shit, woops...
             # notdesign = operation.OperateOnResidueSubset(no_design,
                     # interface_selector)
-            not_interface = residue_selector.NotResidueSelector(interface_selector)
+            and_selector = residue_selector.AndResidueSelector(interface_selector,
+                    selector)
+            not_interface = residue_selector.NotResidueSelector(and_selector)
             notdesign = operation.OperateOnResidueSubset(no_design,
                     not_interface)
 
@@ -444,9 +452,9 @@ def main():
                                 nopack_selector)
                         tf.push_back(good_rots)
 
-            tf.push_back(static)
             tf.push_back(notaa)
             tf.push_back(notdesign)
+            tf.push_back(static)
             tf.push_back(upweight_taskop)
             packertask = tf.create_task_and_apply_taskoperations(pose)
 
