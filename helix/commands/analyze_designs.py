@@ -243,7 +243,8 @@ def protocol_vs_protocol(df, args):
     dfplot = pd.merge(dfx, dfy, on=['patchman_basename', 'target',
         'name_y'],
             suffixes=('_{}'.format(args['--xaxis']),
-                '_{}'.format(args['--yaxis'])))
+                '_{}'.format(args['--yaxis'])),
+            validate='1:1')
     dfplot.to_pickle('test.pkl')
 
     ax = sns.scatterplot(data=dfplot, x=xname, y=yname, picker=True)

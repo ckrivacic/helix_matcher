@@ -345,7 +345,7 @@ def main():
             # Only do this if not using --keep-good-rotamers, because
             # otherwise the structure should already have constraints from
             # its original pose.
-            if not args['--keep-good-rotamers']:
+            if not args['--nocst']:
                 coord_cst = constraint_generator.CoordinateConstraintGenerator()
                 coord_cst.set_sidechain(False)
                 constraints = coord_cst.apply(pose)
@@ -408,8 +408,12 @@ def main():
             notaa = operation.ProhibitSpecifiedBaseResidueTypes(
                     strlist_to_vector1_str(['GLY']),
                     selector)
+            # Shit, woops...
+            # notdesign = operation.OperateOnResidueSubset(no_design,
+                    # interface_selector)
+            not_interface = residue_selector.NotResidueSelector(interface_selector)
             notdesign = operation.OperateOnResidueSubset(no_design,
-                    interface_selector)
+                    not_interface)
 
             if identity > align_threshold:
                 favornative = \

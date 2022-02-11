@@ -83,6 +83,9 @@ def main():
         if args['--delete']:
             cmd += '--delete',
 
+        if args['--nocst']:
+            cmd += '--nocst',
+
         if args['--buns-penalty']:
             cmd += '--buns-penalty',
 
@@ -126,6 +129,13 @@ def main():
                 cmd += '--keep-good-rotamers',
                 cmd += '--special-rot',
                 cmd += '--buns-penalty',
+
+            elif designtype == 'nomin':
+                cmd += '--keep-good-rotamers',
+                cmd += '--special-rot',
+                cmd += '--buns-penalty',
+                cmd += '--nocst',
+
 
         if args['--local']:
             print('Runinng locally')
