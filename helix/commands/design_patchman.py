@@ -23,7 +23,7 @@ Options:
         cause buried unsatisfied hbonds.
     --align-thresh=PERCENT  When the match has above this threshold
         sequence identity to the patch, add a favornative bonus.
-        [default: 100]
+        [default: 101]
     --special-rot  If using keep-good-rotamers, treat them as special
         rotamers with a score bonus instead of fixing them.
     --special-rot-weight=FLOAT  How much to weigh special rotamers
@@ -135,6 +135,9 @@ def main():
                 cmd += '--special-rot',
                 cmd += '--buns-penalty',
                 cmd += '--nocst',
+
+            elif designtype == 'deleteme':
+                cmd += '--align-thresh', '70'
 
 
         if args['--local']:
