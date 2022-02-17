@@ -67,7 +67,7 @@ def get_buried_indices(pose):
     try:
         buried_selector = buried.apply(pose)
         buried_list = utils.res_selector_to_size_list(buried_selector,
-                pylist=True)
+                                                      pylist=True)
     except:
         buried_list = []
 
@@ -88,7 +88,7 @@ def get_alignment_info(df, path):
     row = df[df['complex_basename'] == fname.strip('.gz')]
     length = len(row.iloc[0]['patch_sequence'])
     score = row.iloc[0]['alignment_score']
-    patch_seq = row.iloc[0]['patch_sequence'] 
+    patch_seq = row.iloc[0]['patch_sequence']
     match_seq = row.iloc[0]['match_sequence']
     matches = 0
     for idx, res in enumerate(patch_seq):
@@ -96,6 +96,28 @@ def get_alignment_info(df, path):
             matches += 1
     percent_identity = 100 * (matches / length)
     return score, length, percent_identity
+
+
+def aa_constrain(restype, resnum):
+    '''Make an amino acid constraint mover for a residue number for a
+    given restype'''
+
+    comp_str = "PENALTY_DEFINITION; TYPE {restype}; DELTA_START -1; DELTA_END 1; PENALTIES 1 -0.5 1; " \
+               "ABSOLUTE 1; BEFORE_FUNCTION linear; AFTER_FUNCTION linear;".format(
+        restype=restype)
+
+    mover_str = f'''
+    <RESIDUE_SELECTORS>
+        <Index name="index" resnums="{resnum}" />  
+    </RESIDUE_SELECTORS>
+    <MOVERS>
+        <AddCompositionConstraintMover name="comp_cst" selector="index">
+            <Comp entry="{comp_str}" />
+        </AddCompositionConstraintMover>
+    </MOVERS>
+    '''
+
+    return XmlObjects.create_from_string(mover_str).get_mover('comp_cst')
 
 
 def count_buried_unsat(pose, resnums):
@@ -145,14 +167,14 @@ def select_good_residues(pdbpath, score_df):
             burial = row['burial']
             secstruct = row['secstruct']
             score_row = score_df[
-                    (score_df['restype']==restype) &
-                    (score_df['burial']==burial) &
-                    (score_df['secstruct']==secstruct) &
-                    (score_df['scoretype']=='total_crosschain')
-                    ]
+                (score_df['restype'] == restype) &
+                (score_df['burial'] == burial) &
+                (score_df['secstruct'] == secstruct) &
+                (score_df['scoretype'] == 'total_crosschain')
+                ]
             if score_row.shape[0] == 0:
-                print('No matching restype/environment found for the following row:', 
-                        flush=True)
+                print('No matching restype/environment found for the following row:',
+                      flush=True)
                 print(row, flush=True)
                 continue
             difference = row['total_crosschain'] - score_row.iloc[0]['median']
@@ -173,7 +195,7 @@ def select_good_residues(pdbpath, score_df):
 
 def main():
     args = docopt.docopt(__doc__)
-    special_rot=args['--special-rot']
+    special_rot = args['--special-rot']
     special_rot_weight = float(args['--special-rot-weight'])
     align_threshold = int(args['--align-thresh'])
 
@@ -181,15 +203,15 @@ def main():
         workspace, job_info = big_jobs.initiate()
         # job_info['task_id'] = int(args['--task'])
         # job_info['inputs'] = sorted(glob.glob(
-            # os.path.join(workspace.focus_dir, 'patch_*',
-                # workspace.scaffold_prefix + '*', 'docked_full',
-                # '*.pdb.gz'),
-            # ))
+        # os.path.join(workspace.focus_dir, 'patch_*',
+        # workspace.scaffold_prefix + '*', 'docked_full',
+        # '*.pdb.gz'),
+        # ))
         temp_inputs = sorted(glob.glob(
             os.path.join(workspace.focus_dir, 'patch_*',
-                workspace.scaffold_prefix + '*', 'docked_full',
-                '*.pdb.gz')
-            ))
+                         workspace.scaffold_prefix + '*', 'docked_full',
+                         '*.pdb.gz')
+        ))
         final_inputs = []
         if args['--suffix']:
             for inp in temp_inputs:
@@ -202,23 +224,23 @@ def main():
         print('Maybe this is local?', flush=True)
         workspace = ws.workspace_from_dir(args['<workspace>'])
         job_info = {
-                'task_id': args['--task'],
-                'inputs' : sorted(glob.glob(
-                    os.path.join(workspace.focus_dir, 'patch_*',
-                        workspace.scaffold_prefix + '*', 'docked_full',
-                        '*.pdb.gz'),
+            'task_id': args['--task'],
+            'inputs': sorted(glob.glob(
+                os.path.join(workspace.focus_dir, 'patch_*',
+                             workspace.scaffold_prefix + '*', 'docked_full',
+                             '*.pdb.gz'),
             ))
-                }
+        }
     dalphaball = os.path.join(workspace.rosetta_dir,
-            'source', 'external', 'DAlpahBall',
-            'DAlphaBall.gcc')
-    init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro'\
-            ' -holes:dalphaball {}'.format(dalphaball))
+                              'source', 'external', 'DAlpahBall',
+                              'DAlphaBall.gcc')
+    init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro' \
+         ' -holes:dalphaball {}'.format(dalphaball))
 
     if not hasattr(workspace, 'docking_directory'):
-        raise Exception("Error: design_patchman.py requires RIFWorkspaces as input. You "\
-                "may have provided the root directory to this script "\
-                "somehow.")
+        raise Exception("Error: design_patchman.py requires RIFWorkspaces as input. You " \
+                        "may have provided the root directory to this script " \
+                        "somehow.")
 
     inputs = job_info['inputs']
     nstruct = int(args['--designs-per-task'])
@@ -247,7 +269,7 @@ def main():
 
     summarized_residue_scores = utils.safe_load(workspace.find_path(
         'summarized_res_scores.pkl'
-        ))
+    ))
 
     print('TASK: {}'.format(task_id), flush=True)
     rowlist = []
@@ -256,22 +278,22 @@ def main():
 
     alignment_path = os.path.join(latest_patchdir, 'alignment_scores.pkl')
     alignment_df = utils.safe_load(alignment_path)
-    alignment_df['complex_basename'] = alignment_df.apply(lambda x:\
-            os.path.basename(x['complex']), axis=1)
+    alignment_df['complex_basename'] = alignment_df.apply(lambda x: \
+                                                              os.path.basename(x['complex']), axis=1)
     for input_idx in range(start, stop):
         # Track patchdir so not always loading alignment score df
         current_patchdir = os.path.dirname(inputs[input_idx])
         if current_patchdir != latest_patchdir:
             alignment_path = os.path.join(current_patchdir,
-                    'alignment_scores.pkl')
+                                          'alignment_scores.pkl')
             alignment_df = utils.safe_load(alignment_path)
             latest_patchdir = current_patchdir
-            alignment_df['complex_basename'] = alignment_df.apply(lambda x:\
-                    os.path.basename(x['complex']), axis=1)
+            alignment_df['complex_basename'] = alignment_df.apply(lambda x: \
+                                                                      os.path.basename(x['complex']), axis=1)
 
         # Figure out relative input path for dataframe
         pdb_save = os.path.relpath(inputs[input_idx],
-                start=workspace.root_dir)
+                                   start=workspace.root_dir)
         pdb = os.path.abspath(inputs[input_idx])
         print('OPENING PDB:', flush=True)
         print(pdb, flush=True)
@@ -289,41 +311,42 @@ def main():
 
         # Move into pdb folder as working directory
         folder = os.path.dirname(
-                os.path.abspath(pdb)
-                )
+            os.path.abspath(pdb)
+        )
         os.chdir(folder)
         target = workspace.target_path_clean
         # os.system('ls ???_????_*_*.pdb > input_list')
         # inputs = []
         # with open('input_list', 'r') as f:
-            # for line in f:
-                # inputs.append(line.strip())
+        # for line in f:
+        # inputs.append(line.strip())
         # for pdb in inputs:
 
         # Load pose and score functions
         # if args['--keep-good-rotamers']:
-            # If using special rotamers or freezing them based on score
-            # compared to PDB, that should be done in the same context
-            # in which they were scored, i.e. the minimized pose.
+        # If using special rotamers or freezing them based on score
+        # compared to PDB, that should be done in the same context
+        # in which they were scored, i.e. the minimized pose.
         pose = min_pose
         pose.remove_constraints()
         # else:
-            # pose = pose_from_file(pdb)
+        # pose = pose_from_file(pdb)
         ref = create_score_function('ref2015')
         ref_cst = create_score_function('ref2015')
         ref_cst.set_weight(ScoreType.coordinate_constraint, 1.0)
         if special_rot:
             ref_specialrot = create_score_function('ref2015')
-            ref_specialrot.set_weight(rosetta.core.scoring.special_rot,
-                    special_rot_weight)
-            ref_cst.set_weight(rosetta.core.scoring.special_rot,
-                    special_rot_weight)
+            # ref_specialrot.set_weight(rosetta.core.scoring.special_rot,
+            #                           special_rot_weight)
+            # ref_cst.set_weight(rosetta.core.scoring.special_rot,
+            #                    special_rot_weight)
+            ref_cst.set_weight(ScoreType.aa_composition, 1.0)
 
         # Select chain B for selection
         selector = residue_selector.ChainSelector('B')
         interface_selector_str = \
-        '''
-        <InterfaceByVector name="interface_selector">
+            '''
+        <InterfaceByVector name="interface_selector" nearby_atom_cut="6.5">
            <Chain chains='A'/>
            <Chain chains='B'/>
         </InterfaceByVector>
@@ -332,13 +355,51 @@ def main():
         align_score, patchlength, identity = get_alignment_info(alignment_df, pdb)
 
         if args['--suffix']:
-            basename = os.path.basename(pdb).split('.')[0] +\
-                    args['--suffix'] + '.pdb.gz'
+            basename = os.path.basename(pdb).split('.')[0] + \
+                       args['--suffix'] + '.pdb.gz'
             outdir = os.path.dirname(pdb)
             outpdb = os.path.join(outdir, basename)
         else:
             outpdb = pdb
         tf = TaskFactory()
+        tf.push_back(operation.InitializeFromCommandline())
+
+        if identity > align_threshold:
+            favornative = \
+                '''
+            <FavorNativeResidue name="favornative" bonus="1.5"/>
+
+            '''
+            favornative_mvr = XmlObjects.static_get_mover(favornative)
+            favornative_mvr.apply(pose)
+
+        if args['--keep-good-rotamers']:
+            if special_rot:
+                print('Assigning the following positions as special rotamers:', flush=True)
+                # Thanks to James Lucas
+
+                for position in nopack:
+                    print('{} ({})'.format(position,
+                                           pose.residue(position).name3()), flush=True)
+                    cst_mover = aa_constrain(pose.residue(position).name3(), position)
+                    cst_mover.apply(pose)
+                    '''
+                    SPECIALROT stuff not working out for now
+                    current_rsd_type_ptr = pose.residue_type_ptr(position)
+                    new_rsd_type_mutable = rosetta.core.chemical.MutableResidueType(current_rsd_type_ptr)
+                    new_rsd_type_mutable.add_variant_type(rosetta.core.chemical.SPECIAL_ROT)
+                    new_rsd_type = rosetta.core.chemical.ResidueType.make(new_rsd_type_mutable)
+                    rosetta.core.pose.replace_pose_residue_copying_existing_coordinates(pose,
+                                                                                        position, new_rsd_type)
+                    '''
+            else:
+                print('Keeping residues static', flush=True)
+                print(nopack, flush=True)
+                if len(nopack) > 0:
+                    nopack_selector = utils.list_to_res_selector(nopack)
+                    good_rots = operation.OperateOnResidueSubset(no_packing,
+                                                                 nopack_selector)
+                    tf.push_back(good_rots)
 
         # Set backbone coordinate constraints
         # Only do this if not using --keep-good-rotamers, because
@@ -373,12 +434,14 @@ def main():
                 '''
                 tf.push_back(XmlObjects.static_get_task_operation(prune_str))
             # init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro'\
-                    # ' -holes:dalphaball {} -corrections::beta_nov16'.format(dalphaball))
+            # ' -holes:dalphaball {} -corrections::beta_nov16'.format(dalphaball))
             sfxn = XmlObjects.static_get_score_function(buns_sfxn)
             sfxn.set_weight(ScoreType.coordinate_constraint, 1.0)
             if special_rot:
-                sfxn.set_weight(rosetta.core.scoring.special_rot,
-                        special_rot_weight)
+                # Uncomment if going back to specialrot way of doing things
+                # sfxn.set_weight(rosetta.core.scoring.special_rot,
+                #                 special_rot_weight)
+                sfxn.set_weight(ScoreType.aa_composition, 1.0)
             # Set the sfxn
             fastdes.set_scorefxn(sfxn)
         else:
@@ -386,70 +449,41 @@ def main():
 
         movemap = MoveMap()
         movemap.set_bb_true_range(pose.chain_begin(2),
-                pose.chain_end(2))
+                                  pose.chain_end(2))
         movemap.set_chi_true_range(pose.chain_begin(2),
-                pose.chain_end(2))
+                                   pose.chain_end(2))
         fastdes.set_movemap(movemap)
         fastdes.ramp_down_constraints(False)
 
         or_selector = residue_selector.OrResidueSelector(selector,
-                interface_selector)
+                                                         interface_selector)
 
         clash_selector = rosetta.core.pack.task.residue_selector.ClashBasedShellSelector(or_selector)
         clash_selector.invert(False)
         clash_selector.set_include_focus(True)
         # or_clash = residue_selector.OrResidueSelector(or_selector,
-                # clash_selector)
+        # clash_selector)
         not_selector = residue_selector.NotResidueSelector(clash_selector)
         no_packing = operation.PreventRepackingRLT()
         no_design = operation.RestrictToRepackingRLT()
         upweight = \
-        '''
+            '''
         <ProteinLigandInterfaceUpweighter name="upweight_interface" interface_weight="1.5" />
         '''
         upweight_taskop = XmlObjects.static_get_task_operation(upweight)
         static = operation.OperateOnResidueSubset(no_packing,
-                not_selector)
+                                                  not_selector)
         notaa = operation.ProhibitSpecifiedBaseResidueTypes(
-                strlist_to_vector1_str(['GLY']),
-                selector)
+            strlist_to_vector1_str(['GLY']),
+            selector)
         # Shit, woops...
         # notdesign = operation.OperateOnResidueSubset(no_design,
-                # interface_selector)
+        # interface_selector)
         and_selector = residue_selector.AndResidueSelector(interface_selector,
-                selector)
+                                                           selector)
         not_interface = residue_selector.NotResidueSelector(and_selector)
         notdesign = operation.OperateOnResidueSubset(no_design,
-                not_interface)
-
-        if identity > align_threshold:
-            favornative = \
-            '''
-            <FavorNativeResidue name="favornative" bonus="1.5"/>
-
-            '''
-            favornative_mvr = XmlObjects.static_get_mover(favornative)
-            favornative_mvr.apply(pose)
-
-        if args['--keep-good-rotamers']:
-            nopack_selector = utils.list_to_res_selector(nopack)
-            if special_rot:
-                print('Assigning the following positions as special rotamers:', flush=True)
-                # Thanks to James Lucas
-                for position in nopack:
-                    print('{} ({})'.format(position,
-                        pose.residue(position).name3()), flush=True)
-                    current_rsd_type_ptr = pose.residue_type_ptr(position)
-                    new_rsd_type_mutable = rosetta.core.chemical.MutableResidueType(current_rsd_type_ptr)
-                    new_rsd_type_mutable.add_variant_type(rosetta.core.chemical.SPECIAL_ROT)
-                    new_rsd_type = rosetta.core.chemical.ResidueType.make(new_rsd_type_mutable)
-                    rosetta.core.pose.replace_pose_residue_copying_existing_coordinates(pose,
-                            position, new_rsd_type)
-            else:
-                if len(nopack) > 0:
-                    good_rots = operation.OperateOnResidueSubset(no_packing,
-                            nopack_selector)
-                    tf.push_back(good_rots)
+                                                     not_interface)
 
         tf.push_back(notaa)
         tf.push_back(notdesign)
@@ -463,8 +497,8 @@ def main():
             score = ref(pose)
             # Temp change of PDB filename
             if args['--suffix']:
-                basename = os.path.basename(pdb).split('.')[0] +\
-                        args['--suffix'] + '.pdb.gz'
+                basename = os.path.basename(pdb).split('.')[0] + \
+                           args['--suffix'] + '.pdb.gz'
                 outdir = os.path.dirname(pdb)
                 outpdb = os.path.join(outdir, basename)
             else:
@@ -474,13 +508,17 @@ def main():
         # Get metrics
 
         # Align & save (just in case - should not be necessary)
+        flexpep_file = pdb
+        flexpep_pose = pose.clone()
+
+        # Need to clear sequence constraints to split the pose
+        pose.remove_constraints()
+        pose.clear_sequence_constraints()
         chainB = pose.split_by_chain(2)
         # pymol_mobile = pymol.cmd.load(pdb, 'mobile')
         # pymol.cmd.align('mobile and chain A', 'target')
         # pymol.cmd.save(pdb, 'mobile')
         # pymol.cmd.delete('mobile')
-        flexpep_file = pdb
-        flexpep_pose = pose
 
         # Determine helical propensity
         ss_str = Dssp(chainB).get_dssp_secstruct()
@@ -515,7 +553,7 @@ def main():
         />
         '''
         exposed_hydrophobics = \
-        '''
+            '''
         <ExposedHydrophobics
         name="ExposedHydrophobics SASA [[-]]"
         sasa_cutoff="20"
@@ -529,12 +567,12 @@ def main():
           />
         '''
         sc = \
-        '''
+            '''
         <ShapeComplementarity name="shapecomp" min_sc="0" 
         jump="1"  write_int_area="false" />
         '''
         ia = \
-        '''
+            '''
         <InterfaceAnalyzerMover name="interface_analyzer" 
         pack_separated="false" pack_input="false"
         resfile="false" packstat="true"
@@ -543,7 +581,7 @@ def main():
         interface="A_B" />
         '''
         contact = \
-        '''
+            '''
         <RESIDUE_SELECTORS>
             <Chain name="chA" chains="A"/>
             <Chain name="chB" chains="B"/>
@@ -599,41 +637,41 @@ def main():
             int_set.append(interface_resi)
 
         row = {'patchman_file': pdb_save,
-                'design_file': outpdb,
-                'name': os.path.basename(flexpep_file),
-                'protocol': designtype,
-                'size': flexpep_pose.size(),
-                'pose_score': score,
-                'interface_score': interface_score,
-                'n_hbonds': n_hbonds,
-                'shape_complementarity': sc_score,
-                'contact_molecular_surface': contact_score,
-                'buns_all': buns_all_score,
-                'buns_sc': buns_sc_score,
-                # Buried NPSA applies only to helix
-                'buried_npsa_helix': npsa_score,
-                'delta_buried_npsa': delta_npsa,
-                # Exposed hydro. applies to whole protein
-                'exposed_hydrophobics': exposed_score,
-                'packstat': packstat_score,
-                'percent_helical': percent_helical,
-                'n_interface_residues': ia_mover.get_num_interface_residues(),
-                'complex_sasa': ia_mover.get_complexed_sasa(),
-                'delta_sasa': ia_mover.get_interface_delta_sasa(),
-                'crossterm_energy': ia_mover.get_crossterm_interface_energy(),
-                'interface_packstat': ia_mover.get_interface_packstat(),
-                'delta_unsat': ia_mover.get_interface_delta_hbond_unsat(),
-                'interface_dG': ia_mover.get_interface_dG(),
-                'interfac_residues': int_set,
-                'alignment_score': align_score,
-                'sequence_identity': identity,
-                'patch_length': patchlength,
-                'residues_witheld': nopack,
-                'cst_score': ref_cst(flexpep_pose),
-                'designed_residues':\
-                        utils.res_selector_to_size_list(
-                            packertask.designing_residues(), pylist=True)
-                }
+               'design_file': outpdb,
+               'name': os.path.basename(flexpep_file),
+               'protocol': designtype,
+               'size': flexpep_pose.size(),
+               'pose_score': score,
+               'interface_score': interface_score,
+               'n_hbonds': n_hbonds,
+               'shape_complementarity': sc_score,
+               'contact_molecular_surface': contact_score,
+               'buns_all': buns_all_score,
+               'buns_sc': buns_sc_score,
+               # Buried NPSA applies only to helix
+               'buried_npsa_helix': npsa_score,
+               'delta_buried_npsa': delta_npsa,
+               # Exposed hydro. applies to whole protein
+               'exposed_hydrophobics': exposed_score,
+               'packstat': packstat_score,
+               'percent_helical': percent_helical,
+               'n_interface_residues': ia_mover.get_num_interface_residues(),
+               'complex_sasa': ia_mover.get_complexed_sasa(),
+               'delta_sasa': ia_mover.get_interface_delta_sasa(),
+               'crossterm_energy': ia_mover.get_crossterm_interface_energy(),
+               'interface_packstat': ia_mover.get_interface_packstat(),
+               'delta_unsat': ia_mover.get_interface_delta_hbond_unsat(),
+               'interface_dG': ia_mover.get_interface_dG(),
+               'interfac_residues': int_set,
+               'alignment_score': align_score,
+               'sequence_identity': identity,
+               'patch_length': patchlength,
+               'residues_witheld': nopack,
+               'cst_score': ref_cst(flexpep_pose),
+               'designed_residues': \
+                   utils.res_selector_to_size_list(
+                       packertask.designing_residues(), pylist=True)
+               }
         if special_rot:
             row['specialrot_score'] = ref_specialrot(flexpep_pose)
         rowlist.append(row)
@@ -645,10 +683,11 @@ def main():
     if not os.path.exists(pickle_outdir):
         os.makedirs(pickle_outdir, exist_ok=True)
     df.to_pickle(os.path.join(pickle_outdir,
-        'task_{task}.pkl'.format(task=task_id)))
+                              'task_{task}.pkl'.format(task=task_id)))
 
     # if args['--delete']:
-        # os.remove(pdb)
+    # os.remove(pdb)
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     main()

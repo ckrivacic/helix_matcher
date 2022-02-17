@@ -48,7 +48,7 @@ class ClickablePlot(object):
                 if self.pvp:
                     design_file_x =\
                             self.df.iloc[self.current_ind[int(self.selected_idx)]]['design_file_{}'.format(self.args['--xaxis'])]
-                    design_file_x =\
+                    design_file_y =\
                             self.df.iloc[self.current_ind[int(self.selected_idx)]]['design_file_{}'.format(self.args['--yaxis'])]
                     fpath_x = self.fetch_file(design_file_x)
                     fpath_y = self.fetch_file(design_file_y)

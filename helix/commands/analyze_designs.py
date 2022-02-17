@@ -48,6 +48,7 @@ import helix.workspace as ws
 import seaborn as sns
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
 from pyrosetta import *
 from pyrosetta.rosetta.core.select import residue_selector
 
@@ -59,6 +60,35 @@ def first3_res_correct(pose, res, seq):
     second = pose.residue(res+1).name1() == seq[1]
     third = pose.residue(res+2).name1() == seq[2]
     return first and second and third
+
+
+def calc_designed_identity(row):
+    '''Calculate percent identity of designed residues.
+    Assumes residues in row['helix_resis'] and row['design_resis'] are
+    in Rosetta numbering.'''
+    helix_start = row['helix_resis'][0]
+    helix_stop = row['helix_resis'][0]
+    seq_indices = []
+    for idx, resi in enumerate(row['designed_residues']):
+        if resi >= helix_start or resi <= helix_stop:
+            seq_indices.append(resi - helix_start)
+
+    seqlen = 0
+    identity = 0
+    for idx, aa in enumerate(row.helix_seq):
+        if idx in seq_indices:
+            seqlen += 1
+            if row.benchmark_seq[idx] == aa:
+                identity += 1
+
+    if seqlen == 0:
+        print('No designed sequences?')
+        print('FILE: {}'.format(row.design_file))
+        print('DESIGNED RESIS: {}'.format(row.designed_residues))
+        print('HELIX RESIS: {}'.format(row.helix_resis))
+        return np.nan
+
+    return 100 * identity / seqlen
 
 
 def create_web_logo(name, group, preview=False):
@@ -73,7 +103,7 @@ def create_web_logo(name, group, preview=False):
     print('Benchmark seq:')
     print(group.iloc[0]['benchmark_seq'])
     for idx, row in group.iterrows():
-        print('Residues witheld for {}'.format(row['patchman_file']))
+        print('Residues witheld for {}'.format(row['patchman_file_x']))
         print(row['residues_witheld'])
     sequences = weblogo.seq.SeqList(
             [weblogo.seq.Seq(x) for x in sequences],
@@ -200,10 +230,12 @@ def barplot(df, args):
     # labels = ['Base', 'BUNS penalty', 'BUNS penalty + prune', 
             # 'Freeze good rotamers', 'Special rotamer bonus']
     if args['--xaxis'] == 'protocol':
-        order = ['base', 'buns_penalty', 'buns_penalty_pruned',
-                'residue_lock', 'specialrot', 'combined']
-        labels = ['Base', 'BUNS penalty', 'BUNS pen. pruned', 
-                'Residue lock', 'Special rotamer', 'Combined']
+        order = ['base', 'deleteme', 'buns_penalty', 'buns_penalty_pruned',
+                'residue_lock', 'specialrot', 'combined',
+                'combined_nomin']
+        labels = ['Base', 'NativeResidue', 'BUNS penalty', 'BUNS pen. pruned', 
+                'Residue lock', 'Special rotamer', 'Combined', 
+                'Combined (no cst)']
     else:
         order=None
     if args['--hue']:
@@ -230,7 +262,7 @@ def protocol_vs_protocol(df, args):
     # dfx['patchman_basename'] = dfx.apply(lambda x:
             # os.path.basename(x['patchman_file']), axis=1)
     def relative_to_focusdir(row):
-        patchfile = row['patchman_file']
+        patchfile = row['patchman_file_x']
         return os.path.join(*patchfile.split('/')[2:])
     print('--------------------------------------------------')
     df['patchman_basename'] = df.apply(relative_to_focusdir, axis=1)
@@ -257,7 +289,7 @@ def protocol_vs_protocol(df, args):
 
 
 def get_patchman_pdbid(row):
-    return os.path.basename(row['patchman_file']).split('_')[1].upper()
+    return os.path.basename(row['patchman_file_x']).split('_')[1].upper()
 
 def relative_path(path, workspace):
     pathlist = path.split('/')
@@ -377,6 +409,22 @@ def main():
             df.to_pickle(buried_id_df_name)
         else:
             df = utils.safe_load(buried_id_df_name)
+
+    design_id = False
+    if args['--yaxis'] == 'design-identity' or \
+            args['--yaxis'] == 'design_identity' or \
+            args['--yaxis'] == 'design-id':
+        design_id = True
+        design_id_type = '--yaxis'
+    if args['--xaxis'] == 'design-identity' or \
+            args['--xaxis'] == 'design_identity' or \
+            args['--xaxis'] == 'design-id':
+        design_id = True
+        design_id_type = '--xaxis'
+    if design_id:
+        df[args[design_id_type]] = df.apply(calc_designed_identity,
+                axis=1)
+        df = df[pd.notna(df[args[design_id_type]])]
 
     if args['--patch-id-cutoff']:
         print('Filtering on patch ID. Dataframe initial size: {}'.format(df.shape[0]))
