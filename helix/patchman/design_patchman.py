@@ -103,7 +103,7 @@ def aa_constrain(restype, resnum):
     given restype'''
 
     comp_str = "PENALTY_DEFINITION; TYPE {restype}; DELTA_START -1; DELTA_END 1; PENALTIES 1 -0.5 1; " \
-               "ABSOLUTE 1; BEFORE_FUNCTION linear; AFTER_FUNCTION linear;".format(
+               "ABSOLUTE 1; BEFORE_FUNCTION CONSTANT; AFTER_FUNCTION CONSTANT; END_PENALTY_DEFINITION".format(
         restype=restype)
 
     mover_str = f'''
@@ -341,6 +341,7 @@ def main():
             # ref_cst.set_weight(rosetta.core.scoring.special_rot,
             #                    special_rot_weight)
             ref_cst.set_weight(ScoreType.aa_composition, 1.0)
+            ref_specialrot.set_weight(ScoreType.aa_composition, 1.0)
 
         # Select chain B for selection
         selector = residue_selector.ChainSelector('B')
@@ -595,8 +596,8 @@ def main():
         ia_mover.apply(flexpep_pose)
 
         # For delta NPSA, get the two chains
-        poseA = utils.pose_get_chain(flexpep_pose, 'A')
-        poseB = utils.pose_get_chain(flexpep_pose, 'B')
+        poseA = utils.pose_get_chain(pose, 'A')
+        poseB = utils.pose_get_chain(pose, 'B')
 
         # Make filter objects
         buns_all_obj = XmlObjects.static_get_filter(buns_all)
