@@ -119,6 +119,15 @@ def res_selector_to_size_list(resselector, pylist=False):
         return intlist_to_vector1_size(size_list)
 
 
+def strlist_to_vector1_str(strlist):
+    # Should also go in utils eventually
+    from pyrosetta.rosetta.utility import vector1_std_string
+    vector = vector1_std_string()
+    for string in strlist:
+        vector.append(string)
+    return vector
+
+
 def reslist_to_pdb_numbers(reslist, pose, chain=None):
     poselist = []
     for res in reslist:
