@@ -15,6 +15,8 @@ Options:
     --keep-good-rotamers  Run through positions on docked helix and if
         it is better than the average crosschains core for that residue in
         that environment, keep that rotamer.
+    --special-res  If using keep-good-rotamers, treat them as special
+        residues with a score bonus for that restype instead of fixing them.
     --special-rot  If using keep-good-rotamers, treat them as special
         rotamers with a score bonus instead of fixing them.
     --special-rot-weight=FLOAT  How much to weigh special rotamers
@@ -36,6 +38,7 @@ from pyrosetta import init
 from pyrosetta import pose_from_file
 from pyrosetta import create_score_function
 import pyrosetta
+from helix.patchman.pythondesign import SpecialRotDesign
 from distutils.dir_util import copy_tree
 import docopt
 import os, sys, glob
@@ -196,6 +199,7 @@ def select_good_residues(pdbpath, score_df):
 def main():
     args = docopt.docopt(__doc__)
     special_rot = args['--special-rot']
+    special_res = args['--special-res']
     special_rot_weight = float(args['--special-rot-weight'])
     align_threshold = int(args['--align-thresh'])
 
@@ -334,7 +338,7 @@ def main():
         ref = create_score_function('ref2015')
         ref_cst = create_score_function('ref2015')
         ref_cst.set_weight(ScoreType.coordinate_constraint, 1.0)
-        if special_rot:
+        if special_res:
             ref_specialrot = create_score_function('ref2015')
             # ref_specialrot.set_weight(rosetta.core.scoring.special_rot,
             #                           special_rot_weight)
@@ -342,6 +346,12 @@ def main():
             #                    special_rot_weight)
             ref_cst.set_weight(ScoreType.aa_composition, 1.0)
             ref_specialrot.set_weight(ScoreType.aa_composition, 1.0)
+        if special_rot:
+            ref_specialrot = create_score_function('ref2015')
+            ref_specialrot.set_weight(rosetta.core.scoring.special_rot,
+                                      special_rot_weight)
+            ref_cst.set_weight(rosetta.core.scoring.special_rot,
+                               special_rot_weight)
 
         # Select chain B for selection
         selector = residue_selector.ChainSelector('B')
@@ -375,8 +385,8 @@ def main():
             favornative_mvr.apply(pose)
 
         if args['--keep-good-rotamers']:
-            if special_rot:
-                print('Assigning the following positions as special rotamers:', flush=True)
+            if special_res:
+                print('Assigning the following positions as special residues:', flush=True)
                 # Thanks to James Lucas
 
                 for position in nopack:
@@ -393,6 +403,24 @@ def main():
                     rosetta.core.pose.replace_pose_residue_copying_existing_coordinates(pose,
                                                                                         position, new_rsd_type)
                     '''
+            elif special_rot:
+                continue
+                # '''CHANGE ME'''
+            #     print('Assigning the following positions as special rotamers:', flush=True)
+            # # Thanks to James Lucas
+            #
+            #     for position in nopack:
+            #         print('{} ({})'.format(position,
+            #                                pose.residue(position).name3()), flush=True)
+            #         # cst_mover = aa_constrain(pose.residue(position).name3(), position)
+            #         # cst_mover.apply(pose)
+            #         SPECIALROT stuff not working out for now
+            #         current_rsd_type_ptr = pose.residue_type_ptr(position)
+            #         new_rsd_type_mutable = rosetta.core.chemical.MutableResidueType(current_rsd_type_ptr)
+            #         new_rsd_type_mutable.add_variant_type(rosetta.core.chemical.SPECIAL_ROT)
+            #         new_rsd_type = rosetta.core.chemical.ResidueType.make(new_rsd_type_mutable)
+            #         rosetta.core.pose.replace_pose_residue_copying_existing_coordinates(pose,
+            #                                                                             position, new_rsd_type)
             else:
                 print('Keeping residues static', flush=True)
                 print(nopack, flush=True)
@@ -414,7 +442,10 @@ def main():
                 pose.add_constraint(cst)
 
         # Initialize fastdesign object
-        fastdes = pyrosetta.rosetta.protocols.denovo_design.movers.FastDesign()
+        if not special_rot:
+            fastdes = pyrosetta.rosetta.protocols.denovo_design.movers.FastDesign()
+        else:
+            fastdes = SpecialRotDesign()
 
         if args['--buns-penalty']:
             # If buried unsat penalty, use this sfxn
@@ -438,11 +469,11 @@ def main():
             # ' -holes:dalphaball {} -corrections::beta_nov16'.format(dalphaball))
             sfxn = XmlObjects.static_get_score_function(buns_sfxn)
             sfxn.set_weight(ScoreType.coordinate_constraint, 1.0)
-            if special_rot:
-                # Uncomment if going back to specialrot way of doing things
-                # sfxn.set_weight(rosetta.core.scoring.special_rot,
-                #                 special_rot_weight)
+            if special_res:
                 sfxn.set_weight(ScoreType.aa_composition, 1.0)
+            elif special_rot:
+                sfxn.set_weight(rosetta.core.scoring.special_rot,
+                                special_rot_weight)
             # Set the sfxn
             fastdes.set_scorefxn(sfxn)
         else:
@@ -673,7 +704,7 @@ def main():
                    utils.res_selector_to_size_list(
                        packertask.designing_residues(), pylist=True)
                }
-        if special_rot:
+        if special_rot or special_res:
             row['specialrot_score'] = ref_specialrot(flexpep_pose)
         rowlist.append(row)
 

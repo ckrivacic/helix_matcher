@@ -9,13 +9,12 @@ from pyrosetta.rosetta.core.kinematics import MoveMap
 from pyrosetta import *
 from helix.utils import utils
 import os
-import sys
 
 
 class SpecialRotDesign(object):
     def __init__(self, sfxn=None, script=None, nrepeats=5, ramp_cst=False,
                  special_rotamers=[], special_rot_weight=-1.5, taskfactory=None,
-                 movemap=None, ramp_down_constraints=False, bb_cst=True, sc_cst=False):
+                 movemap=None, ramp_down_constraints=False, bb_cst=False, sc_cst=False):
         '''Initialize'''
         self.nrepeats = nrepeats
         if not script:
@@ -37,7 +36,8 @@ class SpecialRotDesign(object):
         if taskfactory:
             self.taskfactory = taskfactory
         else:
-            self.taskfactory = self.setup_default_taskfactory()
+            # self.taskfactory = self.setup_default_taskfactory()
+            self.taskfactory = None
 
         if movemap:
             self.movemap = movemap
@@ -50,6 +50,19 @@ class SpecialRotDesign(object):
         self.sc_cst = sc_cst
 
         self.best_score = 9999
+
+    def set_scorefxn(self, sfxn):
+        self.sfxn = sfxn
+
+    def set_movemap(self, movemap):
+        self.movemap = movemap
+
+    def ramp_down_constraints(self, ramp):
+        '''boolean'''
+        self.ramp_down_constraints = ramp
+
+    def set_task_factory(self, tf):
+        self.taskfactory = tf
 
     def setup_default_taskfactory(self):
         '''Set up a default task factory for interface design'''
@@ -179,6 +192,7 @@ class SpecialRotDesign(object):
         rosetta.core.pack.pack_rotamers_run(pose, packertask, rotamer_sets, ig)
         ig.clean_up_after_packing(pose)
         local_sfxn(pose)
+
         test = False
         if test:
             print(f'Scorefxn for pose: {local_sfxn(pose)}')
@@ -224,6 +238,10 @@ class SpecialRotDesign(object):
         Initialize packer, edit rotamerset
         Loop through packing & min
         '''
+
+        if not self.taskfactory:
+            self.setup_default_taskfactory()
+
         self.parse_script(self.script)
         if not self.movemap:
             self.movemap = self.setup_default_movemap(pose)
@@ -262,20 +280,13 @@ class SpecialRotDesign(object):
                     pose = self.accept_to_best(pose)
 
 
-# class ConstraintReweight(object):
-    # def __init__(self, cst_type, weight):
-        # self.cst_type = cst_type
-        # self.weight = weight
-
-    # def apply(self, sfxn):
-
-
 def test_parse_script():
     init()
     des = SpecialRotDesign()
     print(des.script)
     des.parse_script(des.script)
     print(des.script_steps)
+
 
 def test_fastdesign():
     init()
@@ -290,6 +301,7 @@ def test_fastdesign():
     final.dump_pdb('/Users/codykrivacic/intelligent_design/helix_workspaces/testout.pdb.gz')
     print(f"Final score:{ref(final)}")
 
+
 def test_rotamer_sets():
     pdbfile = "/Users/codykrivacic/intelligent_design/helix_workspaces/002_1b8d_4_3_16.pdb.gz"
     init()
@@ -297,6 +309,7 @@ def test_rotamer_sets():
     des = SpecialRotDesign(special_rotamers=[167], special_rot_weight=-1.5)
     des.setup_specialrots(pose)
     des.pack_rotamers(pose)
+
 
 if __name__ == '__main__':
     # test_parse_script()
