@@ -44,7 +44,7 @@ class SpecialRotDesign(object):
         else:
             self.movemap = None
 
-        self.ramp_down_constraints = ramp_down_constraints
+        self._ramp_down_constraints = ramp_down_constraints
 
         self.bb_cst = bb_cst
         self.sc_cst = sc_cst
@@ -59,7 +59,7 @@ class SpecialRotDesign(object):
 
     def ramp_down_constraints(self, ramp):
         '''boolean'''
-        self.ramp_down_constraints = ramp
+        self._ramp_down_constraints = ramp
 
     def set_task_factory(self, tf):
         self.taskfactory = tf
@@ -263,7 +263,7 @@ class SpecialRotDesign(object):
         for outer in range(0, self.nrepeats):
             for cmd in self.script_steps:
                 if cmd[0] == 'coord_cst_weight':
-                    if self.ramp_down_constraints:
+                    if self._ramp_down_constraints:
                         self.sfxn.set_weight(ScoreType.coordinate_constraint, cmd[1])
                 elif cmd[0].startswith('scale'):
                     st = cmd[0].split(':')[1]

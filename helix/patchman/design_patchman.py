@@ -308,10 +308,18 @@ def main():
 
         # Check if PDB has a score, if so it has been designed already
         # and we can skip
-        with gzip.open(pdb, 'rt') as f:
-            for line in f:
-                if line.startswith('pose'):
-                    designed = True
+        if args['--suffix']:
+            basename = os.path.basename(pdb).split('.')[0] + \
+                       args['--suffix'] + '.pdb.gz'
+            outdir = os.path.dirname(pdb)
+            outpdb = os.path.join(outdir, basename)
+        else:
+            outpdb = pdb
+            if os.path.exists(outpdb):
+                with gzip.open(outpdb, 'rt') as f:
+                    for line in f:
+                        if line.startswith('pose'):
+                            designed = True
 
         # Move into pdb folder as working directory
         folder = os.path.dirname(
@@ -365,13 +373,6 @@ def main():
         interface_selector = XmlObjects.static_get_residue_selector(interface_selector_str)
         align_score, patchlength, identity = get_alignment_info(alignment_df, pdb)
 
-        if args['--suffix']:
-            basename = os.path.basename(pdb).split('.')[0] + \
-                       args['--suffix'] + '.pdb.gz'
-            outdir = os.path.dirname(pdb)
-            outpdb = os.path.join(outdir, basename)
-        else:
-            outpdb = pdb
         tf = TaskFactory()
         tf.push_back(operation.InitializeFromCommandline())
 
@@ -383,6 +384,7 @@ def main():
             '''
             favornative_mvr = XmlObjects.static_get_mover(favornative)
             favornative_mvr.apply(pose)
+            ref_cst.set_weight(ScoreType.aa_composition, 1.0)
 
         if args['--keep-good-rotamers']:
             if special_res:
@@ -403,8 +405,7 @@ def main():
                     rosetta.core.pose.replace_pose_residue_copying_existing_coordinates(pose,
                                                                                         position, new_rsd_type)
                     '''
-            elif special_rot:
-                continue
+            # elif special_rot:
                 # '''CHANGE ME'''
             #     print('Assigning the following positions as special rotamers:', flush=True)
             # # Thanks to James Lucas
@@ -421,7 +422,7 @@ def main():
             #         new_rsd_type = rosetta.core.chemical.ResidueType.make(new_rsd_type_mutable)
             #         rosetta.core.pose.replace_pose_residue_copying_existing_coordinates(pose,
             #                                                                             position, new_rsd_type)
-            else:
+            elif not special_rot:
                 print('Keeping residues static', flush=True)
                 print(nopack, flush=True)
                 if len(nopack) > 0:
@@ -445,7 +446,7 @@ def main():
         if not special_rot:
             fastdes = pyrosetta.rosetta.protocols.denovo_design.movers.FastDesign()
         else:
-            fastdes = SpecialRotDesign()
+            fastdes = SpecialRotDesign(special_rotamers=nopack)
 
         if args['--buns-penalty']:
             # If buried unsat penalty, use this sfxn
@@ -524,6 +525,7 @@ def main():
         packertask = tf.create_task_and_apply_taskoperations(pose, 1)
 
         if not designed:
+            print('Not designed already. Designing.', flush=True)
             fastdes.set_task_factory(tf)
             fastdes.apply(pose)
             score = ref(pose)
@@ -536,6 +538,8 @@ def main():
             else:
                 outpdb = pdb
             pose.dump_pdb(outpdb)
+        else:
+            print('Has been designed already. Moving on to filters.',flush=True)
 
         # Get metrics
 
@@ -556,6 +560,7 @@ def main():
         ss_str = Dssp(chainB).get_dssp_secstruct()
         # secstruct = contiguous_secstruct(ss_str)
         percent_helical = ss_str.count('H') / len(ss_str)
+        print("SETTING UP FILTERS", flush=True)
 
         # Define filters
         buns_all = '''
