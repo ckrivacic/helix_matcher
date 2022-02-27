@@ -446,7 +446,8 @@ def main():
         if not special_rot:
             fastdes = pyrosetta.rosetta.protocols.denovo_design.movers.FastDesign()
         else:
-            fastdes = SpecialRotDesign(special_rotamers=nopack)
+            cst_true = not args['--nocst']
+            fastdes = SpecialRotDesign(special_rotamers=nopack, bb_cst=cst_true)
 
         if args['--buns-penalty']:
             # If buried unsat penalty, use this sfxn
