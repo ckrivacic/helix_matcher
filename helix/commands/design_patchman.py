@@ -123,11 +123,11 @@ def main():
                 cmd += '--keep-good-rotamers',
             elif designtype == 'specialres':
                 cmd += '--keep-good-rotamers',
-                cmd += '--special-rot',
+                cmd += '--special-res',
             
             elif designtype == 'combined':
                 cmd += '--keep-good-rotamers',
-                cmd += '--special-rot',
+                cmd += '--special-res',
                 cmd += '--buns-penalty',
 
             elif designtype == 'combined_nomin':
@@ -138,6 +138,15 @@ def main():
 
             elif designtype == 'deleteme':
                 cmd += '--align-thresh', '70'
+
+            elif designtype == 'specialrot':
+                cmd += '--keep-good-rotamers',
+                cmd += '--special-rot',
+
+            elif designtype == 'specialrot_combined':
+                cmd += '--keep-good-rotamers',
+                cmd += '--special-rot',
+                cmd += '--buns-penalty',
 
 
         if args['--local']:
