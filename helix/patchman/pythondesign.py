@@ -14,8 +14,10 @@ import os
 class SpecialRotDesign(object):
     def __init__(self, sfxn=None, script=None, nrepeats=5, ramp_cst=False,
                  special_rotamers=[], special_rot_weight=-1.5, taskfactory=None,
-                 movemap=None, ramp_down_constraints=False, bb_cst=False, sc_cst=False):
+                 movemap=None, ramp_down_constraints=False,
+                 bb_cst=False, sc_cst=False, rosettadir=None):
         '''Initialize'''
+        self.rosettadir = rosettadir
         self.nrepeats = nrepeats
         if not script:
             self.script = self.get_default_script()
@@ -119,12 +121,13 @@ class SpecialRotDesign(object):
 
     def get_default_script(self):
         '''Try to get Rosetta dir from environment'''
-        if 'ROSETTA' in os.environ:
-            rosettadir = os.environ['ROSETTA']
-        else:
-            rosettadir = input('Please provide Rosetta main directory '\
-                    '(in the future you can set the environmental '\
-                    'variable $ROSETTA)\n')
+        if not self.rosettadir:
+            if 'ROSETTA' in os.environ:
+                self.rosettadir = os.environ['ROSETTA']
+            else:
+                self.rosettadir = input('Please provide Rosetta main directory '\
+                        '(in the future you can set the environmental '\
+                        'variable $ROSETTA)\n')
         default_script_path = os.path.join(rosettadir, 'database',
                 'sampling', 'relax_scripts', 'MonomerDesign2019.txt')
 
