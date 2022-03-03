@@ -128,7 +128,7 @@ class SpecialRotDesign(object):
                 self.rosettadir = input('Please provide Rosetta main directory '\
                         '(in the future you can set the environmental '\
                         'variable $ROSETTA)\n')
-        default_script_path = os.path.join(rosettadir, 'database',
+        default_script_path = os.path.join(self.rosettadir, 'database',
                 'sampling', 'relax_scripts', 'MonomerDesign2019.txt')
 
         return default_script_path

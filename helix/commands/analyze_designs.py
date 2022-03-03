@@ -197,10 +197,26 @@ def plot_sequence_recovery(df, args):
     # order = ['1b33_K', '1b33_K_buns_noprune', '1b33_K_buns_penalty',
             # '1b33_K_nativelike', '1b33_K_specialrot']
     order = None
-    sns.stripplot(data=df, x='protocol', y=args['--yaxis'],
-            order=order, color='.5', alpha=0.5)
+    order = ['base', #'deleteme', 
+            'buns_penalty', 'buns_penalty_pruned',
+            'residue_lock', 'specialrot', 'combined',
+            'combined_nomin']
+    labels = ['Base', #'NativeResidue', 
+            'BUNS penalty', 'BUNS pen. pruned', 
+            'Residue lock', 'Special rotamer*', 'Combined', 
+            'Combined (no cst)']
+    # sns.stripplot(data=df, x='protocol', y=args['--yaxis'],
+            # order=order, color='.5', alpha=0.5)
+    df = df[df['protocol'] != 'deleteme']
+    means = df.groupby('protocol')[args['--yaxis']].mean()
+    fig, ax = plt.subplots()
     sns.violinplot(data=df, x='protocol', y=args['--yaxis'],
-            order=order)
+            order=order, )
+    plt.scatter(x=range(len(means)), y=means, c='k', marker='_', s=200)
+    if args['--xaxis'] == 'protocol':
+        ax.set_xticklabels(labels)
+        plt.xticks(rotation=45)
+    plt.tight_layout()
     plt.show()
 
 
@@ -230,11 +246,13 @@ def barplot(df, args):
     # labels = ['Base', 'BUNS penalty', 'BUNS penalty + prune', 
             # 'Freeze good rotamers', 'Special rotamer bonus']
     if args['--xaxis'] == 'protocol':
-        order = ['base', 'deleteme', 'buns_penalty', 'buns_penalty_pruned',
+        order = ['base', #'deleteme', 
+                'buns_penalty', 'buns_penalty_pruned',
                 'residue_lock', 'specialrot', 'combined',
                 'combined_nomin']
-        labels = ['Base', 'NativeResidue', 'BUNS penalty', 'BUNS pen. pruned', 
-                'Residue lock', 'Special rotamer', 'Combined', 
+        labels = ['Base', #'NativeResidue', 
+                'BUNS penalty', 'BUNS pen. pruned', 
+                'Residue lock', 'Special rotamer*', 'Combined', 
                 'Combined (no cst)']
     else:
         order=None
