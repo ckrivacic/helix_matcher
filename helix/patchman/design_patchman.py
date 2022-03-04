@@ -529,7 +529,10 @@ def main():
         if not designed:
             print('Not designed already. Designing.', flush=True)
             fastdes.set_task_factory(tf)
-            fastdes.apply(pose)
+            if args['--specialrot']:
+                pose = fastdes.apply(pose)
+            else:
+                fastdes.apply(pose)
             score = ref(pose)
             # Temp change of PDB filename
             if args['--suffix']:

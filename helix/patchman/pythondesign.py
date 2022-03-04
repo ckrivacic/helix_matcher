@@ -282,6 +282,8 @@ class SpecialRotDesign(object):
                 elif cmd[0] == 'accept_to_best':
                     pose = self.accept_to_best(pose)
 
+        return pose
+
 
 def test_parse_script():
     init()
