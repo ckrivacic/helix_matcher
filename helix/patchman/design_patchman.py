@@ -23,6 +23,7 @@ Options:
         [default: -1.5]
     --suffix=STR  Add a suffix to designs
     --nocst  Don't constrain during fastdesign
+    --ramp-cst  Ramp down constraints during FastDesign
 
 """
 
@@ -442,13 +443,21 @@ def main():
             for cst in constraints:
                 pose.add_constraint(cst)
 
+        # Set to interface design script
+        interface_script_path = os.path.join(
+                workspace.rosetta_dir, 'database', 'sampling',
+                'relax_scripts', 'InterfaceDesign2019.txt'
+                )
+
         # Initialize fastdesign object
         if not special_rot:
-            fastdes = pyrosetta.rosetta.protocols.denovo_design.movers.FastDesign()
+            fastdes = pyrosetta.rosetta.protocols.denovo_design.movers.FastDesign(ref_cst,
+                    interface_script_path)
         else:
             cst_true = not args['--nocst']
             fastdes = SpecialRotDesign(special_rotamers=nopack,
-                    bb_cst=cst_true, rosettadir=workspace.rosetta_dir)
+                    bb_cst=cst_true, rosettadir=workspace.rosetta_dir,
+                    script=interface_script_path)
 
         if args['--buns-penalty']:
             # If buried unsat penalty, use this sfxn
@@ -488,7 +497,11 @@ def main():
         movemap.set_chi_true_range(pose.chain_begin(2),
                                    pose.chain_end(2))
         fastdes.set_movemap(movemap)
-        fastdes.ramp_down_constraints(False)
+
+        if not args['--ramp-cst']:
+            fastdes.ramp_down_constraints(False)
+        else:
+            fastdes.ramp_down_constraints(True)
 
         or_selector = residue_selector.OrResidueSelector(selector,
                                                          interface_selector)

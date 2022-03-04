@@ -12,7 +12,7 @@ import os
 
 
 class SpecialRotDesign(object):
-    def __init__(self, sfxn=None, script=None, nrepeats=5, ramp_cst=False,
+    def __init__(self, sfxn=None, script=None, nrepeats=5,
                  special_rotamers=[], special_rot_weight=-1.5, taskfactory=None,
                  movemap=None, ramp_down_constraints=False,
                  bb_cst=False, sc_cst=False, rosettadir=None):
@@ -49,7 +49,7 @@ class SpecialRotDesign(object):
         self._ramp_down_constraints = ramp_down_constraints
 
         self.bb_cst = bb_cst
-        self.sc_cst = sc_cst
+        self.sc_cst = sc_cst # need bb_cst set to True for this to work
 
         self.best_score = 9999
 
@@ -234,6 +234,7 @@ class SpecialRotDesign(object):
         minimizer.score_function(self.sfxn)
         minimizer.min_type(mintype)
         minimizer.tolerance(tolerance)
+
         return minimizer
 
     def apply(self, pose):

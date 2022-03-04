@@ -32,6 +32,7 @@ Options:
         pass based on folder name)
     --suffix=STR  Add a suffix to saved designs
     --nocst  Don't constrain during fastdesign
+    --ramp-cst  Ramp down constraints
 """
 import helix.workspace as ws
 from helix import big_jobs
@@ -107,6 +108,9 @@ def main():
         if args['--suffix']:
             cmd += '--suffix', args['--suffix']
 
+        if args['--ramp-cst']:
+            cmd += '--ramp-cst',
+
         cmd += '--designs-per-task', str(des_per_task)
         
         if args['--benchmark']:
@@ -144,6 +148,12 @@ def main():
                 cmd += '--special-rot',
 
             elif designtype == 'specialrot_combined':
+                cmd += '--keep-good-rotamers',
+                cmd += '--special-rot',
+                cmd += '--buns-penalty',
+
+            elif designtype == 'special_combined_ramp':
+                cmd += '--ramp-cst',
                 cmd += '--keep-good-rotamers',
                 cmd += '--special-rot',
                 cmd += '--buns-penalty',
