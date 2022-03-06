@@ -542,7 +542,7 @@ def main():
         if not designed:
             print('Not designed already. Designing.', flush=True)
             fastdes.set_task_factory(tf)
-            if args['--specialrot']:
+            if special_rot:
                 pose = fastdes.apply(pose)
             else:
                 fastdes.apply(pose)
