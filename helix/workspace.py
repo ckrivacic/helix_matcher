@@ -13,6 +13,7 @@ import os, re, glob, json, pickle, sys
 from klab import scripting
 from pprint import pprint
 import yaml
+import pandas as pd
 # from roseasy.standard_params import *
 
 class Workspace(object):
@@ -210,7 +211,6 @@ class Workspace(object):
         return os.path.join(self.rifdock_outdir, dirname)
 
     def target_clusters(self, target):
-        dirname = self.basename(target)
         return os.path.join(self.target_rifdock_path(target),
                 'cluster_representatives')
 
@@ -612,13 +612,17 @@ class RIFWorkspace(Workspace):
             return pd.concat(dataframes, ignore_index=True)
 
     @property
+    def design_scores_dir(self):
+        return os.path.join(self.focus_dir, 'scores')
+
+    @property
     def all_scorefile_paths(self):
-        return sorted(glob.glob(os.path.join(self.focus_dir, 'scores',
+        return sorted(glob.glob(os.path.join(self.design_scores_dir,
             'task_*.pkl')))
 
     @property
     def final_scorefile_path(self):
-        return os.path.join(self.focus_dir, 'scores', 'final.pkl')
+        return os.path.join(self.design_scores_dir, 'final.pkl')
 
     @property
     def patches(self):
@@ -632,6 +636,11 @@ class RIFWorkspace(Workspace):
             self.focus_dir, 'patch_*',
             '{}*'.format(self.scaffold_prefix), 'docked_full', '*.pdb.gz'
             )))
+
+    @property
+    def cluster_outputs(self):
+        return os.path.join(self.focus_dir,
+                            'filtered')
 
     def scaffold_dir(self, patch, scaffold):
         return os.path.join(self.focus_dir, 'patch_{}'.format(patch),
@@ -763,8 +772,15 @@ class MatchWorkspace(Workspace):
 
     @property
     def query_CA_path(self):
-        return os.path.join(self.target_clusters(self.target_path),
-                'query_CAs.pkl')
+        return os.path.join(self.target_cluster_outputs, 'query_CAs.pkl')
+        # return os.path.join(self.target_clusters(self.target_path),
+        #         'query_CAs.pkl')
+
+    @property
+    def target_cluster_outputs(self):
+        return os.path.join(os.path.dirname(self.target_path), 'filtered')
+        # return os.path.join(self.target_rifdock_path(target),
+        #                     'filtered')
 
     @property
     def query_CAs(self):
@@ -775,7 +791,8 @@ class MatchWorkspace(Workspace):
             atoms_dict = {}
             # for helix in rif_workspace.docked_helices:
             for helix in glob.glob(os.path.join(self.cluster_outputs,
-                "*/", '*.pdb.gz')):
+                # "*/",
+                '*.pdb.gz')):
                 path = os.path.relpath(helix, start=self.root_dir)
                 atoms = prody.parsePDB(helix, chain='A').select('name CA')
                 atoms_dict[path] = atoms.getCoords()
@@ -879,6 +896,10 @@ class MatchWorkspace(Workspace):
     def scaffold_dataframe(self, scaffold):
         return os.path.join(self.scaffold_clusters(scaffold),
                 'query_helices.pkl')
+
+    @property
+    def query_dataframe(self):
+        return os.path.join(self.cluster_outputs, 'query_helices.pkl')
 
 
 

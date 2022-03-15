@@ -733,7 +733,8 @@ def main():
 
     df = pd.DataFrame(rowlist)
     print(df, flush=True)
-    pickle_outdir = os.path.join(workspace.focus_dir, 'scores')
+    # pickle_outdir = os.path.join(workspace.focus_dir, 'scores')
+    pickle_outdir = workspace.design_scores_dir
     print('Saving in folder {}'.format(pickle_outdir), flush=True)
     if not os.path.exists(pickle_outdir):
         os.makedirs(pickle_outdir, exist_ok=True)

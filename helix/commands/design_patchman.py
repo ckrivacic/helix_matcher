@@ -69,10 +69,18 @@ def main():
         if args['--clear']:
             rif_workspace.clear_patchman_designs()
 
-        inputs = sorted(glob.glob(
+        initial_inputs = sorted(glob.glob(
             os.path.join(rif_workspace.focus_dir, 'patch_*',
                 workspace.scaffold_prefix + '*', 'docked_full', '*.pdb.gz')
             ))
+        if args['--suffix']:
+            inputs = []
+            for pdb in initial_inputs:
+                if not args['--suffix'] in os.path.basename(pdb):
+                    inputs.append(pdb)
+        else:
+            inputs = initial_inputs
+
         # ntasks = len(inputs)
         des_per_task = int(args['--designs-per-task'])
         ntasks = math.ceil(len(inputs) / des_per_task)

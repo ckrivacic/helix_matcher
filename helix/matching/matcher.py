@@ -483,15 +483,15 @@ class HelixLookup(object):
 
         print('Forward search done.')
 
-        print('Original name list:')
-        print(names)
+        # print('Original name list:')
+        # print(names)
         min_matches = 2
         names = [item for item, count in
                 collections.Counter(names).items() if
                 count >= min_matches]
 
         print('All matches:')
-        print(names)
+        # print(names)
         print(len(names))
 
         results = []
@@ -647,10 +647,16 @@ def main():
         from helix.matching import scan_helices
         workspace = ws.workspace_from_dir(args['<match_workspace>'])
         # Import pdb
+        '''
+        # This block is for working with CLUSTER folders. Uncomment if I decide to go back to using clusters.
         if args['--scaffold']:
             pdbfolders = [workspace.scaffold_clusters(args['--scaffold'])]
         else:
             pdbfolders = workspace.all_scaffold_clusters
+        '''
+        # This block is for NOT using clusters.
+        pdbfolders = [workspace.cluster_outputs]
+
         init()
 
 
@@ -661,9 +667,10 @@ def main():
             all_helices = []
             for pdbfolder in pdbfolders:
                 # helicepath = os.path.join(pdbfolder, 'query_helices.pkl')
-                helicepath = workspace.scaffold_dataframe(pdbfolder)
+                helicepath = workspace.query_dataframe
                 if os.path.exists(helicepath):
                     helices = pd.read_pickle(helicepath)
+                    all_helices.append(helices)
                 else:
                     folder_helices = []
                     import glob
@@ -672,8 +679,8 @@ def main():
                     gz.extend(dotpdb)
                     pdbs = sorted(gz)
                     for path in pdbs:
-                        # First chain is the docked helix
-                        pose = pose_from_file(path).split_by_chain(1)
+                        # For PatcHMAN, second chain is the docked helix
+                        pose = pose_from_file(path).split_by_chain(2)
                         path = os.path.relpath(path,
                                 start=workspace.root_dir)
 

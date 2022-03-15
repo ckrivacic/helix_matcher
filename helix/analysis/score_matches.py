@@ -180,6 +180,7 @@ def apply(scorer, cutoff=50):
     '''
     best_score = 9999
     best_subgraph = None
+    print(scorer.pdb_path)
     original_atoms = prody.parsePDB(scorer.pdb_path,
             chain=scorer.chain).select('backbone')
     subgraphs = []
@@ -190,6 +191,8 @@ def apply(scorer, cutoff=50):
         df_rows, query_rows = scorer.get_helix_rows(subgraph)
         df_vectors = scorer.get_vectors(df_rows)
         query_vectors = scorer.get_vectors(query_rows)
+        print(df_rows)
+        print(query_rows)
         transform = numeric.Transformation(df_vectors, query_vectors)
         prody_transform =\
                 prody.measure.transform.Transformation(transform.rotation,
@@ -218,7 +221,7 @@ def apply(scorer, cutoff=50):
                     }
             rosetta_score = 0
             length = 0
-            rifdock_score = 0
+            # rifdock_score = 0
             for node in subgraph:
                 query_idx = node[1]
                 query_row = scorer.query_helices.loc[query_idx]
@@ -226,6 +229,8 @@ def apply(scorer, cutoff=50):
                 helixpath = os.path.realpath(query_row['path'])
                 # helixpath = clash.get_relative_path(workspace, helixpath)
                 # turnno = os.path.basename(helixpath).split('_')[0][0]
+                '''
+                # RIFDock stuff
                 score_file = \
                         match_scaffold(scorer.workspace, helixpath)\
                         + '.scores'
@@ -234,10 +239,14 @@ def apply(scorer, cutoff=50):
                         score_file
                         )
                 scorepath = clash.get_relative_path(scorer.workspace, scorepath)
+                '''
+                # rosetta_scorepath = os.path.join(
+                #         os.path.dirname(query_row['path']),
+                #         'scores.pkl'
+                #         )
                 rosetta_scorepath = os.path.join(
-                        os.path.dirname(query_row['path']),
-                        'scores.pkl'
-                        )
+                    scorer.workspace.cluster_outputs, '..', 'scores','final.pkl'
+                )
                 try:
                     rosetta_scores = pd.read_pickle(rosetta_scorepath)
                 except:
@@ -245,6 +254,8 @@ def apply(scorer, cutoff=50):
                         rosetta_scores = pickle.load(f)
                 # In the future, would be more efficient to just open all
                 # the score files once and save them to a dataframe.
+                '''
+                # More RIFDock stuff
                 with open(scorepath, 'r') as f:
                     for line in f:
                         line = line.strip('\n')
@@ -252,15 +263,21 @@ def apply(scorer, cutoff=50):
                             score_line = line
                             break
                 rifdock_score += float(score_line.split()[11])
+                '''
+                # print(helixpath)
+                # print(rosetta_scores)
+                if 'design_file' not in rosetta_scores.columns:
+                    rosetta_scores['design_file']  = rosetta_scores['patchman_file']
                 score_row =\
-                        rosetta_scores[rosetta_scores['original_path']==os.path.relpath(helixpath,
-                        scorer.workspace.root_dir)]
+                        rosetta_scores[rosetta_scores['design_file']==os.path.relpath(
+                                helixpath,
+                                scorer.workspace.root_dir)]
                 rosetta_score += float(score_row['interface_score'])
                 length += float(score_row['size'])
             row['rosetta_score'] = rosetta_score
-            row['rifdock_score'] = rifdock_score
+            # row['rifdock_score'] = rifdock_score
             row['per_residue_score'] = rosetta_score / length
-            print('RIFDOCK SCORE IS {}'.format(rifdock_score))
+            # print('RIFDOCK SCORE IS {}'.format(rifdock_score))
             print('ROSETTA SCORE IS {}'.format(rosetta_score))
             print('ROSETTA NORMALIZED SCORE IS {}'.format(rosetta_score
                 / length))
@@ -284,7 +301,7 @@ def score_matches(workspace, results, query_df, db_df, plot=False,
     alphapath = query_df.iloc[0]['path']
     alphapath = clash.get_relative_path(workspace, alphapath)
     alpha = clash.get_alphashape(alphapath, plot=plot)
-    query_xyz = workspace.query_CAs
+    # query_xyz = workspace.query_CAs
     results['clash_score'] = None
     results['rifdock_score'] = None
     numrows = results.shape[0]
@@ -297,7 +314,7 @@ def score_matches(workspace, results, query_df, db_df, plot=False,
         clash_score = clash.Score(workspace, row, db_df, query_df,
                 alpha=alpha)
         # clash_score.apply()
-        candidates, clash_score = apply(clash_score, threshold=threshold)
+        candidates, clash_score = apply(clash_score, cutoff=threshold)
         scored_results.extend(candidates)
         # print('CLASH SCORE IS {}'.format(clash_score.score))
         # results.at[idx,'clash_score'] = clash_score.score
@@ -424,7 +441,7 @@ def main():
     # test_scoring()
     args = docopt.docopt(__doc__)
     workspace = ws.workspace_from_dir(args['<workspace>'])
-    targets = workspace.targets
+    # targets = workspace.targets
     if 'SGE_TASK_ID' in os.environ:
         task = int(os.environ['SGE_TASK_ID']) - 1
     else:
