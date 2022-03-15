@@ -316,11 +316,11 @@ def main():
             outpdb = os.path.join(outdir, basename)
         else:
             outpdb = pdb
-            if os.path.exists(outpdb):
-                with gzip.open(outpdb, 'rt') as f:
-                    for line in f:
-                        if line.startswith('pose'):
-                            designed = True
+        if os.path.exists(outpdb):
+            with gzip.open(outpdb, 'rt') as f:
+                for line in f:
+                    if line.startswith('pose'):
+                        designed = True
 
         # Move into pdb folder as working directory
         folder = os.path.dirname(
