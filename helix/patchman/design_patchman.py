@@ -236,6 +236,7 @@ def main():
                              '*.pdb.gz'),
             ))
         }
+
     dalphaball = os.path.join(workspace.rosetta_dir,
                               'source', 'external', 'DAlpahBall',
                               'DAlphaBall.gcc')
@@ -261,6 +262,15 @@ def main():
             task_id = 0
     else:
         task_id = int(job_info['task_id'])
+
+    # Check if we already completed this task, and if so, exit.
+    pickle_outdir = workspace.design_scores_dir
+    dataframe_out = os.path.join(pickle_outdir, f'task_{task_id}.pkl')
+
+    if os.path.exists(dataframe_out):
+        print(f'Task already completed ({dataframe_out} exists). \nExiting.', flush=True)
+        sys.exit(0)
+
     start = task_id * nstruct
     stop = task_id * nstruct + nstruct
     if stop > len(inputs) - 1:
@@ -270,7 +280,7 @@ def main():
     print(start, flush=True)
     print(inputs[start], flush=True)
 
-    target = pymol.cmd.load(workspace.target_path_clean)
+    # target = pymol.cmd.load(workspace.target_path_clean)
 
     summarized_residue_scores = utils.safe_load(workspace.find_path(
         'summarized_res_scores.pkl'
@@ -327,7 +337,7 @@ def main():
             os.path.abspath(pdb)
         )
         os.chdir(folder)
-        target = workspace.target_path_clean
+        # target = workspace.target_path_clean
         # os.system('ls ???_????_*_*.pdb > input_list')
         # inputs = []
         # with open('input_list', 'r') as f:
@@ -342,6 +352,8 @@ def main():
         # in which they were scored, i.e. the minimized pose.
         pose = min_pose
         pose.remove_constraints()
+        if designed:
+            pose = pose_from_file(outpdb)
         # else:
         # pose = pose_from_file(pdb)
         ref = create_score_function('ref2015')
@@ -558,17 +570,20 @@ def main():
             pose.dump_pdb(outpdb)
         else:
             print('Has been designed already. Moving on to filters.',flush=True)
+            ref(pose)
 
         # Get metrics
 
         # Align & save (just in case - should not be necessary)
         flexpep_file = pdb
         flexpep_pose = pose.clone()
+        ref(flexpep_pose)
 
         # Need to clear sequence constraints to split the pose
         pose.remove_constraints()
         pose.clear_sequence_constraints()
         chainB = pose.split_by_chain(2)
+        ref(chainB)
         # pymol_mobile = pymol.cmd.load(pdb, 'mobile')
         # pymol.cmd.align('mobile and chain A', 'target')
         # pymol.cmd.save(pdb, 'mobile')
@@ -652,6 +667,8 @@ def main():
         # For delta NPSA, get the two chains
         poseA = utils.pose_get_chain(pose, 'A')
         poseB = utils.pose_get_chain(pose, 'B')
+        ref(poseA)
+        ref(poseB)
 
         # Make filter objects
         buns_all_obj = XmlObjects.static_get_filter(buns_all)
@@ -725,7 +742,8 @@ def main():
                'cst_score': ref_cst(flexpep_pose),
                'designed_residues': \
                    utils.res_selector_to_size_list(
-                       packertask.designing_residues(), pylist=True)
+                       packertask.designing_residues(), pylist=True),
+               'rescored': not designed,
                }
         if special_rot or special_res:
             row['specialrot_score'] = ref_specialrot(flexpep_pose)
@@ -734,12 +752,10 @@ def main():
     df = pd.DataFrame(rowlist)
     print(df, flush=True)
     # pickle_outdir = os.path.join(workspace.focus_dir, 'scores')
-    pickle_outdir = workspace.design_scores_dir
     print('Saving in folder {}'.format(pickle_outdir), flush=True)
     if not os.path.exists(pickle_outdir):
         os.makedirs(pickle_outdir, exist_ok=True)
-    df.to_pickle(os.path.join(pickle_outdir,
-                              'task_{task}.pkl'.format(task=task_id)))
+    df.to_pickle(dataframe_out)
 
     # if args['--delete']:
     # os.remove(pdb)
