@@ -1,4 +1,4 @@
-'''
+t '''
 Analyze different design methods.
 
 Usage:

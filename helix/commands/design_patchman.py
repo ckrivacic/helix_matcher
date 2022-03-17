@@ -33,6 +33,7 @@ Options:
     --suffix=STR  Add a suffix to saved designs
     --nocst  Don't constrain during fastdesign
     --ramp-cst  Ramp down constraints
+    --hold=BOOL  Submit the jobs with a hold
 """
 import helix.workspace as ws
 from helix import big_jobs
@@ -201,6 +202,7 @@ def main():
                         test_run=False,
                         job_name=script_name,
                         create_job_info=True,
+                        hold=args['--hold'],
                         )
             except:
                 print('{} DID NOT SUBMIT'.format(target))
