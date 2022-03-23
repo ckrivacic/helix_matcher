@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import prody
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 from mpl_toolkits.mplot3d import axes3d, Axes3D
 # from descartes import PolygonPatch
 
@@ -18,7 +19,7 @@ def get_relative_path(workspace, path, depth=5):
     path) and get the path relative to the workspace root directory.
     This is a bit of a hack, and in the future, the paths should 
     probably be relative to begin with.'''
-    # This should be everything after the root dir for a cluster
+    # This should be everything after the workspace root dir for a cluster
     # representative
     pathlist = path.split('/')[-depth:]
     pathlist.insert(0, workspace.root_dir)
@@ -27,12 +28,16 @@ def get_relative_path(workspace, path, depth=5):
 
 class Score(object):
     def __init__(self, workspace, results_row, database_helices, query_helices,
-            alpha=None, pdb=None, query_CAs=None, target_path=None):
+            alpha=None, query_CAs=None, target_path=None):
         self.workspace = workspace
+        # Graph object indicating which indices are matched
         self.graph = results_row['graph']
         self.name = results_row['name']#.split('_')[0]
+        # Dataframe of matched helices
         self.db_helices = database_helices
+        # All dense subgraphs that have the maximum number of members
         self.subgraphs = max_subgraph(self.graph)
+        # Dataframe of all docked helices
         self.query_helices = query_helices
         if 'path' not in database_helices.columns:
             print(database_helices.columns)
@@ -43,8 +48,10 @@ class Score(object):
                     self.db_helices.loc[self.subgraphs[0][0][0]]['path']
                     )
         print('PDB PATH for CLASH FILTER {}'.format(self.pdb_path))
+        # Chain of database helices
         self.chain = self.db_helices.loc[self.subgraphs[0][0][0]]['chain']
 
+        # Make an alphashape if one is not provided
         if not alpha:
             if not target_path:
                 print('No alphashape or target provided. Do not attempt to '\
@@ -54,6 +61,7 @@ class Score(object):
         else:
             self.alpha = alpha
         if not query_CAs:
+            # PRODY CAs of all query helices
             self.query_CAs = self.workspace.query_CAs
 
     def calc_interweave_score(self, atoms, df_rows, query_rows):
@@ -102,10 +110,41 @@ class Score(object):
                 helix_score = sum(helix_scores) / len(helix_scores)
                 scores.append(helix_score)
             else:
-                scores.append(0)
+                scores.append(-1)
 
         return sum(scores)
 
+    def calc_rmsd(self, atoms, df_rows, query_rows):
+        '''Calculate the best possible RMSD of each matched helix to the docked helices'''
+        # Requires database atoms, row, and query atoms objects
+        # "atoms" will be database atoms
+        lengths = []
+        rmsds = []
+        for i in range(0, len(df_rows)):
+            row = df_rows[i]
+            target_helix_CAs = atoms.copy()
+            subselection = target_helix_CAs.select('resindex {}:{} and name'\
+                                                   ' CA'.format(row['start'] - 1, row['stop']))
+            tar_CAs = subselection.getCoords()
+            query_path = get_relative_path(self.workspace,
+                                           query_rows[i]['path'], depth=5)
+            query_path = os.path.relpath(query_path,
+                                         start=self.workspace.root_dir)
+            query_CAs = self.query_CAs[query_path]
+
+            rmsd = find_best_rmsd(tar_CAs, query_CAs)
+            if len(tar_CAs) > len(query_CAs):
+                length = len(query_CAs)
+            else:
+                length = len(tar_CAs)
+            rmsds.append(rmsd)
+            lengths.append(length)
+
+        weighted = 0
+        for rmsd, length in zip(rmsds, lengths):
+            weighted += rmsd * length
+
+        return weighted / sum(lengths)
 
     def apply(self):
         '''
@@ -114,6 +153,7 @@ class Score(object):
         '''
         best_score = 9999
         best_subgraph = None
+        print(f'OPENING PDBPATH {self.pdb_path}')
         original_atoms = prody.parsePDB(self.pdb_path,
                 chain=self.chain).select('backbone')
         for subgraph in self.subgraphs:
@@ -181,6 +221,46 @@ class Score(object):
         return df_rows, query_rows
 
 
+def find_best_rmsd(CAs_1, CAs_2):
+    '''Calculate the best possible RMSD between two sets of atoms (intended to be CAs only)
+    without moving either of them'''
+    if len(CAs_2) > len(CAs_1):
+        longer = CAs_2
+        shorter = CAs_1
+        flipped = True
+    else:
+        longer = CAs_1
+        shorter = CAs_2
+        flipped = False
+
+    long_combos = []
+    for i in range(1, len(longer) - len(shorter) + 1):
+        # Say longer is 5 atoms, shorter is 4 atoms; 5 - 4 = 1, but there are 2 possibilities for overlap
+        resi_stop = i + len(shorter) - 1
+        # long_combos.append(longer.select(f'resindex {i} to {resi_stop}'))
+        long_combos.append(longer[i-1:resi_stop])
+    short_combos = [shorter]
+
+    best_rmsd = 99999
+    # short_seq = None
+    # long_seq = None
+    # short_resis = (-1, -1)
+    # long_resis = (-1, -1)
+    for long_sele in long_combos:
+        for short_sele in short_combos:
+            if len(long_sele) == len(short_sele):
+                # rmsd = prody.calcRMSD(long_sele, short_sele)
+                rmsd = numeric.RMSD(long_sele, short_sele)
+            else:
+                print("\033[91mError: atom lengths did not match.\033[0m")
+            if rmsd < best_rmsd:
+                best_rmsd = rmsd
+                # short_seq = short_sele.getSequence()
+                # long_seq = long_sele.getSequence()
+
+    return best_rmsd
+
+
 def get_alphashape(pdb, chain=None, plot=False):
     '''
     Returns an AlphaShape object of a pdb file, outlining its general
@@ -191,7 +271,7 @@ def get_alphashape(pdb, chain=None, plot=False):
         atoms = prody.parsePDB(pdb, chain=chain)
     else:
         atoms = prody.parsePDB(pdb)
-        atoms = atoms.select('not chain A')
+        atoms = atoms.select('chain A')
     # For some reason there is a level which is not populated. This may
     # be for proteins w/ multiple chains.
     coordsets = atoms.getCoordsets()
@@ -201,9 +281,10 @@ def get_alphashape(pdb, chain=None, plot=False):
 
     # coords = [(0., 0.), (0., 1.), (1., 1.), (1., 0.), (0.5, 0.5)]
 
-    alpha_shape = alphashape.alphashape(coords, 0.2)
+    alpha_shape = alphashape.alphashape(coords, 0.1)
 
     if plot:
+        mpl.use('tkagg')
         helix = prody.parsePDB(pdb, chain='A')
         helixcoords = helix.getCoordsets()[0]
         fig = plt.figure()

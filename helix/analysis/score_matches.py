@@ -31,6 +31,8 @@ from helix.utils import numeric
 import subprocess
 import os
 
+import traceback
+
 
 def max_subgraph(graph):
     max_subgraph_len = 0
@@ -179,10 +181,13 @@ def apply(scorer, cutoff=50):
     of the best-scoring transformation
     '''
     best_score = 9999
+    best_interweave_score = 9999
+    best_clash_score = 9999
     best_subgraph = None
-    print(scorer.pdb_path)
+    print(f"PDB PATH: {scorer.pdb_path}")
+    print(f"CHAIN: {scorer.chain}")
     original_atoms = prody.parsePDB(scorer.pdb_path,
-            chain=scorer.chain).select('backbone')
+            chain=scorer.chain.split(' ')[1]).select('backbone')
     subgraphs = []
     rows = []
     for subgraph in scorer.subgraphs:
@@ -191,17 +196,38 @@ def apply(scorer, cutoff=50):
         df_rows, query_rows = scorer.get_helix_rows(subgraph)
         df_vectors = scorer.get_vectors(df_rows)
         query_vectors = scorer.get_vectors(query_rows)
-        print(df_rows)
-        print(query_rows)
         transform = numeric.Transformation(df_vectors, query_vectors)
-        prody_transform =\
-                prody.measure.transform.Transformation(transform.rotation,
-                transform.translation)
-        prody_transform.apply(atoms)
-        score = scorer.calculate(atoms)
-        interweave_score = scorer.calc_interweave_score(atoms, df_rows, query_rows)
+
+        # Don't like that I have to use a try/except here, but I'm having some trouble in a test case, potentially
+        # due to it being an old database? Shouldn't see these errors when matching to a de novo scaffold library.
+        try:
+            prody_transform =\
+                    prody.measure.transform.Transformation(transform.rotation,
+                    transform.translation)
+            prody_transform.apply(atoms)
+            score = scorer.calculate(atoms)
+            interweave_score = scorer.calc_interweave_score(atoms, df_rows, query_rows)
+            rmsd = scorer.calc_rmsd(atoms, df_rows, query_rows)
+        except Exception as e:
+            print("\033[91mError ocurred for the following.")
+            print(f"\033[91mPDB: {scorer.pdb_path}")
+            print(f"\033[91mChain: {scorer.chain}")
+            print("\033[91mDF rows:")
+            print('\033[0m')
+            print(df_rows)
+            print("\033[91mQuery rows:")
+            print('\033[0m')
+            print(query_rows)
+            print('Error was:')
+            print(f"\033[91m{e}\033[0m")
+            print(traceback.format_exc())
+            continue
         # assert(self.interweave_score is not None)
-        # print(self.interweave_score)
+
+        ## print(self.interweave_score)
+        print(f'Current clash score: {score}')
+        print(f'Current RMSD: {rmsd}')
+
         if score + interweave_score < best_score:
             best_interweave_score = interweave_score
             best_clash_score = score
@@ -215,18 +241,28 @@ def apply(scorer, cutoff=50):
                     'chain': scorer.chain,
                     'clash_score': score,
                     'interweave_score': interweave_score,
+                    'rmsd': rmsd,
                     'total_match_score': score + interweave_score,
                     'subgraph': subgraph,
                     'n_matched_helices': len(df_rows),
                     }
-            rosetta_score = 0
-            length = 0
+            # rosetta_score = 0
+            tracked_scores = ['interface_score', 'n_hbonds', 'size', 'shape_complementarity',
+                              'contact_molecular_surface', 'buns_all', 'buns_sc', 'buried_npsa_helix', 'delta_buried_npsa',
+                              'exposed_hydrophobics', 'packstat', 'percent_helical', 'n_interface_residues', 'complex_sasa',
+                              'delta_sasa', 'crossterm_energy', 'interface_packstat', 'delta_unsat', 'interface_dG',
+                              'sequence_identity',]
+            scoredict = {}
+            for sc in tracked_scores:
+                scoredict[sc] = 0
+
+            # length = 0
             # rifdock_score = 0
             for node in subgraph:
                 query_idx = node[1]
                 query_row = scorer.query_helices.loc[query_idx]
                 # Helixpath will follow symlink.
-                helixpath = os.path.realpath(query_row['path'])
+                helixpath = os.path.realpath(os.path.join(scorer.workspace.root_dir, query_row['path']))
                 # helixpath = clash.get_relative_path(workspace, helixpath)
                 # turnno = os.path.basename(helixpath).split('_')[0][0]
                 '''
@@ -272,15 +308,19 @@ def apply(scorer, cutoff=50):
                         rosetta_scores[rosetta_scores['design_file']==os.path.relpath(
                                 helixpath,
                                 scorer.workspace.root_dir)]
-                rosetta_score += float(score_row['interface_score'])
-                length += float(score_row['size'])
-            row['rosetta_score'] = rosetta_score
+                for sc in scoredict:
+                    scoredict[sc] += score_row.iloc[0][sc]
+                # rosetta_score += float(score_row['interface_score'])
+                # length += float(score_row['size'])
+            for sc in scoredict:
+                row[sc + '_sum'] = scoredict[sc]
+            # row['rosetta_score'] = rosetta_score
             # row['rifdock_score'] = rifdock_score
-            row['per_residue_score'] = rosetta_score / length
+            # row['per_residue_interface_score'] = rosetta_score / length
             # print('RIFDOCK SCORE IS {}'.format(rifdock_score))
-            print('ROSETTA SCORE IS {}'.format(rosetta_score))
-            print('ROSETTA NORMALIZED SCORE IS {}'.format(rosetta_score
-                / length))
+            # print('ROSETTA SCORE IS {}'.format(rosetta_score))
+            # # print('ROSETTA NORMALIZED SCORE IS {}'.format(rosetta_score
+            #     / length))
             print('CLASH SCORE IS {}'.format(score))
             print('INTERWEAVE SCORE IS {}'.format(interweave_score))
             # session_from_graph(workspace, row, query_df, db_df, alpha)
@@ -290,11 +330,11 @@ def apply(scorer, cutoff=50):
     scorer.interweave_score = best_interweave_score
     scorer.score = best_clash_score
     scorer.subgraph = best_subgraph
-    return rows, scorer
+    return rows
 
 
 def score_matches(workspace, results, query_df, db_df, plot=False,
-        threshold=50):
+        threshold=50, verbose=False):
     '''Go through results dataframe and score the matches'''
     # for i in range(0, 100): # Review top 100 matches for now.
         # testrow = results.iloc[i]
@@ -314,7 +354,10 @@ def score_matches(workspace, results, query_df, db_df, plot=False,
         clash_score = clash.Score(workspace, row, db_df, query_df,
                 alpha=alpha)
         # clash_score.apply()
-        candidates, clash_score = apply(clash_score, cutoff=threshold)
+        candidates = apply(clash_score, cutoff=threshold)
+        if verbose:
+            print('Candidates:')
+            print(candidates)
         scored_results.extend(candidates)
         # print('CLASH SCORE IS {}'.format(clash_score.score))
         # results.at[idx,'clash_score'] = clash_score.score

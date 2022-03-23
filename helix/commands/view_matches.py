@@ -55,11 +55,14 @@ def session_from_graph(workspace, results_row, query_df, db_df):
     df_row = db_df.loc[subgraph[0][0]]
     if 'path' in df_row:
         pdb = df_row['path']
+        pdbpath = pdb
         pdb_name = os.path.basename(pdb)
-        # pymol.cmd.load(pdb, pdb_name)
+        pymol.cmd.load(pdb, pdb_name)
         dfpose = pose_from_file(pdb)
     else:
+        print('PATH notin dataframe row')
         pdb = df_row['name'].split('_')[0]
+        pdbpath = pdb + '.cif'
         pdb_name = pdb
         pymol.cmd.fetch(pdb, pdb_name)
         dfpose = pose_from_file(pdb + '.cif')
@@ -86,16 +89,24 @@ def session_from_graph(workspace, results_row, query_df, db_df):
         query_vectors.extend(query_row['vector'])
         df_vectors.extend(df_row['vector'])
 
-        query_name = os.path.basename(query_row['path'])[:-7]
+        query_name = os.path.basename(query_row['path']).split('.')[0]
         qobjs += query_name + ' or '
+
+        query_pose = pose_from_file(
+            os.path.join(workspace.root_dir,
+                query_row['path'])
+        )
+        query_pose = query_pose.split_by_chain(2)
+        query_start = query_pose.pdb_info().pose2pdb(query_row['start']).split()[0]
+        query_stop = query_pose.pdb_info().pose2pdb(query_row['stop']).split()[0]
 
         query_selstr += "({} and (resi {}-{})) or ".format(
                 query_name,
-                query_row['start'], query_row['stop']
+                query_start, query_stop
                 )
         db_selstr = "(resi {}-{} and chain {})".format(
                 start, stop,
-                df_row['chain']
+                df_row['chain'].split()[1]
                 )
         db_sels.append(db_selstr)
 
@@ -109,7 +120,7 @@ def session_from_graph(workspace, results_row, query_df, db_df):
     db_selstr += ')'
 
     query_selstr = query_selstr[:-4]
-    query_selstr += ' and chain A'
+    query_selstr += ' and chain B'
 
     qobjs = qobjs[:-3] + ')'
 
@@ -121,10 +132,10 @@ def session_from_graph(workspace, results_row, query_df, db_df):
             'launch_pymol.sho')
     cmd = [script_path]
     cmd.append(';'.join(query_paths))
-    cmd.append(pdb)
+    cmd.append(pdbpath)
     cmd.append(query_selstr)
     cmd.append(db_selstr)
-    cmd.append(df_row['chain'])
+    cmd.append(df_row['chain'].split()[1])
     cmd.extend(pymol_transform)
     cmd.append(qobjs)
 
@@ -168,9 +179,11 @@ def main():
         bins = [0, 10, 20, 30, 40, 50]
         results['binned_match_score'] =\
                 pd.cut(results['total_match_score'], bins)
+        results = results[results.name != '3g67_1']
         results = results.sort_values(by=['n_matched_helices',
             'binned_match_score',
-            'rosetta_score'], ascending=True)
+            'interface_score_sum'], ascending=True)
         for i in range(0, 100):
             testrow = results.iloc[i]
+            print(testrow)
             session_from_graph(match_workspace, testrow, helices, df)

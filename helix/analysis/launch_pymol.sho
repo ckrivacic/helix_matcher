@@ -30,6 +30,9 @@ then
 elif [[ $pdb_name == *.pdb ]]
 then
     pdb_name=${pdb_name%.pdb}
+elif [[ $pdb_name == *.cif ]]
+then
+    pdb_name=${pdb_name%.cif}
 fi
 
 pymol -q $helix_paths $pdb \

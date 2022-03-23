@@ -794,7 +794,7 @@ class MatchWorkspace(Workspace):
                 # "*/",
                 '*.pdb.gz')):
                 path = os.path.relpath(helix, start=self.root_dir)
-                atoms = prody.parsePDB(helix, chain='A').select('name CA')
+                atoms = prody.parsePDB(helix, chain='B').select('name CA')
                 atoms_dict[path] = atoms.getCoords()
             with open(self.query_CA_path, 'wb') as f:
                 pickle.dump(atoms_dict, f)
