@@ -662,6 +662,7 @@ def main():
         </FILTERS>
         '''
         ia_mover = XmlObjects.static_get_mover(ia)
+        ia_mover.set_compute_interface_sc(False)
         ia_mover.apply(flexpep_pose)
 
         # For delta NPSA, get the two chains

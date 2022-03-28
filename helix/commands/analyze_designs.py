@@ -1,4 +1,4 @@
-t '''
+'''
 Analyze different design methods.
 
 Usage:
@@ -197,14 +197,14 @@ def plot_sequence_recovery(df, args):
     # order = ['1b33_K', '1b33_K_buns_noprune', '1b33_K_buns_penalty',
             # '1b33_K_nativelike', '1b33_K_specialrot']
     order = None
-    order = ['base', #'deleteme', 
+    order = ['base', #'deleteme',
             'buns_penalty', 'buns_penalty_pruned',
-            'residue_lock', 'specialrot', 'combined',
-            'combined_nomin']
-    labels = ['Base', #'NativeResidue', 
+            'residue_lock', 'specialres', 'combined','specialrot',
+            'specialrot_combined', 'special_combined_ramp', 'combined_nomin']
+    labels = ['Base', #'NativeResidue',
             'BUNS penalty', 'BUNS pen. pruned', 
-            'Residue lock', 'Special rotamer*', 'Combined', 
-            'Combined (no cst)']
+            'Residue lock', 'Special residue', 'Special res + BUNS','Special rotamer',
+            'Special rot. + BUNS', 'Special rot. + BUNS, ramp cst.', 'Special rot. + BUNS (no cst)']
     # sns.stripplot(data=df, x='protocol', y=args['--yaxis'],
             # order=order, color='.5', alpha=0.5)
     df = df[df['protocol'] != 'deleteme']
