@@ -399,6 +399,7 @@ def main():
             favornative_mvr.apply(pose)
             ref_cst.set_weight(ScoreType.aa_composition, 1.0)
 
+        no_packing = operation.PreventRepackingRLT()
         if args['--keep-good-rotamers']:
             if special_res:
                 print('Assigning the following positions as special residues:', flush=True)
@@ -524,7 +525,6 @@ def main():
         # or_clash = residue_selector.OrResidueSelector(or_selector,
         # clash_selector)
         not_selector = residue_selector.NotResidueSelector(clash_selector)
-        no_packing = operation.PreventRepackingRLT()
         no_design = operation.RestrictToRepackingRLT()
         upweight = \
             '''
@@ -663,8 +663,8 @@ def main():
         '''
         ia_mover = XmlObjects.static_get_mover(ia)
         ia_mover.set_compute_interface_sc(False)
-        ia_mover.set_compute_separated_sasa(False)
-        ia_mover.set_calc_dSASA(False)
+        # ia_mover.set_compute_separated_sasa(False)
+        # ia_mover.set_calc_dSASA(False)
         ia_mover.apply(flexpep_pose)
 
         # For delta NPSA, get the two chains
@@ -731,8 +731,8 @@ def main():
                'packstat': packstat_score,
                'percent_helical': percent_helical,
                'n_interface_residues': ia_mover.get_num_interface_residues(),
-               # 'complex_sasa': ia_mover.get_complexed_sasa(),
-               # 'delta_sasa': ia_mover.get_interface_delta_sasa(),
+               'complex_sasa': ia_mover.get_complexed_sasa(),
+               'delta_sasa': ia_mover.get_interface_delta_sasa(),
                'crossterm_energy': ia_mover.get_crossterm_interface_energy(),
                'interface_packstat': ia_mover.get_interface_packstat(),
                'delta_unsat': ia_mover.get_interface_delta_hbond_unsat(),
