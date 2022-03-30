@@ -86,7 +86,7 @@ def main():
                         'n_hbonds': ['>', 1],
                         },
                     'percentile': {
-                        'interface_dG': ['<', 0.5]
+                        'interface_dG': ['<', -0.5]
                         }
                     }
         scores = parse_filter(filters, scores)

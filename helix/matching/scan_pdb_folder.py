@@ -71,7 +71,7 @@ def main():
             'helixdf_custom_{0}.'.format(today.strftime("%m-%d-%Y")))
     df.to_pickle(out + 'pkl')
     # Comment this out later - no need for csv in final
-    df.to_csv(out + 'csv')
+    # df.to_csv(out + 'csv')
 
 
 if __name__=='__main__':

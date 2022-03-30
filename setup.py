@@ -84,10 +84,7 @@ setuptools.setup(
             define_command('04_match'),
             define_command('05_score_matches'),
             define_command('filter'),
-            # define_command('pick_designs_to_validate'),
-            # define_command('add_residues'),
-            # define_command('make_table'),
-            # define_command('web_logo'),
+            define_command("export_matches"),
             ],
         }
 )

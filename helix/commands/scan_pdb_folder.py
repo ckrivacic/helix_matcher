@@ -30,7 +30,7 @@ from helix import big_jobs
 def main():
     args = docopt.docopt(__doc__)
     workspace = ws.workspace_from_dir(args['<workspace>'])
-    pdffolder = args['<pdbfolder>']
+    pdbfolder = args['<pdbfolder>']
 
     script_path = \
             os.path.join(os.path.abspath(
@@ -45,7 +45,7 @@ def main():
         workspace.clear_database()
 
     cmd = workspace.python_path, script_path
-    cmd += workspace.root_dir, args['<pdbfolder>']
+    cmd += workspace.root_dir,pdbfolder
     argpass = ['--ntasks']
     for arg in argpass:
         cmd += arg, str(args[arg])

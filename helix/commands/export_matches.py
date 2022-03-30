@@ -3,24 +3,21 @@ Make a PyMOL session for each result, one at a time, in ascending score
 order.
 
 Usage:
-    helix view_matches <workspace> [options]
+    helix export_matches <workspace> [options]
 
 Options:
     --target=STR, -t  Only view matches for the given target
 '''
-from helix.analysis import clash
+from pyrosetta.rosetta.core.pose import append_pose_to_pose
 from helix import workspace as ws
 import docopt
-import prody
 import pandas as pd
 import pickle5 as pickle
 import pymol
-from helix.matching import scan_helices
-import networkx as nx
 from pyrosetta import pose_from_file
 from pyrosetta import init
 from helix.utils import numeric
-import subprocess
+from helix.utils import utils
 import os
 
 
@@ -36,27 +33,15 @@ def get_pymol_transform(transformation):
     return pymol_transform
 
 
-def session_from_graph(workspace, results_row, query_df, db_df):
+def session_from_graph(match_workspace, results_row, query_df, db_df):
 
     init()
-    # def chain_from_name(string):
-        # chainno = int(string.split('_')[-1])
-        # chain = chr(ord('@')+chainno)
-        # return chain
 
     subgraph = results_row['subgraph']
 
-    # query_selstr = ""
-    # db_selstr = "db and "
-
-    # query_path = os.path.dirname(query_df.loc[0]['path'])
-
-    # db_sels = []
     df_row = db_df.loc[subgraph[0][0]]
     if 'path' in df_row:
         pdb = df_row['path']
-        pdb_name = os.path.basename(pdb)
-        # pymol.cmd.load(pdb, pdb_name)
         dfpose = pose_from_file(pdb)
     else:
         pdb = df_row['name'].split('_')[0]
@@ -65,96 +50,85 @@ def session_from_graph(workspace, results_row, query_df, db_df):
         dfpose = pose_from_file(pdb + '.cif')
     query_vectors = []
     df_vectors = []
-    # qobjs = '('
 
-    # query_paths = []
+    match_results = ['rmsd', 'clash_score', 'interweave_score', 'total_match_score']
+    # Put files in os.path.join(workspace.focus_dir, 'pdbs')
+    pdbdir = os.path.join(match_workspace.focus_dir, 'pdbs')
+    os.makedirs(pdbdir, exist_ok=True)
+    i = 0
+    filename = df_row['name']
+    filepath = os.path.join(pdbdir, filename + f'_{i}.pdb.gz')
+    while os.path.exists(filepath):
+        i += 1
+        filepath = os.path.join(pdbdir, filename + f'_{i}.pdb.gz')
+
+    query_rows = []
     for node in subgraph:
         df_idx = node[0]
         query_idx = node[1]
         df_row = db_df.loc[df_idx]
         query_row = query_df.loc[query_idx]
-        # query_paths.append(os.path.join(workspace.root_dir,
-            # query_row['path']))
-
-        try:
-            start = dfpose.pdb_info().pose2pdb(df_row['start']).split(' ')[0]
-            stop = dfpose.pdb_info().pose2pdb(df_row['stop']).split(' ')[0]
-        except:
-            start = df_row['start']
-            stop = df_row['stop']
+        for result_type in match_results:
+            query_row[result_type] = results_row[result_type]
+        # To get (hopefully) accurate accounting of residues before & after combining poses, find the residue
+        # index for the specific chain and use that, since we will always make the new scaffold chain A
+        # Note that we only want to do this if split_chains was not selected during the scan_helices step,
+        # so we have to implement a check to see if the residues are part of the correct chain or not.
+        # Also note that this is intended to be used with split_chains ON, so in principle this shouldn't be
+        # necessary; however, in the future, it could be useful (or at least interesting) to match multi-chain units,
+        # and this avoids one potential problem with that (though many other problems will still have to be tackled).
+        # The intention is for these 'rosetta_helix_start/stop' values to be used to transfer helix restypes over from
+        # the designed docked helices.
+        rosetta_chain = dfpose.chain(df_row['start'])
+        pdb_chain = df_row['chain']
+        if ' ' in pdb_chain:
+            pdb_chain = pdb_chain.split(' ')[1]
+        if dfpose.pdb_info().pose2pdb(dfpose.chain_begin(rosetta_chain)).split(' ')[1] == pdb_chain:
+            query_row['rosetta_helix_start'] = df_row['start'] - dfpose.chain_begin(rosetta_chain) + 1
+            query_row['rosetta_helix_stop'] = df_row['stop'] - dfpose.chain_begin(rosetta_chain) + 1
+        else:
+            query_row['rosetta_helix_start'] = df_row['start']
+            query_row['rosetta_helix_stop'] = df_row['stop']
+        query_row['superimposed_file'] = os.path.relpath(os.path.abspath(filepath), workspace.root_dir)
+        query_rows.append(query_row)
 
         query_vectors.extend(query_row['vector'])
         df_vectors.extend(df_row['vector'])
 
-        # query_name = os.path.basename(query_row['path'])[:-7]
-        # qobjs += query_name + ' or '
-
-        # query_selstr += "({} and (resi {}-{})) or ".format(
-                # query_name,
-                # query_row['start'], query_row['stop']
-                # )
-        # db_selstr = "(resi {}-{} and chain {})".format(
-                # start, stop,
-                # df_row['chain']
-                # )
-        # db_sels.append(db_selstr)
-
+    chain = df_row['chain']
+    if ' ' in chain:
+        chain = chain.split(' ')[1]
+    dfpose = utils.pose_get_chain(dfpose, chain)
     transform = numeric.Transformation(df_vectors, query_vectors)
-    pymol_transform = get_pymol_transform(transform)
 
-    """
-    # pymol_tranform: matrix to apply to the df PDB (a LUCS model)
-    transform: object containing trotation + translation
-    matrices/vectors. 
-        transform.rotation
-        transform.translation
-    dfpose: pose containing the database protein
-
+    targetpose = pose_from_file(match_workspace.target_path)
+    targetpose.pdb_info().set_chains('B')
+    dfpose.pdb_info().set_chains('A')
     rotation = numeric.np_array_to_xyzM(transform.rotation)
     translation = numeric.np_array_to_xyzV(transform.translation)
-    dfpose.apply_transform_Rx_plus_v(rotation, tranlsation)
-    dfpose.append_pose_by_jump...
+    dfpose.apply_transform_Rx_plus_v(rotation, translation)
+    append_pose_to_pose(dfpose, targetpose)
 
-    Put files in os.path.join(workspace.focus_dir, 'pdbs')
-    dfpose.dump_pdb(filename)
+    dfpose.dump_pdb(filepath)
 
-    """
+    return query_rows
 
-    # db_selstr = '('+ db_sels[0]
-    # for i in range(1, len(db_sels)):
-        # db_selstr += ' or '
-        # db_selstr += db_sels[i]
-    # db_selstr += ')'
 
-    # query_selstr = query_selstr[:-4]
-    # query_selstr += ' and chain A'
-
-    # qobjs = qobjs[:-3] + ')'
-
-    # print(query_selstr)
-    # print(db_selstr)
-
-    # script_path = os.path.dirname(os.path.realpath(__file__))
-    # script_path = os.path.join(script_path, '..', 'analysis',
-            # 'launch_pymol.sho')
-    # cmd = [script_path]
-    # cmd.append(';'.join(query_paths))
-    # cmd.append(pdb)
-    # cmd.append(query_selstr)
-    # cmd.append(db_selstr)
-    # cmd.append(df_row['chain'])
-    # cmd.extend(pymol_transform)
-    # cmd.append(qobjs)
-
-    # print(cmd)
-
-    # subprocess.call(cmd)
+def get_realpath(row):
+    full = os.path.realpath(os.path.join(
+        workspace.root_dir,
+        row['path']
+        )
+    )
+    return os.path.relpath(full, workspace.root_dir)
 
 
 def main():
     args = docopt.docopt(__doc__)
+    global workspace
     workspace = ws.workspace_from_dir(args['<workspace>'])
 
+    # df is the scaffold database dataframe (NOT the individual helices)
     try:
         df = pd.read_pickle(workspace.dataframe_path)
     except:
@@ -168,6 +142,7 @@ def main():
     for target in targets:
         match_workspace = \
                 ws.workspace_from_dir(workspace.target_match_path(target))
+        # helices is the dataframe of docked helix orientations
         try:
             helices = pd.read_pickle(match_workspace.all_scaffold_dataframe)
         except:
@@ -184,11 +159,33 @@ def main():
             results = pd.concat([results, scores],
                     ignore_index=True)
         bins = [0, 10, 20, 30, 40, 50]
-        results['binned_match_score'] =\
-                pd.cut(results['total_match_score'], bins)
+        results['binned_match_score'] = \
+            pd.cut(results['total_match_score'], bins)
+        results = results[results.name != '3g67_1']
         results = results.sort_values(by=['n_matched_helices',
-            'binned_match_score',
-            'rosetta_score'], ascending=True)
+                                          'binned_match_score',
+                                          'interface_score_sum',
+                                          'rmsd'], ascending=True)
+
+        # Get designed helix scores and merge with results
+        rif_workspace = ws.RIFWorkspace(workspace.root_dir, target)
+        designed_helix_scores = rif_workspace.get_scores()
+        if 'design_file' not in designed_helix_scores.columns:
+            designed_helix_scores['design_file'] = designed_helix_scores['patchman_file']
+
+        helices.drop('name', axis=1, inplace=True)
+        helices['design_file'] = helices.apply(get_realpath, axis=1)
+        helices['copy_index'] = helices.index
+        helices = helices.merge(designed_helix_scores, how='left', on='design_file').set_index('copy_index')
+
+        exported_df = []
         for i in range(0, 100):
-            testrow = results.iloc[i]
-            session_from_graph(match_workspace, testrow, helices, df)
+            if i < results.shape[0]:
+                testrow = results.iloc[i]
+                print(testrow)
+                exported_df.extend(session_from_graph(match_workspace, testrow, helices, df))
+
+        final = pd.DataFrame(exported_df)
+        final.set_index('design_file')
+        final.to_pickle(os.path.join(match_workspace.focus_dir, 'pdbs', 'exported_pdbs.pkl'))
+
