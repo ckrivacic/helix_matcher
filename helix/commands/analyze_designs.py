@@ -196,22 +196,24 @@ def plot_sequence_recovery(df, args):
         # print(df.sort_values(by=printcol)[printcol])
     # order = ['1b33_K', '1b33_K_buns_noprune', '1b33_K_buns_penalty',
             # '1b33_K_nativelike', '1b33_K_specialrot']
-    order = None
-    order = ['base', #'deleteme',
-            'buns_penalty', 'buns_penalty_pruned',
-            'residue_lock', 'specialres', 'combined','specialrot',
-            'specialrot_combined', 'special_combined_ramp', 'combined_nomin']
-    labels = ['Base', #'NativeResidue',
-            'BUNS penalty', 'BUNS pen. pruned', 
-            'Residue lock', 'Special residue', 'Special res + BUNS','Special rotamer',
-            'Special rot. + BUNS', 'Special rot. + BUNS, ramp cst.', 'Special rot. + BUNS (no cst)']
     # sns.stripplot(data=df, x='protocol', y=args['--yaxis'],
             # order=order, color='.5', alpha=0.5)
-    df = df[df['protocol'] != 'deleteme']
-    means = df.groupby('protocol')[args['--yaxis']].mean()
+    # df = df[df['protocol'] != 'deleteme']
+    means = []
+    for protocol in order:
+        mean = df[df['protocol']==protocol][args['--yaxis']].mean()
+        means.append(mean)
     fig, ax = plt.subplots()
+    if args['--yaxis'] == 'n_hbonds':
+        bw = 0.2
+    elif args['--yaxis'] == 'helix_percent_identity':
+        bw = 0.2
+    elif args['--yaxis'] == 'buns_all' or args['--yaxis'] == 'buns_sc':
+        bw = 0.2
+    else:
+        bw = None
     sns.violinplot(data=df, x='protocol', y=args['--yaxis'],
-            order=order, )
+            order=order, bw=bw)
     plt.scatter(x=range(len(means)), y=means, c='k', marker='_', s=200)
     if args['--xaxis'] == 'protocol':
         ax.set_xticklabels(labels)
@@ -223,7 +225,8 @@ def plot_sequence_recovery(df, args):
 def scatterplot(df, args):
     # order = ['1b33_K', '1b33_K_buns_noprune', '1b33_K_buns_penalty',
             # '1b33_K_nativelike', '1b33_K_specialrot']
-    order = None
+    if not args['--xaxis'] == 'protocol':
+        order = None
     if args['--hue']:
         hue = args['--hue']
     else:
@@ -245,17 +248,8 @@ def barplot(df, args):
             # '1b33_K_nativelike', '1b33_K_specialrot']
     # labels = ['Base', 'BUNS penalty', 'BUNS penalty + prune', 
             # 'Freeze good rotamers', 'Special rotamer bonus']
-    if args['--xaxis'] == 'protocol':
-        order = ['base', #'deleteme', 
-                'buns_penalty', 'buns_penalty_pruned',
-                'residue_lock', 'specialrot', 'combined',
-                'combined_nomin']
-        labels = ['Base', #'NativeResidue', 
-                'BUNS penalty', 'BUNS pen. pruned', 
-                'Residue lock', 'Special rotamer*', 'Combined', 
-                'Combined (no cst)']
-    else:
-        order=None
+    # if not args['--xaxis'] == 'protocol':
+    #     order=None
     if args['--hue']:
         hue = args['--hue']
     else:
@@ -264,7 +258,7 @@ def barplot(df, args):
     # sns.stripplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
             # order=order, color='.5', alpha=0.5, ax=ax)
     sns.barplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
-            hue=hue, order=order, ax=ax)
+            hue=hue, order=order, ax=ax, ci=None)
     if args['--xaxis'] == 'protocol':
         ax.set_xticklabels(labels)
         plt.xticks(rotation=45)
@@ -466,6 +460,39 @@ def main():
         for name, group in df.groupby([args['--hue'], 'chain',
             'bench_start', 'benchmark_resis']):
             create_web_logo(name, group)
+
+
+    if args['--xaxis'] == 'protocol':
+        global order
+        global labels
+        order = ['base',
+                 'buns_penalty', 'buns_penalty_pruned',
+                 'deleteme', 'specialres', 'combined',
+                 'residue_lock', 'specialrot',
+                 'specialrot_combined', 'special_combined_ramp', 'combined_nomin']
+        labels = ['Base',
+                  'BUNS penalty', 'BUNS pen. pruned',
+                  'NativeResidue', 'Special residue', 'Special res + BUNS',
+                  'Residue lock',  'Special rotamer',
+                  'Special rot. + BUNS', 'Special rot. + BUNS, ramp cst.', 'Special rot. + BUNS (no cst)']
+        color_dict = {
+            'base': '#A5AA99',
+            'buns_penalty': '#E69F00',
+            'buns_penalty_pruned': '#E69F00',
+            'deleteme': '#CC79A7',
+            'specialres': '#CC79A7',
+            'combined': '#D55E00',
+            'residue_lock': '#56B4E9',
+            'specialrot': '#56B4E9',
+            'specialrot_combined': '#0072B2',
+            'special_combined_ramp': '#009E73',
+            'combined_nomin': '#009E73',
+        }
+        global colors
+        colors = []
+        for prot in order:
+            colors.append(color_dict[prot])
+        sns.set_palette(sns.color_palette(colors))
 
     
     if plot_type == 'seq':

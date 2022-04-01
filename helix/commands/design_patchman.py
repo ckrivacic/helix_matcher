@@ -134,6 +134,7 @@ def main():
 
             elif designtype == 'residue_lock':
                 cmd += '--keep-good-rotamers',
+
             elif designtype == 'specialres':
                 cmd += '--keep-good-rotamers',
                 cmd += '--special-res',
@@ -166,6 +167,33 @@ def main():
                 cmd += '--keep-good-rotamers',
                 cmd += '--special-rot',
                 cmd += '--buns-penalty',
+
+            elif designtype == 'residue_lock_combined':
+                cmd += '--keep-good-rotamers',
+                cmd += '--buns-penalty',
+
+            elif designtype == 'residue_lock_combined_ramp':
+                cmd += '--keep-good-rotamers',
+                cmd += '--buns-penalty',
+                cmd += '--ramp-cst',
+
+            elif designtype == 'specialrot_3':
+                cmd += '--keep-good-rotamers',
+                cmd += '--special-rot',
+                cmd += '--special-rot-weight', '-3.0'
+
+            elif designtype == 'specialrot_3_combined':
+                cmd += '--keep-good-rotamers',
+                cmd += '--special-rot',
+                cmd += '--special-rot-weight', '-3.0'
+                cmd += '--buns-penalty',
+
+            elif designtype == 'specialrot_3_combined_ramp':
+                cmd += '--keep-good-rotamers',
+                cmd += '--special-rot',
+                cmd += '--special-rot-weight', '-3.0'
+                cmd += '--buns-penalty',
+                cmd += '--ramp-cst',
 
 
         if args['--local']:

@@ -58,53 +58,45 @@ class InterfaceSetup(object):
         self.sfxn = create_score_function('ref2015')
         self.sfxn.set_weight(ScoreType.coordinate_constraint, 1.0)
 
-    def transfer_residue(self, pose2, pose1_resnum, pose2_resnum, special_res=False):
+    def transfer_residue(self, pose2, pose1_resnum, pose2_resnum):
         '''Transfers a rotamer from pose2 to pose1'''
-        if special_res:
-            current_rsd_type_ptr = pose2.residue_type_ptr(position)
-            new_rsd_type_mutable = rosetta.core.chemical.MutableResidueType(current_rsd_type_ptr)
-            new_rsd_type_mutable.add_variant_type(rosetta.core.chemical.SPECIAL_ROT)
-            new_rsd_type = rosetta.core.chemical.ResidueType.make(new_rsd_type_mutable)
-            rosetta.core.pose.replace_pose_residue_copying_existing_coordinates(self.design_pose,
-                                                                                pose1_resnum, new_rsd_type)
-        else:
-            pose2_residue = pose2.residue(pose2_resnum)
+        pose2_residue = pose2.residue(pose2_resnum)
 
-            # Define operations
-            idx_selector = residue_selector.ResidueIndexSelector(int(pose1_resnum))
-            restypes = operation.RestrictToSpecifiedBaseResidueTypes(
-                utils.strlist_to_vector1_str([pose2_residue.name3()]),
-                idx_selector)
-            not_selector = residue_selector.NotResidueSelector(idx_selector)
-            no_packing = operation.PreventRepackingRLT()
-            static = operation.OperateOnResidueSubset(no_packing,
-                                                      not_selector)
-            # Apply operations to task factory
-            tf = TaskFactory()
-            tf.push_back(operation.InitializeFromCommandline())
-            tf.push_back(restypes)
-            tf.push_back(static)
-            packertask = tf.create_task_and_apply_taskoperations(self.design_pose)
+        # Define operations
+        idx_selector = residue_selector.ResidueIndexSelector(int(pose1_resnum))
+        restypes = operation.RestrictToSpecifiedBaseResidueTypes(
+            utils.strlist_to_vector1_str([pose2_residue.name3()]),
+            idx_selector)
+        not_selector = residue_selector.NotResidueSelector(idx_selector)
+        no_packing = operation.PreventRepackingRLT()
+        static = operation.OperateOnResidueSubset(no_packing,
+                                                  not_selector)
+        # Apply operations to task factory
+        tf = TaskFactory()
+        tf.push_back(operation.InitializeFromCommandline())
+        tf.push_back(restypes)
+        tf.push_back(static)
+        packertask = tf.create_task_and_apply_taskoperations(self.design_pose)
 
-            # Pack to mutate residue
-            mover = PackRotamersMover(self.sfxn, packertask)
-            mover.apply(self.design_pose)
+        # Pack to mutate residue
+        mover = PackRotamersMover(self.sfxn, packertask)
+        mover.apply(self.design_pose)
 
-            # Now add constraints
-            for atom in range(pose2_residue.first_sidechain_atom(), pose2_residue.natoms()):
-                if pose2_residue.atom_is_hydrogen(atom):
-                    continue
-                xyz = pose2_residue.xyz(atom)
-                id = AtomID(atom, int(pose1_resnum))
-                reference = AtomID(1, 1)
-                func = HarmonicFunc(0, 1)
-                cst = CoordinateConstraint(id, reference, xyz, func)
-                self.design_pose.add_constraint(cst)
+        # Now add constraints
+        for atom in range(pose2_residue.first_sidechain_atom(), pose2_residue.natoms()):
+            if pose2_residue.atom_is_hydrogen(atom):
+                continue
+            xyz = pose2_residue.xyz(atom)
+            id = AtomID(atom, int(pose1_resnum))
+            reference = AtomID(1, 1)
+            func = HarmonicFunc(0, 1)
+            cst = CoordinateConstraint(id, reference, xyz, func)
+            self.design_pose.add_constraint(cst)
 
-            # Repack with constraints
-            packertask = tf.create_task_and_apply_taskoperations(self.design_pose)
-            mover = PackRotamersMover(self.sfxn, packertask)
-            mover.apply(self.design_pose)
+        # Repack with constraints
+        packertask = tf.create_task_and_apply_taskoperations(self.design_pose)
+        mover = PackRotamersMover(self.sfxn, packertask)
+        mover.apply(self.design_pose)
 
 
     def prep_design(self):
@@ -140,7 +132,7 @@ class InterfaceSetup(object):
                     closest_row = res_distances.sort_values(by='dist').iloc[0]
                     # print(closest_row.res2)
                     # print(closest_row.dist)
-                    if closest_row.dist < 1.0:
+                    if closest_row.dist < 0.5:
                         self.transfer_residue(helix_pose, closest_row.res2, helix_index)
 
         self.design_pose.dump_pdb('testout.pdb')
