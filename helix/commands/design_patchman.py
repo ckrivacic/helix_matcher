@@ -107,7 +107,7 @@ def main():
 
         if args['--special-rot']:
             cmd += '--special-rot',
-        if args['--special-rot-weight']:
+        if args['--special-rot-weight'] and not args['--benchmark']:
             cmd += '--special-rot-weight', args['--special-rot-weight']
 
         if args['--task']:
