@@ -171,20 +171,6 @@ def main():
             if chain:
                 print('MAKING PATCHES FOR CHAIN {}'.format(chain))
                 pose = utils.pose_get_chain(pose, chain)
-                # poses = []
-                # for i in range(1, pose.num_chains() + 1):
-                #     chainpose = pose.split_by_chain(i)
-                #     info = chainpose.pdb_info().pose2pdb(1)
-                #     if info.split(' ')[1] in chain and chainpose.residue(1).is_protein():
-                #         if chainpose.size() < 5:
-                #             raise('Error: chain {} too small.'.format(chain))
-                #         else:
-                #             poses.append(chainpose)
-                # pose = poses[0]
-                # if len(poses) > 1:
-                #     for chainpose in poses[1:]:
-                #         append_pose_to_pose(pose, chainpose)
-
             else:
                 pose = pose.split_by_chain(1)
             target_pdb = workspace.target_path
@@ -227,7 +213,6 @@ def main():
                 # Construct dictionary of patches
                 patch_dict = {}
                 for patch in patch_rif_ws.patches:
-                    print('IMPORTING FOR PATCH {}'.format(patch))
                     patch_number = patch.split('/')[-2].split('_')[-1]
                     patch_dict[patch_number] = []
                     patch_pdb = os.path.join(patch, f"{patch_number}_target.pdb")
