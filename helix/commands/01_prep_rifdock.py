@@ -218,9 +218,10 @@ def main():
                     patch_dict[patch_number] = []
                     patch_pdb = os.path.join(patch, f"{patch_number}_target.pdb")
                     print(f'PATCH PDB: {patch_pdb}')
-                    patch_atoms = prody.parsePDB(patch_pdb).getHierView()
+                    patch_atoms = prody.parsePDB(patch_pdb)
                     if not patch_atoms:
                         continue
+                    patch_atoms = patch_atoms.getHierView()
                     for res in patch_atoms.iterResidues():
                         patch_dict[patch_number].append(res.getResnum())
                 for patch_number in patch_dict:
