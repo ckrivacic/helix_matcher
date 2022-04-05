@@ -50,7 +50,7 @@ def main():
 
     for target in targets:
 
-        rif_workspace = ws.workspace_from_dir(target)
+        rif_workspace = ws.RIFWorkspace(workspace.root_dir, target)
         inputs = rif_workspace.unclaimed_inputs
         ntasks = len(inputs)
 
