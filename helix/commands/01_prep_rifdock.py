@@ -225,6 +225,7 @@ def main():
                 # Construct dictionary of patches
                 patch_dict = {}
                 for patch in patch_rif_ws.patches:
+                    print('IMPORTING FOR PATCH {}'.format(patch))
                     patch_number = patch.split('/')[-2].split('_')[-1]
                     patch_dict[patch_number] = []
                     patch_pdb = os.path.join(patch, f"{patch_number}_target.pdb")
