@@ -189,6 +189,7 @@ def main():
                 i = 1
                 for res in patches.reslist:
                     patch_folder = os.path.join(workspace.focus_dir, f'patch_{i}')
+                    print('PATCH FOLDER: {}'.format(patch_folder))
                     i += 1
                     if not os.path.exists(patch_folder):
                         os.makedirs(patch_folder, exist_ok=True)
