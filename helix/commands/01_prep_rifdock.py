@@ -141,7 +141,7 @@ def main():
     root_workspace = ws.workspace_from_dir(args['<workspace>'])
     # posefile = os.path.abspath(args['<target_pdb>'])
     if args['--target']:
-        targets = args['--target']
+        targets = [args['--target']]
     else:
         targets = root_workspace.targets
     chainmap = None
