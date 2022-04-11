@@ -148,7 +148,17 @@ class ClickablePlot(object):
         Fetch a file (if not found)
         '''
         pathlist = patchman_file.split('/')
-        if os.path.basename(self.workspace.root_dir) not in pathlist:
+        print(pathlist)
+        if '2022_02_17_design_benchmark' in pathlist:
+            start = pathlist.index(
+                os.path.basename('2022_02_17_design_benchmark')
+            ) + 1
+            fpath = os.path.join(
+                self.workspace.root_dir,
+                *pathlist[start:]
+            )
+            patchman_file = os.path.join(*pathlist[start:])
+        elif os.path.basename(os.path.normpath(self.workspace.root_dir)) not in pathlist:
             fpath = os.path.join(
                     self.workspace.root_dir,
                     patchman_file
@@ -161,10 +171,17 @@ class ClickablePlot(object):
                     self.workspace.root_dir,
                     *pathlist[start:]
                     )
+        if not os.path.exists(os.path.dirname(fpath)):
+            os.makedirs(os.path.dirname(fpath), exist_ok=True)
+        print('FPATH')
+        print(fpath)
         if not os.path.exists(fpath):
+            print("NO EXIST")
             if os.path.basename(self.workspace.root_dir) not in pathlist:
                 remote_path = os.path.join(
-                        os.path.basename(self.workspace.root_dir),
+                        os.path.basename(
+                            os.path.normpath(self.workspace.root_dir)
+                        ),
                         patchman_file
                         )
                 remote_path = self.workspace.rsync_url + remote_path

@@ -12,7 +12,7 @@ Options:
         [default: interface_score_y]
 
     --rmsd-cutoff=FLOAT, -c  Eliminate helices greater than this RMSD cutoff  
-        [default: 1.0]
+        [default: 0]
 
     --pose-score-cutoff=FLOAT, -p  Elimiate poses with a total score
         greater than this float  [default: 0]
@@ -27,7 +27,7 @@ Options:
     --id-cutoff=FLOAT  Filter out results that have a sequence identity
         within this #
 
-    --patch-id-cutoff=FLOAT  filter out patches that have htis amount of
+    --patch-id-cutoff=FLOAT  filter out patches that have this amount of
         sequence identity
 
     --buried-identity  Calculate buried sequence identity. WARNING: Do
@@ -217,7 +217,7 @@ def plot_sequence_recovery(df, args):
     plt.scatter(x=range(len(means)), y=means, c='k', marker='_', s=200)
     if args['--xaxis'] == 'protocol':
         ax.set_xticklabels(labels)
-        plt.xticks(rotation=45)
+        plt.xticks(rotation=70)
     plt.tight_layout()
     plt.show()
 
@@ -231,6 +231,7 @@ def scatterplot(df, args):
         hue = args['--hue']
     else:
         hue = None
+    print(df[args['--yaxis']].sort_values())
     if args['--size']:
         size = args['--size']
         ax = sns.scatterplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
@@ -261,7 +262,7 @@ def barplot(df, args):
             hue=hue, order=order, ax=ax, ci=None)
     if args['--xaxis'] == 'protocol':
         ax.set_xticklabels(labels)
-        plt.xticks(rotation=45)
+        plt.xticks(rotation=70)
     fig.tight_layout()
     plt.xlabel(None)
     plt.show()
@@ -356,6 +357,37 @@ def calc_buried_identity(row):
     # print(buried_len)
     # print(100 * identity /buried_len)
     return 100 * (identity / buried_len)
+
+
+def delta_graph(df, args):
+    def relative_to_focusdir(row):
+        patchfile = row['patchman_file_x']
+        return os.path.join(*patchfile.split('/')[2:])
+    df['patchman_basename'] = df.apply(relative_to_focusdir, axis=1)
+    prot2 = 'residue_lock_combined_ramp'
+    prot1 = 'specialrot_3_combined_ramp'
+    df1 = df[df.protocol==prot1]
+    df2 = df[df.protocol==prot2]
+    dfplot = pd.merge(df1, df2, on=['patchman_basename', 'target',
+                                    'name_y'],
+                      suffixes=('_{}'.format(prot1),
+                                '_{}'.format(prot2)),
+                      validate='1:1')
+    dfplot = dfplot[dfplot['{}_{}'.format(args['--xaxis'], prot1)] > dfplot['{}_{}'.format(args['--xaxis'], prot2)]]
+    dfplot['delta'] = dfplot['{}_{}'.format(args['--yaxis'], prot1)] - dfplot['{}_{}'.format(args['--yaxis'], prot2)]
+
+    bw = 0.2
+    xname = '{}_{}'.format(args['--xaxis'], prot1)
+    means = []
+    hbonds = set(dfplot[xname])
+    for n in hbonds:
+        mean = dfplot[dfplot[xname]==n]['delta'].mean()
+        means.append(mean)
+    sns.violinplot(data=dfplot, x=xname, y='delta',
+                bw=bw)
+    plt.scatter(x=range(len(means)), y=means, c='k', marker='_', s=200)
+    plt.tight_layout()
+    plt.show()
 
 
 def main():
@@ -468,25 +500,34 @@ def main():
         order = ['base',
                  'buns_penalty', 'buns_penalty_pruned',
                  'deleteme', 'specialres', 'combined',
-                 'residue_lock', 'specialrot',
-                 'specialrot_combined', 'special_combined_ramp', 'combined_nomin']
+                 'residue_lock', 'residue_lock_combined', 'residue_lock_combined_ramp',
+                 'specialrot',
+                 'specialrot_combined', 'special_combined_ramp', 'combined_nomin',
+                 'specialrot_3', 'specialrot_3_combined', 'specialrot_3_combined_ramp']
         labels = ['Base',
                   'BUNS penalty', 'BUNS pen. pruned',
                   'NativeResidue', 'Special residue', 'Special res + BUNS',
-                  'Residue lock',  'Special rotamer',
-                  'Special rot. + BUNS', 'Special rot. + BUNS, ramp cst.', 'Special rot. + BUNS (no cst)']
+                  'Residue lock',  'Residue lock + BUNS', 'Residue lock + BUNS\n(ramp cst.)',
+                  'Special rotamer',
+                  'Special rot. + BUNS', 'Special rot. + BUNS\n(ramp cst.)', 'Special rot. + BUNS\n(no cst)',
+                  'Special rot. weight 3', 'Special rot. weight 3\n+ BUNS', 'Special rot. weight 3\n+ BUNS (ramp cst.)']
         color_dict = {
             'base': '#A5AA99',
-            'buns_penalty': '#E69F00',
-            'buns_penalty_pruned': '#E69F00',
+            'buns_penalty': '#F0E442',
+            'buns_penalty_pruned': '#F0E442',
             'deleteme': '#CC79A7',
             'specialres': '#CC79A7',
-            'combined': '#D55E00',
-            'residue_lock': '#56B4E9',
+            'combined': '#CC79A7',
+            'residue_lock': '#009E73',
+            'residue_lock_combined': '#009E73',
+            'residue_lock_combined_ramp': '#009E73',
             'specialrot': '#56B4E9',
-            'specialrot_combined': '#0072B2',
-            'special_combined_ramp': '#009E73',
-            'combined_nomin': '#009E73',
+            'specialrot_combined': '#56B4E9',
+            'special_combined_ramp': '#56B4E9',
+            'combined_nomin': '#56B4E9',
+            'specialrot_3': '#0072B2',
+            'specialrot_3_combined': '#0072B2',
+            'specialrot_3_combined_ramp': '#0072B2',
         }
         global colors
         colors = []
@@ -503,6 +544,8 @@ def main():
         barplot(df, args)
     if plot_type == 'pvp':
         protocol_vs_protocol(df, args)
+    if plot_type == 'delta':
+        delta_graph(df, args)
 
 
 if __name__=='__main__':

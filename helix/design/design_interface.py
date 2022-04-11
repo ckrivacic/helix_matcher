@@ -15,9 +15,14 @@ from pyrosetta import create_score_function
 from pyrosetta.rosetta.core.pack.task import TaskFactory
 from pyrosetta.rosetta.core.select import residue_selector
 from pyrosetta.rosetta.core.pack.task import operation
+from pyrosetta.rosetta.core.pack.task.residue_selector import ClashBasedShellSelector
+# Movers
 from pyrosetta.rosetta.protocols.minimization_packing import PackRotamersMover
+from pyrosetta.rosetta.protocols.minimization_packing import MinMover
+from pyrosetta.rosetta.core.kinematics import MoveMap
 # Constraint stuff
 from pyrosetta.rosetta.core.scoring.constraints import CoordinateConstraint
+from pyrosetta.rosetta.protocols import constraint_generator
 from pyrosetta.rosetta.core.id import AtomID
 from pyrosetta.rosetta.core.scoring.func import HarmonicFunc
 from pyrosetta.rosetta.core.scoring import ScoreType
@@ -108,6 +113,7 @@ class InterfaceSetup(object):
         Expects a dataframe group where all rows have the same "superimposed_file"
         '''
 
+        final_repack_resis = []
         for idx, row in self.df.iterrows():
             # Helix residue positions are for just that chain
             docked_pose = pose_from_file(
@@ -132,11 +138,61 @@ class InterfaceSetup(object):
                     closest_row = res_distances.sort_values(by='dist').iloc[0]
                     # print(closest_row.res2)
                     # print(closest_row.dist)
-                    if closest_row.dist < 0.5:
+                    if closest_row.dist < 1.0:
                         self.transfer_residue(helix_pose, closest_row.res2, helix_index)
+                        final_repack_resis.append(int(closest_row.res2))
+
+
+        # Now that all residues have been transferred, repack and minimize
+        # For task factory, repack all the interface residues and a clash-based repack shell. Use constraints.
+        print('Constraints present for the following residues:')
+        print(', '.join([str(x) for x in final_repack_resis]))
+        idx_selector = utils.list_to_res_selector(final_repack_resis)
+        clash_selector = ClashBasedShellSelector()
+        clash_selector.set_focus(idx_selector)
+        clash_selector.set_include_focus(True)
+        clash_selector.set_num_shells(2)
+        clash_selector.invert(True)
+
+        tf = TaskFactory()
+        no_packing = operation.PreventRepackingRLT()
+        static = operation.OperateOnResidueSubset(no_packing,
+                                                  clash_selector)
+        tf.push_back(static)
+
+        # Repack with constraints
+        packertask = tf.create_task_and_apply_taskoperations(self.design_pose)
+        mover = PackRotamersMover(self.sfxn, packertask)
+        mover.apply(self.design_pose)
+
+        # Add backbone constraints for minimization
+        coord_cst = constraint_generator.CoordinateConstraintGenerator()
+        # if not self.sc_cst:
+        #     coord_cst.set_sidechain(False)
+        constraints = coord_cst.apply(self.design_pose)
+        for cst in constraints:
+            self.design_pose.add_constraint(cst)
+
+        # Minimize with constraints
+        movemap = self.setup_movemap()
+        minmover = MinMover()
+        minmover.movemap(movemap)
+        minmover.score_function(self.sfxn)
+        minmover.apply(self.design_pose)
 
         self.design_pose.dump_pdb('testout.pdb')
 
+    def setup_movemap(self):
+        movemap = MoveMap()
+        movemap.set_bb(False)
+        movemap.set_chi(False)
+        for idx, row in self.df.iterrows():
+            start = row.rosetta_helix_start
+            stop = row.rosetta_helix_stop
+            movemap.set_bb_true_range(start, stop)
+            movemap.set_chi_true_range(start, stop)
+
+        return movemap
 
 
 def test_prep():
