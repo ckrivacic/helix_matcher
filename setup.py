@@ -85,6 +85,7 @@ setuptools.setup(
             define_command('05_score_matches'),
             define_command('filter'),
             define_command("export_matches"),
+            define_command('docking_benchmark'),
             ],
         }
 )
