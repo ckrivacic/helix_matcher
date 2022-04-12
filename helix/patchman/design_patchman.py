@@ -313,12 +313,7 @@ def main():
         print('OPENING PDB:', flush=True)
         print(pdb, flush=True)
         designed = False
-
-        # Look for residues that have good scores and no BUNS
-        nopack, min_pose = select_good_residues(pdb, summarized_residue_scores)
-
-        # Check if PDB has a score, if so it has been designed already
-        # and we can skip
+        # Determine outpdb
         if args['--suffix']:
             basename = os.path.basename(pdb).split('.')[0] + \
                        args['--suffix'] + '.pdb.gz'
@@ -326,6 +321,28 @@ def main():
             outpdb = os.path.join(outdir, basename)
         else:
             outpdb = pdb
+
+        ref = create_score_function('ref2015')
+        pose = pose_from_file(pdb)
+        # Determine helical propensity
+        chainB = pose.split_by_chain(2)
+        ss_str = Dssp(chainB).get_dssp_secstruct()
+        # secstruct = contiguous_secstruct(ss_str)
+        percent_helical = ss_str.count('H') / len(ss_str)
+        if percent_helical < 0.6:
+            print('TARGET {} IS LESS THAN 60% HELICAL; SKIPPING'.format(
+                outpdb
+            ))
+            print(f'Helical percentage: {percent_helical}')
+            print(ss_str)
+            ref(pose)
+            pose.dump_pdb(outpdb)
+            continue
+        # Look for residues that have good scores and no BUNS
+        nopack, min_pose = select_good_residues(pdb, summarized_residue_scores)
+
+        # Check if PDB has a score, if so it has been designed already
+        # and we can skip
         if os.path.exists(outpdb):
             with gzip.open(outpdb, 'rt') as f:
                 for line in f:
@@ -356,7 +373,6 @@ def main():
             pose = pose_from_file(outpdb)
         # else:
         # pose = pose_from_file(pdb)
-        ref = create_score_function('ref2015')
         ref_cst = create_score_function('ref2015')
         ref_cst.set_weight(ScoreType.coordinate_constraint, 1.0)
         if special_res:
@@ -560,13 +576,6 @@ def main():
                 fastdes.apply(pose)
             score = ref(pose)
             # Temp change of PDB filename
-            if args['--suffix']:
-                basename = os.path.basename(pdb).split('.')[0] + \
-                           args['--suffix'] + '.pdb.gz'
-                outdir = os.path.dirname(pdb)
-                outpdb = os.path.join(outdir, basename)
-            else:
-                outpdb = pdb
             pose.dump_pdb(outpdb)
         else:
             print('Has been designed already. Moving on to filters.',flush=True)
