@@ -555,6 +555,7 @@ def main():
         # Shit, woops...
         # notdesign = operation.OperateOnResidueSubset(no_design,
         # interface_selector)
+        # Interface and chain B
         and_selector = residue_selector.AndResidueSelector(interface_selector,
                                                            selector)
         not_interface = residue_selector.NotResidueSelector(and_selector)

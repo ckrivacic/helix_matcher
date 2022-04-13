@@ -164,8 +164,9 @@ def main():
         results = results[results.name != '3g67_1']
         results = results.sort_values(by=['n_matched_helices',
                                           'binned_match_score',
+                                          'rmsd',
                                           'interface_score_sum',
-                                          'rmsd'], ascending=True)
+                                          ], ascending=True)
 
         # Get designed helix scores and merge with results
         rif_workspace = ws.RIFWorkspace(workspace.root_dir, target)
