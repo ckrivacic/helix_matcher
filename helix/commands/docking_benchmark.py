@@ -26,11 +26,11 @@ def get_best_rmsds(patch, rif, benchmark, args):
     no_rif_match = []
     outrows = []
     if args['--length'] == '14':
-        patch = patch[patch['patch_length'] == 'len_14']
-        rif = rif[rif['patch_length'] == 'len_4turn_dock_helix']
+        patch = patch[patch['patch_len'] == 'len_14']
+        rif = rif[rif['patch_len'] == 'len_4turn_dock_helix']
     elif args['--length'] == '28':
-        patch = patch[patch['patch_length'] == 'len_28']
-        rif = rif[rif['patch_length'] == 'len_8turn_dock_helix']
+        patch = patch[patch['patch_len'] == 'len_28']
+        rif = rif[rif['patch_len'] == 'len_8turn_dock_helix']
     for name, group in benchmark.groupby(['name', 'target']):
         patch_group = patch[(patch['name'] == name[0]) & (patch['target'] == name[1])]
         rif_group = rif[(rif['name'] == name[0]) & (rif['target'] == name[1])]
