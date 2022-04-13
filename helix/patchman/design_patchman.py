@@ -332,9 +332,9 @@ def main():
         if percent_helical < 0.6:
             print('TARGET {} IS LESS THAN 60% HELICAL; SKIPPING'.format(
                 outpdb
-            ))
-            print(f'Helical percentage: {percent_helical}')
-            print(ss_str)
+            ), flush=True)
+            print(f'Helical percentage: {percent_helical}', flush=True)
+            print(ss_str, flush=True)
             ref(pose)
             pose.dump_pdb(outpdb)
             continue
