@@ -6,7 +6,8 @@ Usage:
 
 
 Options:
-    --length=INT, -l  Length of helices to be evaluated  [default: 14]
+    --length=INT, -l  Length of helices to be evaluated. Can be either 14, 28, or 0. 0 means all lengths are
+    evaluated together.  [default: 0]
 
 '''
 
@@ -75,29 +76,30 @@ def get_benchmark_resis(row):
 def main():
     mpl.use('tkagg')
     args = docopt.docopt(__doc__)
-    bench_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-                 '..', 'benchmark', 'interface_finder', 'final_consolidated.pkl'
-         )
-    benchmark = utils.safe_load(bench_path)
-    benchmark['start_stop'] = benchmark.apply(get_benchmark_resis, axis=1)
-    patchman_workspace = ws.workspace_from_dir(args['<patchman_workspace>'])
-    rifdock_workspace = ws.workspace_from_dir(args['<rifdock_workspace>'])
-
-    patchman_df = utils.safe_load(os.path.join(
-        patchman_workspace.root_dir, 'rifdock_outputs', 'benchmark_results_reverse', 'final.pkl'
-    ))
-    patchman_df['start_stop'] = patchman_df.apply(get_benchmark_resis, axis=1)
-    rifdock_df = utils.safe_load(os.path.join(
-        rifdock_workspace.root_dir, 'rifdock_outputs', 'benchmark_results_reverse', 'final.pkl'
-    ))
-    rifdock_df['start_stop'] = rifdock_df.apply(get_benchmark_resis, axis=1)
 
     outpath = 'benchmark_data_{}.pkl'.format(args['--length'])
     if not os.path.exists(outpath):
+        bench_path = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            '..', 'benchmark', 'interface_finder', 'final_consolidated.pkl'
+        )
+        benchmark = utils.safe_load(bench_path)
+        benchmark['start_stop'] = benchmark.apply(get_benchmark_resis, axis=1)
+        patchman_workspace = ws.workspace_from_dir(args['<patchman_workspace>'])
+        rifdock_workspace = ws.workspace_from_dir(args['<rifdock_workspace>'])
+
+        patchman_df = utils.safe_load(os.path.join(
+            patchman_workspace.root_dir, 'rifdock_outputs', 'benchmark_results_reverse', 'final.pkl'
+        ))
+        patchman_df['start_stop'] = patchman_df.apply(get_benchmark_resis, axis=1)
+        rifdock_df = utils.safe_load(os.path.join(
+            rifdock_workspace.root_dir, 'rifdock_outputs', 'benchmark_results_reverse', 'final.pkl'
+        ))
+        rifdock_df['start_stop'] = rifdock_df.apply(get_benchmark_resis, axis=1)
         df = get_best_rmsds(patchman_df, rifdock_df, benchmark, args)
         df.to_pickle(outpath)
         print(df.shape)
     else:
         df = utils.safe_load(outpath)
+
     plot_distribution(df, args)
