@@ -125,9 +125,9 @@ def align_matches(folder, matches, workspace, patch):
                         try:
                             match_pose = utils.pose_from_wynton('5eqb')
                         except:
-                            match_pose = pose_from_rcsb('5eqb')
+                            match_pose = utils.pose_from_rcsb('5eqb')
                     else:
-                        match_pose = pose_from_rcsb(match_pdbid)
+                        match_pose = utils.pose_from_rcsb(match_pdbid)
 
                 except:
                     print('Could not find PDB {}'.format(match_pdbid))
