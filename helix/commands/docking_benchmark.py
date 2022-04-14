@@ -8,6 +8,8 @@ Usage:
 Options:
     --length=INT, -l  Length of helices to be evaluated. Can be either 14, 28, or 0. 0 means all lengths are
     evaluated together.  [default: 0]
+    --trim=INT, -t  Trim the dataframe such that only benchmark targets that have at least two helices greater than
+    the provided length are analyzed.
 
 '''
 
@@ -62,7 +64,7 @@ def get_best_rmsds(patch, rif, benchmark, args):
 
 def plot_distribution(df, args):
     '''Plot the distribution for pathcman and rifdock'''
-    sns.histplot(data=df, x='rmsd', hue='protocol')
+    sns.histplot(data=df, x='rmsd', hue='protocol', stat='probability', common_norm=False)
     plt.show()
 
 
@@ -78,12 +80,13 @@ def main():
     args = docopt.docopt(__doc__)
 
     outpath = 'benchmark_data_{}.pkl'.format(args['--length'])
-    if not os.path.exists(outpath):
-        bench_path = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            '..', 'benchmark', 'interface_finder', 'final_consolidated.pkl'
-        )
+    bench_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        '..', 'benchmark', 'interface_finder', 'final_consolidated.pkl'
+    )
+    if not os.path.exists(outpath) or args['--trim']:
         benchmark = utils.safe_load(bench_path)
+    if not os.path.exists(outpath):
         benchmark['start_stop'] = benchmark.apply(get_benchmark_resis, axis=1)
         patchman_workspace = ws.workspace_from_dir(args['<patchman_workspace>'])
         rifdock_workspace = ws.workspace_from_dir(args['<rifdock_workspace>'])
@@ -101,5 +104,28 @@ def main():
         print(df.shape)
     else:
         df = utils.safe_load(outpath)
+
+    if args['--trim']:
+        benchmark['helix_length'] = benchmark.apply(lambda x: len(x['pdb_resis']), axis=1)
+
+        def count(benchdf, length=14):
+            return benchdf[benchdf['helix_length'] > length].shape[0]
+
+        trim = []
+        trim_cutoff = int(args['--trim'])
+        for name, group in benchmark.groupby(['name', 'target']):
+            if count(group, length=trim_cutoff) < 2:
+                trim.append(name)
+
+        print('The following targets will be trimmed:')
+        print(trim)
+        df['tup'] = df.apply(lambda x: (x['name'], x['target']), axis=1)
+        for name in trim:
+            print(df[df['tup'] == name])
+
+        print(df.shape)
+        # df = df[(~df['name'].isin(trim_name)) & (~df['target'].isin(trim_chain))]
+        df = df[~df['tup'].isin(trim)]
+        print(df.shape)
 
     plot_distribution(df, args)

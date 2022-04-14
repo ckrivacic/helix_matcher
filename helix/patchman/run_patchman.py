@@ -194,7 +194,7 @@ def main():
     if 'TMPDIR' in os.environ:
         os_tmp = os.environ['TMPDIR']
     else:
-        os_tmp = os.path.join(os.environ['HOME'], 'temp')
+        os_tmp = os.path.join(os.environ['HOME'], 'temp', workspace.basename(workspace.initial_target_path))
     outdir_temp = os.path.join(os_tmp, str(task_id))
     if not os.path.exists(outdir_temp):
         os.makedirs(outdir_temp, exist_ok=True)
