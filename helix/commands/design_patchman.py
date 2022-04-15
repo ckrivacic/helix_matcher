@@ -34,6 +34,8 @@ Options:
     --nocst  Don't constrain during fastdesign
     --ramp-cst  Ramp down constraints
     --hold  Submit the jobs with a hold
+    --taskrange=TASKS  Run a range of task #s (local only)
+    --subprocess  Run the (local) jobs in a background process
 """
 import helix.workspace as ws
 from helix import big_jobs
@@ -113,6 +115,12 @@ def main():
         if args['--task']:
             cmd += '--task', args['--task']
             ntasks = 1
+
+        if args['--taskrange']:
+            tasks = []
+            for t in range(int(args['--taskrange'].split('-')[0]), int(args['--taskrange'].split('-')[1])):
+                tasks.append(t)
+            ntasks = len(tasks)
 
         if args['--suffix']:
             cmd += '--suffix', args['--suffix']
@@ -198,11 +206,16 @@ def main():
 
         if args['--local']:
             print('Runinng locally')
+            if args['--taskrange']:
+                for n in tasks:
+                    local_cmd = deepcopy(cmd)
+                    local_cmd += '--task', str(n)
+                    utils.run_command(local_cmd, subprocess=args['--subprocess'])
             for n in range(1, ntasks + 1):
                 local_cmd = deepcopy(cmd)
                 if not args['--task']:
                     local_cmd += '--task', str(n)
-                utils.run_command(local_cmd)
+                utils.run_command(local_cmd, subprocess=args['--subprocess'])
 
         else:
             # print('Submitting jobs for {}'.format(target))
