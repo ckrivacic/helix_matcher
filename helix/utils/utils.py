@@ -240,13 +240,16 @@ def max_subgraph(graph):
     return subgraphs
 
 
-def run_command(cmd, environment=None, background=False):
+def run_command(cmd, environment=None, background=False, logdir=None, log_prefix=''):
     import subprocess
     print("Working directory: {}".format(os.getcwd()))
     print("Command: {}".format(' '.join(cmd)))
     if not environment:
         environment = os.environ.copy()
     sys.stdout.flush()
+    if logdir:
+        logfile = os.path.join(logdir, log_prefix + '_$$.log')
+        cmd += '>', logfile
     if background:
         process = subprocess.Popen(cmd, env=environment, start_new_session=background,
                                    stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
@@ -257,7 +260,7 @@ def run_command(cmd, environment=None, background=False):
     print()
     sys.stdout.flush()
 
-    if not subprocess:
+    if not background:
         process.wait()
 
 

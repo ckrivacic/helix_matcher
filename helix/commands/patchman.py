@@ -92,7 +92,8 @@ def main():
                 for n in tasks:
                     local_cmd = deepcopy(cmd)
                     local_cmd += '--task', str(n)
-                    utils.run_command(local_cmd, background=args['--subprocess'])
+                    utils.run_command(local_cmd, background=args['--subprocess'], logdir=rif_workspace.log_dir,
+                                      log_prefix='task_{}'.format(n))
             else:
                 for n in range(1, ntasks + 1):
                     local_cmd = deepcopy(cmd)
