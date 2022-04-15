@@ -210,13 +210,13 @@ def main():
                 for n in tasks:
                     local_cmd = deepcopy(cmd)
                     local_cmd += '--task', str(n)
-                    utils.run_command(local_cmd, subprocess=args['--subprocess'])
+                    utils.run_command(local_cmd, background=args['--subprocess'])
             else:
                 for n in range(1, ntasks + 1):
                     local_cmd = deepcopy(cmd)
                     if not args['--task']:
                         local_cmd += '--task', str(n)
-                    utils.run_command(local_cmd, subprocess=args['--subprocess'])
+                    utils.run_command(local_cmd, background=args['--subprocess'])
 
         else:
             # print('Submitting jobs for {}'.format(target))
