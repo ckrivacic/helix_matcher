@@ -249,7 +249,7 @@ def run_command(cmd, environment=None, background=False):
     sys.stdout.flush()
     if background:
         process = subprocess.Popen(cmd, env=environment, start_new_session=background,
-                                   STDOUT=subprocess.DEVNULL, STDERR=subprocess.STDOUT)
+                                   stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
     else:
         process = subprocess.Popen(cmd, env=environment,)
 
