@@ -254,7 +254,8 @@ def run_command(cmd, environment=None, subprocess=False):
     print()
     sys.stdout.flush()
 
-    process.wait()
+    if not subprocess:
+        process.wait()
 
 
 def pose_get_chain(pose, chain):
