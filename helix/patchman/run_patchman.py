@@ -60,15 +60,15 @@ def align_matches(folder, matches, workspace, patch):
 
     # init('-ignore_zero_occupancy false')
     init()
-    print('here is patch: {}'.format(patch))
+    print('here is patch: {}'.format(patch), flush=True)
     dict_list = []
     print('Evaluating sequence similarity for {}'.format(
         matches 
-        ))
+        ), flush=True)
     split = patch.split('_')
     if len(split) < 2:
-        print('Could not align matches; incorrect patch definition:')
-        print(patch)
+        print('Could not align matches; incorrect patch definition:', flush=True)
+        print(patch, flush=True)
         return pd.DataFrame()
     patchno = split[0]
     basename = split[1]
@@ -79,14 +79,14 @@ def align_matches(folder, matches, workspace, patch):
     patch_pose = pose_from_file(patch)
     patch_sequence = patch_pose.sequence()
 
-    print('FILES IN FOLDER')
-    print(os.listdir())
+    print('FILES IN FOLDER', flush=True)
+    print(os.listdir(), flush=True)
 
     latest_pdbid = None
     nline = 0
     for match in matches:
-        print('Looking for match:')
-        print(match)
+        print('Looking for match:', flush=True)
+        print(match, flush=True)
         nline += 1
         position_list = match[7]
         # filename = line.strip().split(' ')[1].split('/')[-1]
@@ -105,14 +105,14 @@ def align_matches(folder, matches, workspace, patch):
                 folder, 'docked_full', comp
                 ))
         if len(complexes) < 1:
-            print('No complexes for this match; skipping')
+            print('No complexes for this match; skipping', flush=True)
             # line_idx += 1
             continue
         else:
-            print('PDBID')
-            print(match_pdbid)
-            print('The following complexes were found:')
-            print(complexes)
+            print('PDBID', flush=True)
+            print(match_pdbid, flush=True)
+            print('The following complexes were found:', flush=True)
+            print(complexes, flush=True)
 
         # All this try/except nonsense is probably not necessary
         if not match_pdbid == latest_pdbid:
@@ -120,7 +120,7 @@ def align_matches(folder, matches, workspace, patch):
                 match_pose = utils.pose_from_wynton(match_pdbid)
             except:
                 try:
-                    print('Obsolete PDB found: {}'.format(match_pdbid))
+                    print('Obsolete PDB found: {}'.format(match_pdbid), flush=True)
                     if match_pdbid.lower() == '4k0f':
                         try:
                             match_pose = utils.pose_from_wynton('5eqb')
@@ -130,7 +130,7 @@ def align_matches(folder, matches, workspace, patch):
                         match_pose = utils.pose_from_rcsb(match_pdbid)
 
                 except:
-                    print('Could not find PDB {}'.format(match_pdbid))
+                    print('Could not find PDB {}'.format(match_pdbid), flush=True)
                     with open('docked_full/failed.txt', 'a') as f:
                         f.write(match_pdbid)
                     continue
@@ -138,16 +138,16 @@ def align_matches(folder, matches, workspace, patch):
         match_pose = utils.pose_get_chain(match_pose, match_chain)
         match_sequence = ''
         for pos in position_list:
-            print(pos)
+            print(pos, flush=True)
             match_sequence += match_pose.sequence(pos[0]+1,
                     pos[1]+1) 
         # MASTER output is apparently 0-indexed
 
-        print('Aligning the following sequences')
-        print(patch_sequence)
-        print(match_sequence)
+        print('Aligning the following sequences', flush=True)
+        print(patch_sequence, flush=True)
+        print(match_sequence, flush=True)
         score = score_sequences(patch_sequence, match_sequence)
-        print('SCORE: {}'.format(score))
+        print('SCORE: {}'.format(score), flush=True)
         # alignments = pairwise2.align.globalds(patch_sequence,
                 # match_sequence, matrix, -1, -0.3)
         # print(format_alignment(*alignments[0]))
@@ -166,7 +166,7 @@ def align_matches(folder, matches, workspace, patch):
                 'match_sequence': match_sequence,
                 'alignment_score': score,
                 })
-        print('Finished {} lines'.format(nline))
+        print('Finished {} lines'.format(nline), flush=True)
         # if match_pdbid.lower() == '4m8r':
         # if match_pdbid.lower() == '1m6y':
             # print(dict_list)
@@ -185,7 +185,7 @@ def main():
                 "somehow.")
 
     total_jobs = len(glob.glob(workspace.focus_dir + '/patch_*/len_*'))
-    print('TOTAL JOBS: {}'.format(total_jobs))
+    print('TOTAL JOBS: {}'.format(total_jobs), flush=True)
     num_tasks = total_jobs
 
     task_id = job_info['task_id']
@@ -195,7 +195,7 @@ def main():
         else:
             task_id = 0
 
-    print('TASK: {}'.format(task_id))
+    print('TASK: {}'.format(task_id), flush=True)
 
     if 'TMPDIR' in os.environ:
         os_tmp = os.environ['TMPDIR']
@@ -209,25 +209,25 @@ def main():
     folders = job_info['inputs']
     folder = folders[task_id]
 
-    print("Running PatchMAN for {}".format(folder))
+    print("Running PatchMAN for {}".format(folder), flush=True)
     basename = os.path.basename(folder)
     tempdir = os.path.join(outdir_temp, basename)
-    print('TEMPDIR IS {}'.format(tempdir))
+    print('TEMPDIR IS {}'.format(tempdir), flush=True)
     copy_tree(folder, tempdir)
     os.chdir(tempdir)
 
     motif_path = os.path.join(tempdir, '???_target.pdb')
     motif_list = glob.glob(motif_path)
     if len(motif_list) > 1:
-        print('ERROR: More than one input motif found. Motif list:')
-        print(motif_list)
+        print('ERROR: More than one input motif found. Motif list:', flush=True)
+        print(motif_list, flush=True)
         sys.exit()
     else:
         motif = motif_list[0]
 
     target = workspace.target_path_clean
-    print("TARGET:")
-    print(target)
+    print("TARGET:", flush=True)
+    print(target, flush=True)
 
     # Split surface into structural patches (done in prep_patchman)
     # print('Running split_to_motifs.py on {}'.format(target))
@@ -328,8 +328,8 @@ def main():
             # print('ARGLIST')
             # print(arglist)
             # motif_args = ' '.join(arglist)
-            print('MOTIF ARGS')
-            print(motif_args)
+            print('MOTIF ARGS', flush=True)
+            print(motif_args, flush=True)
             matches = extract_peps_for_motif.main(motif_args)
 
             # Create a list of input structures for refinement
@@ -373,10 +373,10 @@ def main():
             tf.push_back(static)
             tf.push_back(notaa)
             packertask = tf.create_task_and_apply_taskoperations(pose)
-            print('REPACK')
-            print(packertask.repacking_residues())
-            print('DESIGN')
-            print(packertask.designing_residues())
+            print('REPACK', flush=True)
+            print(packertask.repacking_residues(), flush=True)
+            print('DESIGN', flush=True)
+            print(packertask.designing_residues(), flush=True)
 
             fastdes.set_task_factory(tf)
             fastdes.set_scorefxn(ref)
@@ -415,3 +415,4 @@ def main():
 
 if __name__=='__main__':
     main()
+    print('JOB FINISHED', flush=True)
