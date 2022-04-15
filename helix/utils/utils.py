@@ -242,6 +242,9 @@ def max_subgraph(graph):
 
 def run_command(cmd, environment=None, subprocess=False):
     from subprocess import Popen
+    if subprocess:
+        import shlex
+        shlex.split(cmd)
     print("Working directory: {}".format(os.getcwd()))
     print("Command: {}".format(' '.join(cmd)))
     sys.stdout.flush()
