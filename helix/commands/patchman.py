@@ -82,7 +82,7 @@ def main():
 
         if args['--taskrange']:
             tasks = []
-            for t in range(int(args['--taskrange'].split('-')[0]), int(args['--taskrange'].split('-')[1])):
+            for t in range(int(args['--taskrange'].split('-')[0]), int(args['--taskrange'].split('-')[1]) + 1):
                 tasks.append(t)
             ntasks = len(tasks)
 
