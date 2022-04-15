@@ -22,6 +22,8 @@ Options:
         The memory limit for each job.
     --hold, -h  Keep the job on hold after submitting (to be released
         manually later)
+    --taskrange=TASKS  Run a range of task #s (local only)
+    --subprocess  Run the (local) jobs in a background process
 """
 import helix.workspace as ws
 import os
@@ -78,22 +80,33 @@ def main():
             cmd += '--task', args['--task']
             ntasks = 1
 
+        if args['--taskrange']:
+            tasks = []
+            for t in range(int(args['--taskrange'].split('-')[0]), int(args['--taskrange'].split('-')[1])):
+                tasks.append(t)
+            ntasks = len(tasks)
+
         if args['--local']:
             print('Runinng locally')
+            if args['--taskrange']:
+                for n in tasks:
+                    local_cmd = deepcopy(cmd)
+                    local_cmd += '--task', str(n)
+                    utils.run_command(local_cmd, subprocess=args['--subprocess'])
             for n in range(1, ntasks + 1):
                 local_cmd = deepcopy(cmd)
                 if not args['--task']:
                     local_cmd += '--task', str(n)
-                utils.run_command(local_cmd)
+                utils.run_command(local_cmd, subprocess=args['--subprocess'])
 
         else:
             print('Submitting jobs for {}'.format(target))
             big_jobs.submit(
                     rif_workspace, cmd, nstruct=ntasks, 
-                    max_runtime = args['--max-runtime'],
+                    max_runtime=args['--max-runtime'],
                     max_memory=args['--max-memory'],
-                    job_name = 'PatchMAN',
-                    inputs = inputs,
+                    job_name='PatchMAN',
+                    inputs=inputs,
                     hold=args['--hold'],
                     )
             # submit.submit(rif_workspace, cmd, distributor='sge',
