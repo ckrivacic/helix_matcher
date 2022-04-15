@@ -251,8 +251,8 @@ def run_command(cmd, environment=None, background=False, logdir=None, log_prefix
     print("Command: {}".format(' '.join(cmd)))
     sys.stdout.flush()
     if background:
-        process = subprocess.Popen(' '.join(cmd), env=environment, start_new_session=background, shell=True,)
-                                   # stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+        process = subprocess.Popen(' '.join(cmd), env=environment, start_new_session=background, shell=True,
+                                   stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
     else:
         process = subprocess.Popen(cmd, env=environment,)
 
