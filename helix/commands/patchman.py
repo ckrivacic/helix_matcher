@@ -99,7 +99,11 @@ def main():
                     local_cmd = deepcopy(cmd)
                     if not args['--task']:
                         local_cmd += '--task', str(n)
-                    utils.run_command(local_cmd, background=args['--subprocess'])
+                    if args['--subprocess']:
+                        utils.run_command(local_cmd, background=args['--subprocess'], logdir=rif_workspace.log_dir,
+                                          log_prefix='task_{:04}'.format(n))
+                    else:
+                        utils.run_command(local_cmd, background=args['--subprocess'])
 
         else:
             print('Submitting jobs for {}'.format(target))
