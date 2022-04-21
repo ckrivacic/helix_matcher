@@ -101,7 +101,7 @@ def main():
                         local_cmd += '--task', str(n)
                     if args['--subprocess']:
                         utils.run_command(local_cmd, background=args['--subprocess'], logdir=rif_workspace.log_dir,
-                                          log_prefix='task_{:04}'.format(n))
+                                          log_prefix='task_{:04}'.format(args['--task']))
                     else:
                         utils.run_command(local_cmd, background=args['--subprocess'])
 
