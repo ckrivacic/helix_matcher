@@ -24,7 +24,7 @@ Options:
     --suffix=STR  Add a suffix to designs
     --nocst  Don't constrain during fastdesign
     --ramp-cst  Ramp down constraints during FastDesign
-
+    --upweight-interface=WEIGHT  Upweight interface by the weight factor provided.
 """
 
 from pyrosetta import rosetta
@@ -542,11 +542,13 @@ def main():
         # clash_selector)
         not_selector = residue_selector.NotResidueSelector(clash_selector)
         no_design = operation.RestrictToRepackingRLT()
-        upweight = \
-            '''
-        <ProteinLigandInterfaceUpweighter name="upweight_interface" interface_weight="1.5" />
-        '''
-        upweight_taskop = XmlObjects.static_get_task_operation(upweight)
+        if args['--upweight-interface']:
+            upweight = \
+                '''
+            <ProteinProteinInterfaceUpweighter name="upweight_interface" interface_weight="{}" />
+            '''.format(args['--upweight-interface'])
+            upweight_taskop = XmlObjects.static_get_task_operation(upweight)
+            tf.push_back(upweight_taskop)
         static = operation.OperateOnResidueSubset(no_packing,
                                                   not_selector)
         notaa = operation.ProhibitSpecifiedBaseResidueTypes(
@@ -565,7 +567,6 @@ def main():
         tf.push_back(notaa)
         tf.push_back(notdesign)
         tf.push_back(static)
-        tf.push_back(upweight_taskop)
         packertask = tf.create_task_and_apply_taskoperations(pose, 1)
 
         if not designed:
@@ -714,7 +715,11 @@ def main():
         n_hbonds = interface_scorer.n_hbonds
 
         # Temp - only for benchmarking
-        designtype = '_'.join(os.path.basename(workspace.focus_dir).split('_')[2:])
+        dirsplit = os.path.basename(workspace.focus_dir).split('_')
+        if len(dirsplit) > 2:
+            designtype = '_'.join(os.path.basename(workspace.focus_dir).split('_')[2:])
+        else:
+            designtype = ''
 
         # Can't pickle a C++ set, so put it in a Python list
         int_set = []
