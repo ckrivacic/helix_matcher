@@ -33,6 +33,7 @@ Options:
     --suffix=STR  Add a suffix to saved designs
     --nocst  Don't constrain during fastdesign
     --ramp-cst  Ramp down constraints
+    --upweight-interface=WEIGHT  Upweight interface by this weight
     --hold  Submit the jobs with a hold
     --taskrange=TASKS  Run a range of task #s (local only)
     --subprocess  Run the (local) jobs in a background process
@@ -111,6 +112,9 @@ def main():
             cmd += '--special-rot',
         if args['--special-rot-weight'] and not args['--benchmark']:
             cmd += '--special-rot-weight', args['--special-rot-weight']
+
+        if args['--upweight-interface']:
+            cmd += '--upweight-interface', args['--upweight-interface']
 
         if args['--task']:
             cmd += '--task', args['--task']
