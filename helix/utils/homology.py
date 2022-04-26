@@ -50,20 +50,6 @@ def find_homologs(pdbid, id_cutoff, chain=None):
                 seq += polymer.sequence
         else:
             seq += polymer.sequence
-    # atoms = atoms.select('name CA')
-    # seq = atoms.getSequence()
-
-    # pdbid_query['query']['parameters']['value'] = f"{pdbid}"
-    # response = requests.get("https://search.rcsb.org/rcsbsearch/v1/query",
-    #                         {"json": json.dumps(pdbid_query)})
-    # if str(response) == '<Response [204]>':
-    #     print("No results found for target {}.".format(pdbid))
-    #     results = []
-    # else:
-    #     print(response.json())
-    #     results = [result for result in response.json()['link']]
-    #     print(results)
-        # results = [result["identifier"] for result in response.json()["result_set"]]
 
     query['query']['parameters']['value'] = seq
     query['query']['parameters']['identity_cutoff'] = id_cutoff / 100
