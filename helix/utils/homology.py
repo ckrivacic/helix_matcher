@@ -26,20 +26,6 @@ query = {
     "return_type": "entry"
 }
 
-pdbid_query = {
-    "query":{
-        "type": "terminal",
-        "service": "text",
-        "parameters":{
-            "attribute": "rcsb_id",
-            "operator": "exact_match",
-            "value": ""
-        }
-    },
-    "return_type": "entry",
-    # "return_type": "polymer_entity"
-}
-
 
 def find_homologs(pdbid, id_cutoff, chain=None):
     polymers = prody.parsePDBHeader(pdbid, 'polymers')
