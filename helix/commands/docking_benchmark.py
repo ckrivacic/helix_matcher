@@ -10,10 +10,11 @@ Options:
     evaluated together.  [default: 0]
     --trim=INT, -t  Trim the dataframe such that only benchmark targets that have at least two helices greater than
     the provided length are analyzed.
-
+    --subangstrom, -s  Plot the percent sub-angstrom, also showing decreasing % ID
 '''
 
 from helix.utils import utils
+from helix.utils import homology
 import docopt
 import os
 import seaborn as sns
@@ -21,6 +22,27 @@ import matplotlib as mpl
 import pandas as pd
 import matplotlib.pyplot as plt
 import helix.workspace as ws
+
+
+def get_patchman_pdbid(row):
+    return os.path.basename(row['patchman_file']).split('_')[1].upper()
+
+
+def calc_patch_percent_id(row):
+    seqlen = 0
+    identity = 0
+    for idx, aa in enumerate(row.match_sequence):
+        seqlen += 1
+        if row.patch_sequence[idx] == aa:
+            identity += 1
+    if seqlen == 0:
+        print('No designed sequences?')
+        print('FILE: {}'.format(row.design_file))
+        print('DESIGNED RESIS: {}'.format(row.designed_residues))
+        print('HELIX RESIS: {}'.format(row.helix_resis))
+        return np.nan
+
+    return 100 * identity / seqlen
 
 
 def get_best_rmsds(patch, rif, benchmark, args):
@@ -79,7 +101,12 @@ def main():
     mpl.use('tkagg')
     args = docopt.docopt(__doc__)
 
-    outpath = 'benchmark_data_{}.pkl'.format(args['--length'])
+    outpath = 'benchmark_data_{}'.format(args['--length'])
+    if args['--subangstrom']:
+        outpath += '_homology'
+    if args['--trim']:
+        outpath += '_trimmed'
+    outpath += '.pkl'
     bench_path = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
         '..', 'benchmark', 'interface_finder', 'final_consolidated.pkl'
@@ -91,17 +118,21 @@ def main():
         patchman_workspace = ws.workspace_from_dir(args['<patchman_workspace>'])
         rifdock_workspace = ws.workspace_from_dir(args['<rifdock_workspace>'])
 
+        print('Loading patchman DF')
         patchman_df = utils.safe_load(os.path.join(
-            patchman_workspace.root_dir, 'rifdock_outputs', 'benchmark_results_reverse', 'final.pkl'
+            patchman_workspace.root_dir, 'rifdock_outputs', 'benchmark_results_reverse', 'final_aligned.pkl'
         ))
         patchman_df['start_stop'] = patchman_df.apply(get_benchmark_resis, axis=1)
+        print('Loading RIFDock DF')
         rifdock_df = utils.safe_load(os.path.join(
             rifdock_workspace.root_dir, 'rifdock_outputs', 'benchmark_results_reverse', 'final.pkl'
         ))
         rifdock_df['start_stop'] = rifdock_df.apply(get_benchmark_resis, axis=1)
-        df = get_best_rmsds(patchman_df, rifdock_df, benchmark, args)
-        df.to_pickle(outpath)
-        print(df.shape)
+        if not args['--subangstrom']:
+            print('Finding best RMSD for each benchmark helix')
+            df = get_best_rmsds(patchman_df, rifdock_df, benchmark, args)
+            df.to_pickle(outpath)
+            print(df.shape)
     else:
         df = utils.safe_load(outpath)
 
@@ -128,4 +159,28 @@ def main():
         df = df[~df['tup'].isin(trim)]
         print(df.shape)
 
-    plot_distribution(df, args)
+    if args['--subangstrom']:
+        homology_outpath = 'patchman_results_homology.pkl'
+        if not os.path.exists(homology_outpath):
+            cutoffs = [10, 30, 50, 70, 80, 90, 95]
+            patchman_df['patch_percent_id'] = patchman_df.apply(calc_patch_percent_id, axis=1)
+            patchman_df['patchman_pdbid'] = patchman_df.apply(get_patchman_pdbid, axis=1)
+            homology_dfs = []
+            for cutoff in cutoffs:
+                for name, group in patchman_df.groupby(['name', 'chain']):
+                    print('Finding homologs for {} with {} percent ID'.format(name, cutoff))
+                    pdbid = name[0]
+                    chain = name[1]
+                    homologs = homology.find_homologs(pdbid, cutoff,
+                                                      chain=chain)
+                    group = group[~group['patchman_pdbid'].isin(homologs)]
+                    group['cutoff'] = cutoff
+                    homology_dfs.append(group)
+            homology_df = pd.concat(homology_dfs)
+            homology_df.to_pickle(homology_outpath)
+        else:
+            homology_df = utils.safe_load(homology_outpath)
+        print(homology_df)
+
+    else:
+        plot_distribution(df, args)
