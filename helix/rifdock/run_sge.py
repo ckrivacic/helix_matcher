@@ -64,7 +64,7 @@ def write_flags(folder, scaffold):
 # this is where the output will go, and how much
 -rif_dock:outdir docked_full/
 -rif_dock:dokfile all.dok
--rif_dock:n_pdb_out 20 # max number of output pdbs
+-rif_dock:n_pdb_out 80 # max number of output pdbs
 
 # optional flag to add extra output file tag
 #-rif_dock:target_tag conf01
