@@ -394,9 +394,10 @@ Expected to find a file matching '{0}'.  Did you forget to compile rosetta?
 
     @property
     def scaffolds(self):
-        return sorted(glob.glob(os.path.join(self.helix_dir,
+        scaffolds = sorted(glob.glob(os.path.join(self.helix_dir,
             '*.pdb')) + glob.glob(os.path.join(self.helix_dir,
                 '*.pdb.gz')))
+        return [os.path.basename(x) for x in scaffolds]
 
     @property
     def flags_path(self):

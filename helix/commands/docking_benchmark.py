@@ -59,8 +59,10 @@ def get_best_rmsds(patch, rif, benchmark, args, cutoff=False, patch_id=False):
         patch = patch[patch['patch_len'] == 'len_28']
         rif = rif[rif['patch_len'] == 'len_8turn_dock_helix']
     for name, group in benchmark.groupby(['name', 'target']):
+        print(name)
         patch_group = patch[(patch['name'] == name[0]) & (patch['target'] == name[1])]
         rif_group = rif[(rif['name'] == name[0]) & (rif['target'] == name[1])]
+        print(rif_group)
         for idx, row in group.iterrows():
             benchmark_resis = row['start_stop']
             patch_subgroup = patch_group[patch_group['start_stop'] == benchmark_resis]
@@ -220,7 +222,7 @@ def main():
                 'patchman_results_homology.pkl'
             )
             if not os.path.exists(homology_outpath):
-                cutoffs = [10, 30, 50, 70, 80, 90, 95, 100]
+                cutoffs = [10, 30, 50, 70, 80, 90, 95, 100, 110]
                 print('Figuring out PDBIDs...')
                 patchman_df['patchman_pdbid'] = patchman_df.apply(get_patchman_pdbid, axis=1)
                 homology_dfs = []
