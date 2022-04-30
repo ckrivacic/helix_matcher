@@ -12,7 +12,7 @@ Options:
     YAML file that tells this script which chains go with which target.
     --patchsize=NUM, -p  
     How many angstroms across should a patch be?  [default: 10.5]
-    --patchman-workspace=PATH, -p
+    --patchman-workspace=PATH
     Use patch definitions from a PatchMAN workspace.
 
 TO DO:
