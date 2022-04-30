@@ -1,6 +1,6 @@
 palette = {
     'orange': '#e7921e',
-    'purple': '#6d78b8',
+    'bluepurple': '#6d78b8',
     'teal': '#99c945',
     'green': '#99c945',
     'pink': '#d170b7',
@@ -12,6 +12,7 @@ palette = {
     'darkpink': '#d14d99',
     'lightgray': '#b7bbad',
     'darkgray': '#84887a',
+    'white': '#f6f6f4'
 }
 
 def hex_to_rgb(hex):
