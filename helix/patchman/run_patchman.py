@@ -211,7 +211,7 @@ def main():
         folders = []
         with open(os.path.join(workspace.focus_dir, 'unfinished.txt'), 'r') as f:
             for line in f:
-                folders.append(line)
+                folders.append(line.strip('\n'))
     else:
         folders = job_info['inputs']
     folder = folders[task_id]
