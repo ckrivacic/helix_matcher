@@ -212,7 +212,7 @@ def main():
                 patch_rif_ws = ws.RIFWorkspace(patch_workspace.root_dir, os.path.basename(target))
                 patch_target = os.path.join(patch_rif_ws.focus_dir, 'target.clean.pdb')
                 target_atoms = prody.parsePDB(patch_target)
-                first_res = target_atoms.select("resindex 0").getResnums()[0]
+                first_res = int(target_atoms.select("resindex 0").getResnums()[0]) - 1
                 # Construct dictionary of patches
                 patch_dict = {}
                 for patch in patch_rif_ws.patches:
