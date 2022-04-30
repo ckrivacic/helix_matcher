@@ -52,14 +52,22 @@ def main():
     for target in targets:
         rif_workspace = ws.RIFWorkspace(workspace.root_dir, target)
         rif_workspace.make_dirs()
+
+        cmd = workspace.python_path, script_path
+        cmd += target,
+
         if args['--make-dirs']:
             continue
         if args['--clear']:
             rif_workspace.clear_outputs
         if args['--keep-existing']:
             inputs = rif_workspace.unfinished_inputs
+            with open(os.path.join(rif_workspace.focus_dir, 'unfinished.txt'), 'w') as f:
+                for inp in inputs:
+                    f.write(inp + '\n')
             print('Unfinished inputs')
             print(inputs)
+            cmd += '--keep-existing',
         else:
             inputs = rif_workspace.unclaimed_inputs
         ntasks = len(inputs)
@@ -67,14 +75,11 @@ def main():
             print('No inputs for target {}'.format(target))
             continue
 
-        cmd = workspace.python_path, script_path
-        cmd += target,
-
         if args['--flexpepdock']:
-            cmd += '--flexpepdock'
+            cmd += '--flexpepdock',
 
         if args['--relax']:
-            cmd += '--relax'
+            cmd += '--relax',
 
         if args['--task']:
             cmd += '--task', args['--task']

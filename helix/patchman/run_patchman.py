@@ -9,6 +9,7 @@ Options:
     --task=INT  Only run a specific task
     --flexpepdock  Run flexpepdock on matched motifs
     --relax  Do not run relax on target
+    --keep-existing
 """
 import pandas as pd
 from pyrosetta import pose_from_pdb
@@ -206,7 +207,13 @@ def main():
         os.makedirs(outdir_temp, exist_ok=True)
 
     # folders = workspace.patches
-    folders = job_info['inputs']
+    if args['--keep-existing']:
+        folders = []
+        with open(os.path.join(workspace.focus_dir, 'unfinished.txt'), 'r') as f:
+            for line in f:
+                folders.append(line)
+    else:
+        folders = job_info['inputs']
     folder = folders[task_id]
 
     print("Running PatchMAN for {}".format(folder), flush=True)
