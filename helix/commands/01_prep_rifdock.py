@@ -210,6 +210,9 @@ def main():
                 import prody
                 patch_workspace = ws.workspace_from_dir(args['--patchman-workspace'])
                 patch_rif_ws = ws.RIFWorkspace(patch_workspace.root_dir, os.path.basename(target))
+                patch_target = os.path.join(patch_rif_ws.focus_dir, 'target.clean.pdb')
+                target_atoms = prody.parsePDB(patch_target)
+                first_res = target_atoms.select("resindex 0").getResnums()[0]
                 # Construct dictionary of patches
                 patch_dict = {}
                 for patch in patch_rif_ws.patches:
@@ -223,7 +226,7 @@ def main():
                         continue
                     patch_atoms = patch_atoms.getHierView()
                     for res in patch_atoms.iterResidues():
-                        patch_dict[patch_number].append(res.getResnum())
+                        patch_dict[patch_number].append(int(res.getResnum()) - int(first_res))
                 for patch_number in patch_dict:
                     patch_folder = os.path.join(workspace.focus_dir, f'patch_{patch_number}')
                     if not os.path.exists(patch_folder):
