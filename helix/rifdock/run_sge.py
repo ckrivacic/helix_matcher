@@ -167,7 +167,13 @@ def main():
     print('START JOB: {}'.format(start_job))
     print('STOP JOB: {}'.format(stop_job))
 
-    folders = workspace.patches
+    if args['--keep-existing']:
+        folders = []
+        with open(os.path.join(workspace.focus_dir, 'unfinished.txt'), 'r') as f:
+            for line in f:
+                folders.append(line.strip('\n'))
+    else:
+        folders = workspace.patches
 
     # rifgen = os.path.join(folder, 'rifgen')
     # rifdock = os.path.join(folder, 'rifdock')

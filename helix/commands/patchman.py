@@ -62,6 +62,8 @@ def main():
             rif_workspace.clear_outputs
         if args['--keep-existing']:
             inputs = rif_workspace.unfinished_inputs
+            if os.path.exists(os.path.join(rif_workspace.focus_dir, 'unfinished.txt')):
+                os.remove(os.path.join(rif_workspace.focus_dir, 'unfinished.txt'))
             with open(os.path.join(rif_workspace.focus_dir, 'unfinished.txt'), 'w') as f:
                 for inp in inputs:
                     f.write(inp + '\n')

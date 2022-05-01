@@ -23,6 +23,7 @@ Options:
     for now.
     --clear, -o  Overwrite a previous run. Gets rid of docked outputs,
     log files, and job info files.
+    --keep-existing  Only submit jobs for unfinished patches.
 
 Workspace should be the root workspace.
 """
@@ -60,6 +61,19 @@ def main():
         if args['--task']:
             cmd += '--task', args['--task']
             ntasks = 1
+
+        if args['--keep-existing']:
+            inputs = rif_workspace.unfinished_inputs
+            if os.path.exists(os.path.join(rif_workspace.focus_dir, 'unfinished.txt')):
+                os.remove(os.path.join(rif_workspace.focus_dir, 'unfinished.txt'))
+            with open(os.path.join(rif_workspace.focus_dir, 'unfinished.txt'), 'w') as f:
+                for inp in inputs:
+                    f.write(inp + '\n')
+            print('Unfinished inputs')
+            print(inputs)
+            cmd += '--keep-existing',
+        else:
+            inputs = rif_workspace.unclaimed_inputs
 
         if args['--local']:
             local_cmd = deepcopy(cmd)
