@@ -241,7 +241,7 @@ def main():
                               'source', 'external', 'DAlpahBall',
                               'DAlphaBall.gcc')
     init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro' \
-         ' -holes:dalphaball {} -ignore_unrecognized_res'.format(dalphaball))
+         ' -holes:dalphaball {} -ignore_unrecognized_res -detect_disulf false'.format(dalphaball))
 
     if not hasattr(workspace, 'docking_directory'):
         raise Exception("Error: design_patchman.py requires RIFWorkspaces as input. You " \
