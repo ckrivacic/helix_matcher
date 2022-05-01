@@ -14,6 +14,8 @@ Options:
     How many angstroms across should a patch be?  [default: 10.5]
     --patchman-workspace=PATH
     Use patch definitions from a PatchMAN workspace.
+    --overwrite, -o
+    Prep rifdock even for targets that already have a sub-workspace
 
 TO DO:
     Allow user to specify ranges
@@ -160,6 +162,8 @@ def main():
     for target in targets:
         try:
             workspace = ws.RIFWorkspace(args['<workspace>'], target)
+            if os.path.exists(workspace.focus_dir) and not args['--overwrite']:
+                continue
             workspace.make_dirs()
             pose = pose_from_file(workspace.initial_target_path)
             chain = None
