@@ -9,6 +9,7 @@ Usage:
 Options:
     --sge  Running on the cluster?
     --task=NUM  Which task number, for testing
+    --keep-existing  Only run tasks for unfinished patches
 '''
 
 import sys, os, docopt
