@@ -13,6 +13,7 @@ Options:
     --subangstrom, -s  Plot the percent sub-angstrom, also showing decreasing % ID
     --patch-id, -p  Plot percent sub-Angstrom based on patch % ID
     --filter=JSON, -f  Give a filter json
+    --overwrite, -o  Recalculate
 '''
 
 from helix.utils import utils
@@ -166,9 +167,9 @@ def main():
     )
     patchman_workspace = ws.workspace_from_dir(args['<patchman_workspace>'])
     rifdock_workspace = ws.workspace_from_dir(args['<rifdock_workspace>'])
-    if not os.path.exists(outpath) or args['--trim']:
+    if not os.path.exists(outpath) or args['--trim'] or args['--overwrite']:
         benchmark = utils.safe_load(bench_path)
-    if not os.path.exists(outpath):
+    if not os.path.exists(outpath) or args['--overwrite']:
         benchmark['start_stop'] = benchmark.apply(get_benchmark_resis, axis=1)
 
         print('Loading patchman DF')
