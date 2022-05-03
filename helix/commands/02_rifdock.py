@@ -26,6 +26,7 @@ Options:
     --keep-existing  Only submit jobs for unfinished patches.
     --max-runtime=NUMBER  Maximum runtime  [default: 12:00:00]
     --max-memory=NUMBER  Maximum memory for SGE  [defualt: 2G]
+    --hold  Keep jbos on hold
 
 Workspace should be the root workspace.
 """
