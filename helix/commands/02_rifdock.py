@@ -25,6 +25,7 @@ Options:
     log files, and job info files.
     --keep-existing  Only submit jobs for unfinished patches.
     --max-runtime=NUMBER  Maximum runtime  [default: 12:00:00]
+    --max-memory=NUMBER  Maximum memory for SGE  [defualt: 2G]
 
 Workspace should be the root workspace.
 """
@@ -92,4 +93,5 @@ def main():
                 make_dirs=args['--make-dirs'],
                 test_run=args['--test-run'], clear=args['--clear'],
                 max_runtime=args['--max-runtime'],
+                max_memory=args['--max-memory'],
                 )
