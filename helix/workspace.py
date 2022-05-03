@@ -600,7 +600,7 @@ class RIFWorkspace(Workspace):
         return os.path.join(self.rifdock_outdir, self.focus_name)
 
     def scaffold_folder(self, scaffold_basename):
-        return self.scaffold_prefix + scaffold_basename
+        return self.scaffold_prefix + self.basename(scaffold_basename)
 
     def get_scores(self):
         # This will go faster if you run helix combine on the "scores"
