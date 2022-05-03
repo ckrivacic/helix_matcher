@@ -24,6 +24,7 @@ Options:
     --clear, -o  Overwrite a previous run. Gets rid of docked outputs,
     log files, and job info files.
     --keep-existing  Only submit jobs for unfinished patches.
+    --max-runtime=NUMBER  Maximum runtime  [default: 12:00:00]
 
 Workspace should be the root workspace.
 """
@@ -90,4 +91,5 @@ def main():
         submit.submit(rif_workspace, cmd, distributor='sge',
                 make_dirs=args['--make-dirs'],
                 test_run=args['--test-run'], clear=args['--clear'],
+                max_runtime=args['--max-runtime'],
                 )
