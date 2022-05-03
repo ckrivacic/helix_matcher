@@ -54,6 +54,9 @@ def main():
     for target in targets:
 
         rif_workspace = ws.RIFWorkspace(workspace.root_dir, target)
+        if args['--keep-existing']:
+            if not os.path.exists(rif_workspace.focus_dir):
+                continue
         inputs = rif_workspace.unclaimed_inputs
         ntasks = len(inputs)
 
