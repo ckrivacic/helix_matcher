@@ -72,6 +72,8 @@ def main():
             print('Unfinished inputs')
             print(inputs)
             ntasks = len(inputs)
+            if ntasks == 0:
+                continue
             cmd += '--keep-existing',
         else:
             inputs = rif_workspace.unclaimed_inputs
