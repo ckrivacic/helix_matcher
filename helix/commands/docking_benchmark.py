@@ -17,6 +17,7 @@ Options:
 '''
 
 from helix.utils import utils
+from helix import big_jobs
 from helix.utils import homology
 import docopt
 import os
