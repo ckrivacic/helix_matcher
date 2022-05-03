@@ -89,9 +89,17 @@ def main():
         else:
             cmd += '--sge',
         print('Submitting jobs for {}'.format(target))
-        submit.submit(rif_workspace, cmd, distributor='sge',
-                make_dirs=args['--make-dirs'],
-                test_run=args['--test-run'], clear=args['--clear'],
-                max_runtime=args['--max-runtime'],
-                max_memory=args['--max-memory'],
-                )
+        # submit.submit(rif_workspace, cmd, distributor='sge',
+        #         make_dirs=args['--make-dirs'],
+        #         test_run=args['--test-run'], clear=args['--clear'],
+        #         max_runtime=args['--max-runtime'],
+        #         max_memory=args['--max-memory'],
+        #         )
+        big_jobs.submit(
+            rif_workspace, cmd, nstruct=ntasks,
+            max_runtime=args['--max-runtime'],
+            max_memory=args['--max-memory'],
+            job_name='RIFDock',
+            inputs=inputs,
+            hold=args['--hold'],
+        )
