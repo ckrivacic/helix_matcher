@@ -12,6 +12,7 @@ Options:
     the provided length are analyzed.
     --subangstrom, -s  Plot the percent sub-angstrom, also showing decreasing % ID
     --patch-id, -p  Plot percent sub-Angstrom based on patch % ID
+    --filter=JSON, -f  Give a filter json
 '''
 
 from helix.utils import utils

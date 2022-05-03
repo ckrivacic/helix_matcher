@@ -86,6 +86,7 @@ setuptools.setup(
             define_command('filter'),
             define_command("export_matches"),
             define_command('docking_benchmark'),
+            define_command('plot_filter'),
             ],
         }
 )

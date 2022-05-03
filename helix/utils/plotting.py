@@ -149,15 +149,20 @@ class ClickablePlot(object):
         '''
         pathlist = patchman_file.split('/')
         print(pathlist)
-        if '2022_02_17_design_benchmark' in pathlist:
+        if '2022_02_17_design_benchmark' in pathlist\
+                or '2022_04_10_patchman_design' in pathlist:
+            print('THING 1')
             start = pathlist.index(
-                os.path.basename('2022_02_17_design_benchmark')
+                os.path.basename('2022_04_10_patchman_design')
             ) + 1
             fpath = os.path.join(
                 self.workspace.root_dir,
                 *pathlist[start:]
             )
             patchman_file = os.path.join(*pathlist[start:])
+            pathlist = os.path.join(*pathlist[start:])
+            print('New pathlist:')
+            print(pathlist)
         elif os.path.basename(os.path.normpath(self.workspace.root_dir)) not in pathlist:
             fpath = os.path.join(
                     self.workspace.root_dir,

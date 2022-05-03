@@ -36,6 +36,8 @@ Options:
     --target=STR  Only show results for a specific target
 
     --protocol=STR  Only show results for this protocol
+
+    --length=#, -l  Only show results for docked helices of this length (14 orr 28)
 '''
 import docopt
 import os
@@ -425,6 +427,10 @@ def main():
     else:
         df = df_temp
 
+    if args['--length']:
+        length_name = workspace.scaffold_prefix + args['--length']
+        df = df[df['patch_len'] == length_name]
+
     if args['--focus-dir']:
         focusdirs = args['--focus-dir'].split(',')
         df = df[df['focus_dir'].isin(focusdirs)]
@@ -502,15 +508,15 @@ def main():
                  'deleteme', 'specialres', 'combined',
                  'residue_lock', 'residue_lock_combined', 'residue_lock_combined_ramp',
                  'specialrot',
-                 'specialrot_combined', 'special_combined_ramp', 'combined_nomin',
-                 'specialrot_3', 'specialrot_3_combined', 'specialrot_3_combined_ramp']
+                 'specialrot_combined', 'special_combined_ramp', #'combined_nomin',
+                 'specialrot_3', 'specialrot_3_combined', 'specialrot_3_combined_ramp',] #'interface']
         labels = ['Base',
                   'BUNS penalty', 'BUNS pen. pruned',
                   'NativeResidue', 'Special residue', 'Special res + BUNS',
                   'Residue lock',  'Residue lock + BUNS', 'Residue lock + BUNS\n(ramp cst.)',
                   'Special rotamer',
-                  'Special rot. + BUNS', 'Special rot. + BUNS\n(ramp cst.)', 'Special rot. + BUNS\n(no cst)',
-                  'Special rot. weight 3', 'Special rot. weight 3\n+ BUNS', 'Special rot. weight 3\n+ BUNS (ramp cst.)']
+                  'Special rot. + BUNS', 'Special rot. + BUNS\n(ramp cst.)', #'Special rot. + BUNS\n(no cst)',
+                  'Special rot. weight 3', 'Special rot. weight 3\n+ BUNS', 'Special rot. weight 3\n+ BUNS (ramp cst.)',] #'INTERFACE']
         color_dict = {
             'base': '#A5AA99',
             'buns_penalty': '#F0E442',
@@ -528,6 +534,7 @@ def main():
             'specialrot_3': '#0072B2',
             'specialrot_3_combined': '#0072B2',
             'specialrot_3_combined_ramp': '#0072B2',
+            'interface' : '#A5AA99',
         }
         global colors
         colors = []
