@@ -5,7 +5,7 @@ Usage:
     helix filter <workspace> [options]
 
 Options:
-    --filter, -f  A yaml file describing filters. If not provided, a
+    --filter=FILENAME, -f  A yaml file describing filters. If not provided, a
     default set of filters will be used.
     --target=STR, -t  Only run filters for a specific target
     --clear, -o  Delete existing filtered symlinks prior to running
