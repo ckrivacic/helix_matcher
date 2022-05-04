@@ -3,6 +3,7 @@ Create bins or match a query protein.
 
 Usage:
     matcher.py bin <helix_dataframe> [options]
+    matcher.py bin_query <match_workspace> [options]
     matcher.py match <match_workspace> [options]
 
 options:
@@ -30,6 +31,17 @@ options:
 
     --scaffold=PDB  Only run matching for a given helix length/RIFDock
     scaffold.
+
+    --min-dist=FLOAT  Minimum distance for two helices to have their relative orientations saved.
+    Useful for query dataframes where you have lots of helices.
+
+    --max-dist=FLOAT  Maximum distance before two helices do not have their relative orientations saved.
+
+    --overwrite  Overwrite relative orientation dataframe even if another task has already made it
+
+    --bin-tasks=INT  For binning query helices only. How many tasks to split the binning process into.
+
+    --bin-task-id=INT  Task ID for binning (for local runs only)
 '''
 import collections
 import os, psutil, sys
@@ -42,6 +54,7 @@ import networkx as nx
 from helix import workspace as ws
 from helix.matching.scan_helices import final_vector
 from helix.utils import numeric
+from helix.utils import utils
 from itertools import product
 from pyrosetta import init, pose_from_file
 # import graph_tool.all as gt
@@ -200,10 +213,15 @@ class Match(object):
 class HelixBin(object):
     def __init__(self, helix_db, exposed_cutoff=0.3, length_cutoff=10.8,
             query_df=None, query_name=None, angstroms=2.5, degrees=15,
-            verbose=False, start=None, stop=None):
+            verbose=False, start=None, stop=None, min_distance=None, max_distance=None,
+            task=None):
         self.verbose = verbose
         self.df = helix_db
         self.df['idx'] = self.df.index
+        self.task = int(task)
+
+        self.min_distance = float(min_distance)
+        self.max_distance = float(max_distance)
 
         # Binning parameters
         self.degrees = degrees
@@ -211,8 +229,7 @@ class HelixBin(object):
         self.setup_bins()
         binned_name = 'bins_{}A_{}D'.format(self.angstroms,
                 self.degrees)
-        self.start = start
-        self.stop = stop
+
 
         # Trimming dataframe
         if length_cutoff:
@@ -223,6 +240,15 @@ class HelixBin(object):
         if 'normalized_vector' not in self.df.columns:
             self.df['normalized_vector'] = self.df.apply(lambda x:
                     final_vector(x['direction'], 1, x['centroid']), axis=1)
+
+        if start:
+            self.start = start
+        else:
+            self.start = 0
+        if stop:
+            self.stop = stop
+        else:
+            self.stop = self.df.shape[0]
 
     def setup_bins(self):
         nrbins = int(360//self.degrees) + 1
@@ -252,19 +278,24 @@ class HelixBin(object):
         # dataframes. Results will be saved in chunks.
         # bins.set_index(['bin', 'name'], inplace=True)
         total_proteins = len(set(self.df['name']))
-        interval = 500
+        if total_proteins == 1:
+            interval = 5000
+        else:
+            interval = 500
 
         # import shelve
 
         # binned = shelve.open('binned_0p3/hashtable', 'c', writeback=True)
         # i tracks # of names analyzed
         i = 0
+        # j tracks # of rows analyzed
+        j = 0
         # saveno tracks how many dataframes have been saved.
         self.saveno = 1
         unsaved_docs = []
         start_time = time.time()
 
-        def update(bins, start_time, unsaved_docs, interval, i,
+        def update(bins, start_time, unsaved_docs, interval, i, j,
                 final=False):
             print('{} of {} PDBs processed so far.'.format(
                 i, total_proteins))
@@ -280,10 +311,17 @@ class HelixBin(object):
                     ))
             elapsed = time.time() - start_time
             rate = interval / elapsed
-            remaining = (total_proteins - i) / rate / 3600
-            print('Analysis of 500 pdbs took {} seconds. Est. {} h remaining'.format(
-                elapsed, remaining
+            if total_proteins == 1:
+                total_combos = self.df.shape[0]**2
+                remaining = (total_combos - i) / rate / 3600
+                print('Analysis of {} rows took {} seconds. Est. {} h remaining'.format(
+                    interval, elapsed, remaining
                 ))
+            else:
+                remaining = (total_proteins - i) / rate / 3600
+                print('Analysis of {} pdbs took {} seconds. Est. {} h remaining'.format(
+                    interval, elapsed, remaining
+                    ))
 
             if len(unsaved_docs) > 0:
                 if self.verbose:
@@ -301,8 +339,13 @@ class HelixBin(object):
             if outdir:
                 if df_mem * 10**-9 > 4 or final:
                     bins.set_index(['bin', 'name'], inplace=True)
-                    outfile = 'bins_{}A_{}D_{:04d}.pkl'.format(self.angstroms,
-                            self.degrees, self.saveno)
+                    if self.task:
+                        outfile = 'bins_{}A_{}D_{:03d}_{:04d}.pkl'.format(self.angstroms,
+                                self.degrees, self.task, self.saveno,)
+                    else:
+                        outfile = 'bins_{}A_{}D_{:04d}.pkl'.format(self.angstroms,
+                                self.degrees, self.saveno)
+
                     out = os.path.join(outdir, outfile)
                     print('Saving current dataframe to {}'.format(out))
                     if not os.path.exists(outdir):
@@ -322,33 +365,47 @@ class HelixBin(object):
 
         groups = self.df.groupby(['name'])
         names = sorted(list(groups.groups.keys()))
-        if self.start:
-            names = names[self.start:]
-        if self.stop:
-            names = names[:self.stop]
+        # if self.start:
+        #     names = names[self.start:]
+        # if self.stop:
+        #     names = names[:self.stop]
         for name in names:
-        # for name, group in df.groupby(['name']):
             group = groups.groups[name]
+            group_df = self.df.loc[group]
             i += 1
 
-            for combination in product(self.df.loc[group].T.to_dict().values(),
-                    repeat=2):
-                if combination[0]['idx'] != combination[1]['idx']:
+            # for combination in product(self.df.loc[group].T.to_dict().values(),
+            #         repeat=2):
+            for idx1 in range(self.start, self.stop):
+                for idx2 in range(0, group_df.shape[0]):
+                    # if combination[0]['idx'] == combination[1]['idx']:
+                    j += 1
+                    if idx1 == idx2:
+                        continue
+                    if idx1 not in self.df.index or idx2 not in self.df.index:
+                        continue
                     # vector1 = combination[0]['vector']
                     # vector2 = combination[1]['vector']
 
                     # plot_vectors([vector1, vector2], color='purple')
 
-                    idx1 = combination[0]['idx']
-                    idx2 = combination[1]['idx']
+                    # idx1 = combination[0]['idx']
+                    # idx2 = combination[1]['idx']
                     # if self.verbose:
                         # print('------------------------------------')
                         # print(combination[0])
                         # print(combination[1])
+                    combination = (group_df.loc[idx1], group_df.loc[idx2])
 
                     dist, angle1, angle2, dihedral =\
                             relative_position(combination[0], combination[1])
                     dist = np.array([dist])
+                    if dist < self.min_distance:
+                        # Add the indices to a list of indices we don't need to check? Hm.... Does that actually help?
+                        # Would only save us a single distance calculation.
+                        continue
+                    if dist > self.max_distance:
+                        continue
                     angles = np.array([angle1, angle2, dihedral])
 
                     lengths = np.array([combination[0]['length'],
@@ -377,7 +434,7 @@ class HelixBin(object):
                     for bin_12 in all_bins:
                         bin_12 = ' '.join(map(str, bin_12))
                         doc = {
-                                'bin':bin_12, 
+                                'bin':bin_12,
                                 'name': name,
                                 'idx1':idx1,
                                 'idx2':idx2
@@ -388,12 +445,12 @@ class HelixBin(object):
                         # else:
                         unsaved_docs.append(doc)
 
-            if i%interval == 0:
-                bins = update(bins, start_time, unsaved_docs, interval, i)
-                start_time = time.time()
-                unsaved_docs = []
+                    if i%interval == 0:
+                        bins = update(bins, start_time, unsaved_docs, interval, i, j)
+                        start_time = time.time()
+                        unsaved_docs = []
 
-        bins = update(bins, start_time, unsaved_docs, interval, i, final=True)
+        bins = update(bins, start_time, unsaved_docs, interval, i, j, final=True)
 
         return bins
 
@@ -640,9 +697,10 @@ def main():
                 exposed_cutoff=0.3, length_cutoff=10.8,
                 angstroms=float(args['--angstroms']),
                 degrees=float(args['--degrees']),
-                verbose=args['--verbose'])
+                verbose=args['--verbose'], min_distance=args['--min-dist'],
+                max_distance=args['--max-dist'],)
         lookup.bin_db(outdir=dbpath, bin_length=args['--length'])
-    if args['match']:
+    if args['match'] or args ['bin_query']:
         # import scan_helices
         from helix.matching import scan_helices
         workspace = ws.workspace_from_dir(args['<match_workspace>'])
@@ -659,10 +717,9 @@ def main():
 
         init()
 
-
         if not args['--scaffold'] and \
                 os.path.exists(workspace.all_scaffold_dataframe):
-            all_helices = pd.read_pickle(workspace.all_scaffold_dataframe)
+            all_helices = utils.safe_load(workspace.all_scaffold_dataframe)
         else:
             all_helices = []
             for pdbfolder in pdbfolders:
@@ -700,17 +757,43 @@ def main():
 
         print("HELICES")
         print(all_helices)
-        print(all_helices['vector'])
 
-        # Bin pdb helices
-        query = HelixBin(all_helices, exposed_cutoff=0.3,
-                length_cutoff=10.8, 
-                angstroms=float(args['--angstroms']), 
-                degrees=float(args['--degrees']),
-                verbose=args['--verbose'])
-        query_bins = query.bin_db(bin_length=args['--length'])
-        print('QUERY BINS')
-        print(query_bins)
+        if not os.path.exists(workspace.query_database_dir):
+            os.makedirs(workspace.query_database_dir, exist_ok=True)
+        if not os.path.exists(workspace.relative_orientation_dataframe) or args['--overwrite']:
+            if 'SGE_TASK_ID' in os.environ:
+                task_id = int(os.environ['SGE_TASK_ID'])
+            else:
+                task_id = int(args['--bin-task-id'])
+            if args['--bin-tasks']:
+                interval = (all_helices.shape[0] // int(args['--bin-tasks'])) + 1
+                task = task_id - 1
+                start = task * interval
+                stop = start + interval
+            else:
+                task_id = 1
+                start = 0
+                stop = all_helices.shape[0]
+            # Bin pdb helices
+            query = HelixBin(all_helices, exposed_cutoff=0.3,
+                    length_cutoff=10.8,
+                    angstroms=float(args['--angstroms']),
+                    degrees=float(args['--degrees']),
+                    verbose=args['--verbose'],
+                    min_distance=args['--min-dist'],
+                    max_distance=args['--max-dist'],
+                    start=start, stop=stop, task=task_id)
+            query_bins = query.bin_db(bin_length=args['--length'], outdir = workspace.query_database_dir,)
+            print('QUERY BINS')
+            print(query_bins)
+            # if not os.path.exists(workspace.relative_orientation_dataframe) and not args['--overwrite']:
+            #     query_bins.to_pickle(workspace.relative_orientation_dataframe)
+        else:
+            query_bins = workspace.relative_orientations
+
+        if args['bin_query']:
+            # Exit after binning
+            sys.exit()
 
         # Match
         # name = os.path.basename(path).split('.')[0]

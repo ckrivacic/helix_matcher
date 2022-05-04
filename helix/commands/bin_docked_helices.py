@@ -67,19 +67,10 @@ Options:
 
     --max-runtime=10:00:00  How much time to allocate to the job?
     [default: 10:00:00]
-
-    --min-dist=FLOAT  Minimum distance for two helices to have their relative orientations saved.
-    Useful for query dataframes where you have lots of helices.
-
-    --max-dist=FLOAT  Maximum distance before two helices do not have their relative orientations saved.
-
-    --bin-tasks=INT  Split binning into this many tasks. This will also turn this into a bin-only run, i.e.
-    no matching. Run this command again to match using the created bins.
 """
 from helix import submit
 from helix.utils import utils
 from helix import big_jobs
-from copy import deepcopy
 import helix.workspace as ws
 import docopt
 import re
@@ -184,44 +175,23 @@ def main():
             continue
 
         cmd = match_workspace.python_path, script_path
-        if args['--bin-tasks']:
-            cmd += 'bin_query', match_workspace.focus_dir
-            cmd += '--bin-tasks', args['--bin-tasks']
-        else:
-            cmd += 'match', match_workspace.focus_dir
+        cmd += 'bin', match_workspace.scaffold_dataframe
         # cmd += match_workspace.target_clusters(target),
         for setting in settings['match']:
             if setting != '--database':
                 cmd += setting, settings['match'][setting]
             else:
                 cmd += setting, database
-        num_rel_dataframes = len(match_workspace.relative_orientation_dataframes)
-        if args['--ntasks'] and not args['--bin-tasks']:
-            ntasks = int(args['--ntasks']) * workspace.n_bin_pickles * num_rel_dataframes
+        if args['--ntasks']:
+            ntasks = int(args['--ntasks']) * workspace.n_bin_pickles
             cmd += '--tasks', args['--ntasks']
-        if args['--bin-tasks']:
-            ntasks = int(args['--bin-tasks'])
 
         if args['--scaffold']:
             cmd += '--scaffold', args['--scaffold']
 
-        if args['--min-dist']:
-            cmd += '--min-dist', args['--min-dist']
-        if args['--max-dist']:
-            cmd += '--max-dist', args['--max-dist']
-
-        if args['--verbose']:
-            cmd += '--verbose',
-
         if args['--local']:
             cmd += '--local',
-            if args['--bin-tasks']:
-                for i in range(1, int(args['--bin-tasks']) + 1):
-                    cmd_copy = deepcopy(cmd)
-                    cmd_copy += '--bin-task-id', str(i)
-                    utils.run_command(cmd_copy)
-            else:
-                utils.run_command(cmd)
+            utils.run_command(cmd)
             continue
         else:
             script_name = 'matcher'

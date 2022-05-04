@@ -11,10 +11,9 @@ the design, each of which is related to a cluster job.
 
 import os, re, glob, json, pickle, sys
 from klab import scripting
-from pprint import pprint
 import yaml
 import pandas as pd
-# from roseasy.standard_params import *
+from helix.utils import utils
 
 class Workspace(object):
     """
@@ -849,6 +848,7 @@ class MatchWorkspace(Workspace):
         scripting.mkdir(self.focus_dir)
         scripting.mkdir(self.log_dir)
         scripting.mkdir(self.output_dir)
+        scripting.mkdir(self.query_database_dir)
         pickle_path = os.path.join(self.focus_dir, 'workspace.pkl')
         with open(pickle_path, 'wb') as file:
             pickle.dump(self.__class__, file)
@@ -903,6 +903,37 @@ class MatchWorkspace(Workspace):
     @property
     def query_dataframe(self):
         return os.path.join(self.cluster_outputs, 'query_helices.pkl')
+
+    @property
+    def query_database_dir(self):
+        length = self.settings['match'].get('--length', False)
+        if length:
+            return os.path.join(self.focus_dir, 'query_database', 'length')
+        else:
+            return os.path.join(self.focus_dir, 'query_database', 'standard')
+
+    @property
+    def relative_orientation_basename(self):
+        return "bins_{}A_{}D".format(
+                float(self.settings['match']['--angstroms']),
+                float(self.settings['match']['--degrees']))
+
+    @property
+    def relative_orientation_dataframes(self):
+        return sorted(glob.glob(os.path.join(
+            self.query_database_dir, f'{self.relative_orientation_basename}*.pkl'
+        )))
+
+    @property
+    def relative_orientation_dataframe(self):
+        return os.path.join(self.query_database_dir, f'{self.relative_orientation_basename}.pkl')
+
+    @property
+    def relative_orientations(self):
+        dfs = []
+        for pkl in self.relative_orientation_dataframes:
+            dfs.append(utils.safe_load(pkl))
+        return pd.concat(dfs)
 
 
 
