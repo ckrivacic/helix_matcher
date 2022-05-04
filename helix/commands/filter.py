@@ -55,6 +55,10 @@ def parse_filter(filter_dict, df):
     return df
 
 
+def get_patch_length(row):
+    return row['patchman_file'].splti('/')[2]
+
+
 def main():
     args = docopt.docopt(__doc__)
     workspace = ws.workspace_from_dir(args['<workspace>'])
@@ -73,8 +77,8 @@ def main():
 
         # Import all "score" files
         scores = rif_workspace.get_scores()
-        print(scores.columns)
-        print(scores)
+        if 'patch_len' not in scores.columns:
+            scores['patch_len'] = scores.apply(get_patch_length, axis=1)
         if 'design_file' not in scores.columns:
             scores['design_file'] = scores['patchman_file']
 
