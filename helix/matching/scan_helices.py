@@ -122,7 +122,10 @@ class Surface(object):
 
 
     def apply(self, pose):
-        return self.selector.apply(pose)
+        try:
+            return self.selector.apply(pose)
+        except:
+            return [True for x in range(0, pose.size())]
 
 
 def find_avg_helix_direction(resis):
