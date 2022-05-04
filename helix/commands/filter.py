@@ -89,7 +89,10 @@ def main():
                         'interface_dG': ['<', -0.5]
                         }
                     }
-        scores = parse_filter(filters, scores)
+        scorelist = []
+        for name, group in scores.groupby(['patch_len']):
+            scorelist.append(parse_filter(filters, scores))
+        scores = pd.concat(scorelist)
 
         # Symlink 
         outdir = rif_workspace.cluster_outputs

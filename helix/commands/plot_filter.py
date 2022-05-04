@@ -191,7 +191,11 @@ def main():
         print('Parsing filters...')
         for i in range(0, len(filters)):
             current_filter = filters[i]
-            filtered_df = parse_filter(current_filter, df)
+            groups = []
+            for name, group in df.groupby(['name_x', 'target', 'patch_len']):
+                group_df = parse_filter(current_filter, group)
+                groups.append(group_df)
+            filtered_df = pd.concat(groups)
             filtered_dataframes.append(filtered_df)
             filter_names.append(parse_filter_name(current_filter))
 
