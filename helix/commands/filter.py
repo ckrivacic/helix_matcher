@@ -73,6 +73,8 @@ def main():
 
         # Import all "score" files
         scores = rif_workspace.get_scores()
+        print(scores.columns)
+        print(scores)
         if 'design_file' not in scores.columns:
             scores['design_file'] = scores['patchman_file']
 
@@ -91,7 +93,7 @@ def main():
                     }
         scorelist = []
         for name, group in scores.groupby(['patch_len']):
-            scorelist.append(parse_filter(filters, scores))
+            scorelist.append(parse_filter(filters, group))
         scores = pd.concat(scorelist)
 
         # Symlink 
