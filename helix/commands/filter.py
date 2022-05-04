@@ -56,7 +56,7 @@ def parse_filter(filter_dict, df):
 
 
 def get_patch_length(row):
-    return row['patchman_file'].splti('/')[2]
+    return row['patchman_file'].split('/')[2]
 
 
 def main():
