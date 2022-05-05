@@ -526,6 +526,9 @@ class HelixLookup(object):
         query_increment = tasks * len(lookups)
 
         task = int(os.environ['SGE_TASK_ID']) - 1
+        print("Loading query dataframe {}".format(
+            self.query_list[task // query_increment]
+        ))
         self.query = utils.safe_load(self.query_list[task // query_increment])
         os.makedirs(outdir, exist_ok=True)
         out = os.path.join(outdir, '{}_results_{:03d}.pkl'.format(self.name,
@@ -534,15 +537,16 @@ class HelixLookup(object):
 
         # Warning: total_tasks must be a multiple of len(lookups) for
         # now.
-        increment = total_tasks // tasks_per_query //len(lookups)
-        print('Increment {}'.format(increment))
-        lookups_idx = task%increment
+        # increment = total_tasks // tasks_per_query //len(lookups)
+        # increment = tasks * len(self.query_list) // len(lookups)
+        # print('Increment {}'.format(increment))
+        lookups_idx = (task//tasks)%len(lookups)
         print('Reading database file # {}'.format(lookups_idx))
 
         lookup = utils.safe_load(lookups[lookups_idx])
         num_rows = lookup.shape[0]
-        row_increment = num_rows // increment
-        rowstart = (task%increment) * row_increment
+        row_increment = num_rows // tasks
+        rowstart = (task%tasks) * row_increment
         rowend = rowstart + row_increment
         lookup = lookup.iloc[rowstart:rowend]
         print('Looking up rows {} through {}'.format(rowstart, rowend))
