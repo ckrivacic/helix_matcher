@@ -147,7 +147,7 @@ def main():
 
     dbexp = 'bins_.*A_.*D'
     match = False
-    for subfolder in os.listdir(database):
+    for subfolder in os.listdir(os.path.join(workspace.root_dir,database)):
         if re.match(dbexp, subfolder):
             match = True
             break
