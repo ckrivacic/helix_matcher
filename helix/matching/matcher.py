@@ -495,7 +495,7 @@ class HelixLookup(object):
             verbose=False):
         self.verbose = verbose
         self.lookup_folder = lookup_folder
-        self.query_list = query
+        self.query_list = query_list
         self.name = name
 
     def submit_local(self, outdir):
@@ -516,13 +516,13 @@ class HelixLookup(object):
                 self.match(utils.safe_load(lookup), out=out)
                 i += 1
 
-    def submit_cluster(self, outdir, tasks, queries):
+    def submit_cluster(self, outdir, tasks):
         # For now, "queries" is the list of query relative orientation dataframes.
         # For now just pass None to "query" when initiating this class if using submit_cluster.
         import glob
         lookups = sorted(glob.glob(self.lookup_folder + '/*.pkl'))
-        total_tasks = tasks * len(lookups) * len(queries)
-        tasks_per_query = total_tasks // len(queries)
+        total_tasks = tasks * len(lookups) * len(self.query_list)
+        tasks_per_query = total_tasks // len(self.query_list)
         query_increment = tasks * len(lookups)
 
         task = int(os.environ['SGE_TASK_ID']) - 1
