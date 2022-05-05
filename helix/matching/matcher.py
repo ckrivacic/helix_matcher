@@ -218,10 +218,19 @@ class HelixBin(object):
         self.verbose = verbose
         self.df = helix_db
         self.df['idx'] = self.df.index
-        self.task = int(task)
+        if task:
+            self.task = int(task)
+        else:
+            self.task = 1
 
-        self.min_distance = float(min_distance)
-        self.max_distance = float(max_distance)
+        if min_distance:
+            self.min_distance = float(min_distance)
+        else:
+            self.min_distance = min_distance
+        if max_distance:
+            self.max_distance = float(max_distance)
+        else:
+            self.max_distance = max_distance
 
         # Binning parameters
         self.degrees = degrees
@@ -313,13 +322,13 @@ class HelixBin(object):
             rate = interval / elapsed
             if total_proteins == 1:
                 total_combos = self.df.shape[0]**2
-                remaining = (total_combos - i) / rate / 3600
-                print('Analysis of {} rows took {} seconds. Est. {} h remaining'.format(
+                remaining = (total_combos - j) / rate / 3600
+                print('Analysis of {} rows took {:02f} seconds. Est. {:02f} h remaining'.format(
                     interval, elapsed, remaining
                 ))
             else:
                 remaining = (total_proteins - i) / rate / 3600
-                print('Analysis of {} pdbs took {} seconds. Est. {} h remaining'.format(
+                print('Analysis of {} pdbs took {:02f} seconds. Est. {:02f} h remaining'.format(
                     interval, elapsed, remaining
                     ))
 
@@ -376,8 +385,18 @@ class HelixBin(object):
 
             # for combination in product(self.df.loc[group].T.to_dict().values(),
             #         repeat=2):
-            for idx1 in range(self.start, self.stop):
-                for idx2 in range(0, group_df.shape[0]):
+            if total_proteins > 1:
+                idx1_range = group_df.index
+                idx2_range = group_df.index
+            else:
+                idx1_range = range(self.start, self.stop)
+                idx2_range = range(0, group_df.shape[0])
+            for idx1 in idx1_range:
+                for idx2 in idx2_range:
+                    # if self.verbose:
+                    #     print('Indices are ({}, {})'.format(idx1, idx2))
+                    #     print('Group:')
+                    #     print(group_df)
                     # if combination[0]['idx'] == combination[1]['idx']:
                     j += 1
                     if idx1 == idx2:
@@ -395,17 +414,22 @@ class HelixBin(object):
                         # print('------------------------------------')
                         # print(combination[0])
                         # print(combination[1])
+                    # if total_proteins > 1:
+                    #     combination = (group_df.iloc[idx1], group_df.iloc[idx2])
+                    # else:
                     combination = (group_df.loc[idx1], group_df.loc[idx2])
 
                     dist, angle1, angle2, dihedral =\
                             relative_position(combination[0], combination[1])
                     dist = np.array([dist])
-                    if dist < self.min_distance:
-                        # Add the indices to a list of indices we don't need to check? Hm.... Does that actually help?
-                        # Would only save us a single distance calculation.
-                        continue
-                    if dist > self.max_distance:
-                        continue
+                    if self.min_distance:
+                        if dist < self.min_distance:
+                            # Add the indices to a list of indices we don't need to check? Hm.... Does that actually help?
+                            # Would only save us a single distance calculation.
+                            continue
+                    if self.max_distance:
+                        if dist > self.max_distance:
+                            continue
                     angles = np.array([angle1, angle2, dihedral])
 
                     lengths = np.array([combination[0]['length'],
@@ -444,11 +468,17 @@ class HelixBin(object):
                                 # unsaved_docs.append(doc)
                         # else:
                         unsaved_docs.append(doc)
+                    if total_proteins == 1:
+                        if j%interval == 0:
+                            bins = update(bins, start_time, unsaved_docs, interval, i, j)
+                            start_time = time.time()
+                            unsaved_docs = []
 
-                    if i%interval == 0:
-                        bins = update(bins, start_time, unsaved_docs, interval, i, j)
-                        start_time = time.time()
-                        unsaved_docs = []
+            if total_proteins > 1:
+                if i%interval == 0:
+                    bins = update(bins, start_time, unsaved_docs, interval, i, j)
+                    start_time = time.time()
+                    unsaved_docs = []
 
         bins = update(bins, start_time, unsaved_docs, interval, i, j, final=True)
 
@@ -490,7 +520,7 @@ class HelixLookup(object):
             out = os.path.join(outdir, '{}_results_{:03d}.pkl'.format(
                 self.name, i)
                 )
-            self.match(pd.read_pickle(lookup), out=out)
+            self.match(utils.safe_load(lookup), out=out)
             i += 1
 
     def submit_cluster(self, outdir, tasks):
@@ -510,7 +540,7 @@ class HelixLookup(object):
         lookups_idx = task//increment
         print('Reading database file # {}'.format(lookups_idx))
 
-        lookup = pd.read_pickle(lookups[lookups_idx])
+        lookup = utils.safe_load(lookups[lookups_idx])
         num_rows = lookup.shape[0]
         row_increment = num_rows // increment
         rowstart = (task%increment) * row_increment
@@ -650,7 +680,7 @@ def test_rifdock():
 def make_hash_table():
     print('Loading database and setting up lookup object...')
     # length cutoff of 2 turns or 10.8 angstroms
-    lookup = HelixLookup(pd.read_pickle('nr_dataframes/final.pkl'),
+    lookup = HelixLookup(utils.safe_load('nr_dataframes/final.pkl'),
             exposed_cutoff=0.3, length_cutoff=10.8, angstroms=2.5,
             degrees=15, dbname='nr')
     print('Done.')
@@ -665,7 +695,7 @@ def make_test_hash_table():
     deg=15
     angstroms=2.5
     # client['test_bins']['bins_{}A_{}D'.format(angstroms, deg)].drop()
-    lookup=HelixLookup(pd.read_pickle('out.pkl'), exposed_cutoff=0.3,
+    lookup=HelixLookup(utils.safe_load('out.pkl'), exposed_cutoff=0.3,
             length_cutoff=10.8, angstroms=angstroms, degrees=deg,
             dbname='test_bins')
     lookup.update_bin_db()
@@ -693,7 +723,7 @@ def main():
                 )
             )
     if args['bin']:
-        lookup = HelixBin(pd.read_pickle(args['<helix_dataframe>']),
+        lookup = HelixBin(utils.safe_load(args['<helix_dataframe>']),
                 exposed_cutoff=0.3, length_cutoff=10.8,
                 angstroms=float(args['--angstroms']),
                 degrees=float(args['--degrees']),
@@ -726,7 +756,7 @@ def main():
                 # helicepath = os.path.join(pdbfolder, 'query_helices.pkl')
                 helicepath = workspace.query_dataframe
                 if os.path.exists(helicepath):
-                    helices = pd.read_pickle(helicepath)
+                    helices = utils.safe_load(helicepath)
                     all_helices.append(helices)
                 else:
                     folder_helices = []
@@ -760,11 +790,14 @@ def main():
 
         if not os.path.exists(workspace.query_database_dir):
             os.makedirs(workspace.query_database_dir, exist_ok=True)
-        if not os.path.exists(workspace.relative_orientation_dataframe) or args['--overwrite']:
+        if len(workspace.relative_orientation_dataframes) < 1 or args['--overwrite']:
             if 'SGE_TASK_ID' in os.environ:
                 task_id = int(os.environ['SGE_TASK_ID'])
             else:
-                task_id = int(args['--bin-task-id'])
+                if args['--bin-task-id']:
+                    task_id = int(args['--bin-task-id'])
+                else:
+                    task_id = 1
             if args['--bin-tasks']:
                 interval = (all_helices.shape[0] // int(args['--bin-tasks'])) + 1
                 task = task_id - 1

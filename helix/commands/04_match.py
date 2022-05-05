@@ -197,7 +197,7 @@ def main():
                 cmd += setting, database
         num_rel_dataframes = len(match_workspace.relative_orientation_dataframes)
         if args['--ntasks'] and not args['--bin-tasks']:
-            ntasks = int(args['--ntasks']) * workspace.n_bin_pickles * num_rel_dataframes
+            ntasks = int(args['--ntasks']) * workspace.n_bin_pickles# * num_rel_dataframes
             cmd += '--tasks', args['--ntasks']
         if args['--bin-tasks']:
             ntasks = int(args['--bin-tasks'])

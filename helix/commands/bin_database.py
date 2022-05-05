@@ -28,6 +28,7 @@ Options:
 
     --max-runtime=10:00:00  How much time to allocate to the job?
     [default: 10:00:00]
+
 """
 from helix import submit
 from helix.utils import utils
@@ -122,6 +123,9 @@ def main():
 
     if args['--ntasks']:
         cmd += '--tasks', args['--ntasks']
+
+    if args['--verbose']:
+        cmd += '--verbose',
 
     if args['--local']:
         cmd += '--local',
