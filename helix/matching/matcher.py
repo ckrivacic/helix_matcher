@@ -491,22 +491,12 @@ class HelixLookup(object):
     this is it for now.
     '''
 
-    def __init__(self, lookup_folder, query, name='unknown',
+    def __init__(self, lookup_folder, query_list, name='unknown',
             verbose=False):
         self.verbose = verbose
         self.lookup_folder = lookup_folder
-        self.query = query
+        self.query_list = query
         self.name = name
-
-    def score_match(self, list_of_index_pairs):
-        """
-        Idea (idk where else to put this):
-            To get 3rd, 4th, etc. helices, do a reverse lookup. That is,
-            for each bin in the FOUND PDB, look for matches in the QUERY
-            pdb.
-        """
-        # TO DO: score clashes
-        return
 
     def submit_local(self, outdir):
         import glob
@@ -517,17 +507,26 @@ class HelixLookup(object):
         os.makedirs(outdir, exist_ok=True)
         for lookup in lookups:
             print('MATCHING AGAINST {}'.format(lookup))
-            out = os.path.join(outdir, '{}_results_{:03d}.pkl'.format(
-                self.name, i)
-                )
-            self.match(utils.safe_load(lookup), out=out)
-            i += 1
+            for query in queries:
+                print(f'USING QUERY DF {query}')
+                self.query = utils.safe_load(query)
+                out = os.path.join(outdir, '{}_results_{:03d}.pkl'.format(
+                    self.name, i)
+                    )
+                self.match(utils.safe_load(lookup), out=out)
+                i += 1
 
-    def submit_cluster(self, outdir, tasks):
+    def submit_cluster(self, outdir, tasks, queries):
+        # For now, "queries" is the list of query relative orientation dataframes.
+        # For now just pass None to "query" when initiating this class if using submit_cluster.
         import glob
         lookups = sorted(glob.glob(self.lookup_folder + '/*.pkl'))
-        total_tasks = tasks * len(lookups)
+        total_tasks = tasks * len(lookups) * len(queries)
+        tasks_per_query = total_tasks // len(queries)
+        query_increment = tasks * len(lookups)
+
         task = int(os.environ['SGE_TASK_ID']) - 1
+        self.query = utils.safe_load(queries[task // query_increment])
         os.makedirs(outdir, exist_ok=True)
         out = os.path.join(outdir, '{}_results_{:03d}.pkl'.format(self.name,
             task))
@@ -535,9 +534,9 @@ class HelixLookup(object):
 
         # Warning: total_tasks must be a multiple of len(lookups) for
         # now.
-        increment = total_tasks // len(lookups)
+        increment = total_tasks // tasks_per_query //len(lookups)
         print('Increment {}'.format(increment))
-        lookups_idx = task//increment
+        lookups_idx = task%increment
         print('Reading database file # {}'.format(lookups_idx))
 
         lookup = utils.safe_load(lookups[lookups_idx])
@@ -821,12 +820,13 @@ def main():
             print(query_bins)
             # if not os.path.exists(workspace.relative_orientation_dataframe) and not args['--overwrite']:
             #     query_bins.to_pickle(workspace.relative_orientation_dataframe)
-        else:
-            query_bins = workspace.relative_orientations
+        # else:
+        #     query_bins = workspace.relative_orientations
 
         if args['bin_query']:
             # Exit after binning
             sys.exit()
+        query_bins = workspace.relative_orientation_dataframes
 
         # Match
         # name = os.path.basename(path).split('.')[0]
