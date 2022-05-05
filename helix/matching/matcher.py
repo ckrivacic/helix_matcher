@@ -526,7 +526,7 @@ class HelixLookup(object):
         query_increment = tasks * len(lookups)
 
         task = int(os.environ['SGE_TASK_ID']) - 1
-        self.query = utils.safe_load(queries[task // query_increment])
+        self.query = utils.safe_load(self.query_list[task // query_increment])
         os.makedirs(outdir, exist_ok=True)
         out = os.path.join(outdir, '{}_results_{:03d}.pkl'.format(self.name,
             task))
