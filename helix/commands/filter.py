@@ -70,6 +70,7 @@ def main():
 
     # Iterate through all targets?
     for target in targets:
+        print(f'Filtering target {target}')
         rif_workspace = ws.RIFWorkspace(workspace.root_dir, target)
 
         if args['--clear']:

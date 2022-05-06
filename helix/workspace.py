@@ -1097,7 +1097,8 @@ def fetch_data(directory, remote_url=None, recursive=True, include_logs=False, d
             'rsync', '-av',
     ] +   (['--no-recursive'] if not recursive else []) + [
             '--exclude', 'rosetta',
-            '--exclude', 'rsync_url',
+            '--exclude', '*/python',
+            '--exclude', '*/rsync_url',
             '--exclude', 'fragments',
             '--exclude', 'core.*',
             '--exclude', 'sequence_profile*',
