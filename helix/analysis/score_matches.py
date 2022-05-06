@@ -187,7 +187,7 @@ def apply(scorer, cutoff=50):
     print(f"PDB PATH: {scorer.pdb_path}")
     print(f"CHAIN: {scorer.chain}")
     original_atoms = prody.parsePDB(scorer.pdb_path,
-            chain=scorer.chain.split(' ')[1]).select('backbone')
+            chain=scorer.chain).select('backbone')
     subgraphs = []
     rows = []
     for subgraph in scorer.subgraphs:
