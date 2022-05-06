@@ -509,7 +509,7 @@ class HelixLookup(object):
         os.makedirs(outdir, exist_ok=True)
         for lookup in lookups:
             print('MATCHING AGAINST {}'.format(lookup))
-            for query in queries:
+            for query in self.query_list:
                 print(f'USING QUERY DF {query}')
                 self.query = utils.safe_load(query)
                 out = os.path.join(outdir, '{}_results_{:03d}.pkl'.format(
@@ -530,7 +530,7 @@ class HelixLookup(object):
         if 'SGE_TASK_ID' in os.environ:
             task = int(os.environ['SGE_TASK_ID']) - 1
         else:
-            task = int(args['--bin-task-id']) - 1
+            task = 37
         print("Loading query dataframe {}".format(
             self.query_list[task // query_increment]
         ))
