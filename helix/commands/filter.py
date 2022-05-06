@@ -95,6 +95,8 @@ def main():
                         'interface_dG': ['<', -0.5]
                         }
                     }
+        print('FILTERS:')
+        print(filters)
         scorelist = []
         for name, group in scores.groupby(['patch_len']):
             scorelist.append(parse_filter(filters, group))
