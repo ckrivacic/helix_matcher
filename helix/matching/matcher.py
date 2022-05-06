@@ -589,6 +589,7 @@ class HelixLookup(object):
 
         # sys.exit()
         i = 0
+        output_num = 0
         for name in names:
             i += 1
             result = {}
@@ -600,6 +601,16 @@ class HelixLookup(object):
             result['matches'] = match.max_subgraph()
             result['graph'] = match.graph
             results.append(result)
+            mem_used = psutil.Process(os.getpid()).memory_info().rss / 1024 ** 2
+            if mem_used > 5400:
+                output_num += 1
+                out_basename = os.path.basename(out)
+                out_dir = os.path.dirname(out)
+                this_out = out_basename.split('.')[0] + '_{:03d}'.format(output_num) + '.pkl'
+                pd.DataFrame(results).to_pickle(os.path.join(out_dir, this_out))
+                del results
+                results = []
+
             # match.plot_graph()
             # print('searching {}'.format(name))
             # for _bin in self.binned.find({'name': name[0]}):
@@ -613,7 +624,12 @@ class HelixLookup(object):
 
         df = pd.DataFrame(results)
         if out:
-            df.to_pickle(out)
+            output_num += 1
+            out_basename = os.path.basename(out)
+            out_dir = os.path.dirname(out)
+            this_out = out_basename.split('.')[0] + '_{:03d}'.format(output_num) + '.pkl'
+            pd.DataFrame(results).to_pickle(os.path.join(out_dir, this_out))
+            # df.to_pickle(out)
 
         return df
         # for key in results:
