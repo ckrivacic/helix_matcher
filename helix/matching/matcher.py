@@ -568,7 +568,7 @@ class HelixLookup(object):
         names = []
 
         # Pandas rewrite
-        print('Starting forward search...')
+        print('Starting forward search...', flush=True)
         for _bin, group in self.query.groupby(level='bin'):
             if self.verbose:
                 print('Searching bin {}'.format(_bin))
@@ -582,7 +582,7 @@ class HelixLookup(object):
                             result[0]
                             )
 
-        print('Forward search done.')
+        print('Forward search done.', flush=True)
 
         # print('Original name list:')
         # print(names)
@@ -591,9 +591,9 @@ class HelixLookup(object):
                 collections.Counter(names).items() if
                 count >= min_matches]
 
-        print('All matches:')
-        # print(names)
-        print(len(names))
+        print('All matches:', flush=True)
+        # print(names, flush=True)
+        print(len(names), flush=True)
 
         results = []
         # TEMP
@@ -605,8 +605,8 @@ class HelixLookup(object):
             i += 1
             result = {}
             result['name'] = name
-            print('-------------------------------------------------')
-            print('Name: {}'.format(name))
+            print('-------------------------------------------------', flush=True)
+            print('Name: {}'.format(name), flush=True)
             match = Match(name, self.query, lookup, verbose=self.verbose)
             match.find_edges()
             result['matches'] = match.max_subgraph()
@@ -815,8 +815,8 @@ def main():
                 # scaffolds
                 all_helices.to_pickle(workspace.all_scaffold_dataframe)
 
-        print("HELICES")
-        print(all_helices)
+        print("HELICES", flush=True)
+        print(all_helices, flush=True)
 
         if not os.path.exists(workspace.query_database_dir):
             os.makedirs(workspace.query_database_dir, exist_ok=True)
@@ -847,8 +847,8 @@ def main():
                     max_distance=args['--max-dist'],
                     start=start, stop=stop, task=task_id)
             query_bins = query.bin_db(bin_length=args['--length'], outdir = workspace.query_database_dir,)
-            print('QUERY BINS')
-            print(query_bins)
+            print('QUERY BINS', flush=True)
+            print(query_bins, flush=True)
             # if not os.path.exists(workspace.relative_orientation_dataframe) and not args['--overwrite']:
             #     query_bins.to_pickle(workspace.relative_orientation_dataframe)
         # else:
