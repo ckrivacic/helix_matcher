@@ -63,7 +63,7 @@ Options:
     --scaffold=SCAFFOLD  Only run matcher for a given docked scaffold
     (meaning helix length for now).
 
-    --max-memory=6G  How much memory to allocate to the job?  [default: 4G]
+    --max-memory=6G  How much memory to allocate to the job?  [default: 6G]
 
     --max-runtime=10:00:00  How much time to allocate to the job?
     [default: 10:00:00]
