@@ -308,13 +308,10 @@ def apply(scorer, cutoff=50):
                     rosetta_scores['design_file']  = rosetta_scores['patchman_file']
                 # I should eventually change it so that 'design_file' is relative to workspace root directory,
                 # as this would be safer than looking for the patchman file in case one wants ot output multiple designs per helix.
-                print('Relpath')
-                print(os.path.relpath(helixpath, scorer.workspace.root_dir))
                 score_row =\
                         rosetta_scores[rosetta_scores['patchman_file']==os.path.relpath(
                                 helixpath,
                                 scorer.workspace.root_dir)]
-                print(score_row)
                 for sc in scoredict:
                     scoredict[sc] += score_row.iloc[0][sc]
                 # rosetta_score += float(score_row['interface_score'])
