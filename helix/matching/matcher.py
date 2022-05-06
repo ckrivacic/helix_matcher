@@ -527,7 +527,10 @@ class HelixLookup(object):
         tasks_per_query = total_tasks // len(self.query_list)
         query_increment = tasks * len(lookups)
 
-        task = int(os.environ['SGE_TASK_ID']) - 1
+        if 'SGE_TASK_ID' in os.environ:
+            task = int(os.environ['SGE_TASK_ID']) - 1
+        else:
+            task = int(args['--bin-task-id']) - 1
         print("Loading query dataframe {}".format(
             self.query_list[task // query_increment]
         ))
