@@ -277,7 +277,7 @@ class HelixBin(object):
         from scipy.spatial.transform import Rotation as R
         import subprocess
         import time
-        if args['--verbose']:
+        if verbose:
             print('Binning dataframes.')
 
         # db = self.client[dbname]
@@ -378,8 +378,6 @@ class HelixBin(object):
 
         groups = self.df.groupby(['name'])
         names = sorted(list(groups.groups.keys()))
-        if args['--verbose']:
-            print(f'Names in dataframe: \n{names}')
         # if self.start:
         #     names = names[self.start:]
         # if self.stop:
@@ -397,7 +395,7 @@ class HelixBin(object):
             else:
                 idx1_range = range(self.start, self.stop)
                 idx2_range = range(0, group_df.shape[0])
-            if args['--verbose'] == '2':
+            if verbose == '2':
                 print(idx1_range, flush=True)
                 print(idx2_range, flush=True)
             for idx1 in idx1_range:
@@ -427,7 +425,7 @@ class HelixBin(object):
                     #     combination = (group_df.iloc[idx1], group_df.iloc[idx2])
                     # else:
                     combination = (group_df.loc[idx1], group_df.loc[idx2])
-                    if args['--verbose'] == '2':
+                    if verbose == '2':
                         print(combination, flush=True)
 
                     dist, angle1, angle2, dihedral =\
@@ -822,7 +820,7 @@ def main():
 
         if not os.path.exists(workspace.query_database_dir):
             os.makedirs(workspace.query_database_dir, exist_ok=True)
-        if len(workspace.relative_orientation_dataframes) < 1 or args['--overwrite']:
+        if len(workspace.relative_orientation_dataframes) < 1 or args['--overwrite'] or args['bin_query']:
             if 'SGE_TASK_ID' in os.environ:
                 task_id = int(os.environ['SGE_TASK_ID'])
             else:
