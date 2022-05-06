@@ -58,7 +58,7 @@ def main():
         ntasks = int(args['--ntasks']) * len(dataframes)
 
         cmd = workspace.python_path, script_path
-        cmd += workspace.root_dir,
+        cmd += match_workspace.focus_dir,
         # if args['--target']:
         #     cmd += '--target', args['--target']
         if args['--plot-alphashape']:
