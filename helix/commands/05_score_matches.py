@@ -59,8 +59,8 @@ def main():
 
         cmd = workspace.python_path, script_path
         cmd += workspace.root_dir,
-        if args['--target']:
-            cmd += '--target', args['--target']
+        # if args['--target']:
+        #     cmd += '--target', args['--target']
         if args['--plot-alphashape']:
             cmd += '--plot-alphashape',
         if args['--ntasks']:

@@ -22,8 +22,7 @@ import docopt
 import prody
 import pandas as pd
 import pickle5 as pickle
-import pymol
-from helix.matching import scan_helices
+import sys
 import networkx as nx
 from pyrosetta import pose_from_file
 from pyrosetta import init
@@ -488,23 +487,26 @@ def main():
     # test_scoring()
     args = docopt.docopt(__doc__)
     workspace = ws.workspace_from_dir(args['<workspace>'])
+    if not hasattr(workspace, 'relative_orientations'):
+        print('ERROR: Not a match workspace.')
+        sys.exit()
     # targets = workspace.targets
     if 'SGE_TASK_ID' in os.environ:
         task = int(os.environ['SGE_TASK_ID']) - 1
     else:
         task = int(args['--task']) - 1
     ntasks = int(args['--ntasks'])
-    if args['--target']:
-        match_workspace = \
-                ws.workspace_from_dir(workspace.target_match_path(args['--target']))
-        dataframes = match_workspace.outputs
-    else:
-        dataframes = workspace.all_match_outputs
+    # if args['--target']:
+    #     match_workspace = \
+    #             ws.workspace_from_dir(workspace.target_match_path(args['--target']))
+    #     dataframes = match_workspace.outputs
+    # else:
+    dataframes = workspace.outputs
     num_dataframes = len(dataframes)
     this_job = task % num_dataframes
     subjob = task // num_dataframes
 
-    match_workspace = ws.workspace_from_dir(os.path.dirname(dataframes[this_job]))
+    # match_workspace = ws.workspace_from_dir(os.path.dirname(dataframes[this_job]))
     result = dataframes[this_job]
     print(f'Loading dataframe {result}')
 
@@ -528,20 +530,20 @@ def main():
     suffix = '_'.join(result.split('.')[0].split('_')[-2:])
 
     try:
-        df = pd.read_pickle(match_workspace.dataframe_path)
-        helices = pd.read_pickle(match_workspace.all_scaffold_dataframe)
+        df = pd.read_pickle(workspace.dataframe_path)
+        helices = pd.read_pickle(workspace.all_scaffold_dataframe)
     except:
-        with open(match_workspace.dataframe_path, 'rb') as f:
+        with open(workspace.dataframe_path, 'rb') as f:
             df = pickle.load(f)
-        with open(match_workspace.all_scaffold_dataframe, 'rb') as f:
+        with open(workspace.all_scaffold_dataframe, 'rb') as f:
             helices = pickle.load(f)
     print('Using the following helix dataframe: {}'.format(
-        match_workspace.dataframe_path))
+        workspace.dataframe_path))
 
-    results = score_matches(match_workspace, output, helices, df,
+    results = score_matches(workspace, output, helices, df,
             plot=args['--plot-alphashape'],
             threshold=float(args['--threshold']))
-    out = os.path.join(match_workspace.output_dir,'results_scored_{}_{}.pkl'.format(suffix, subjob))
+    out = os.path.join(workspace.output_dir,'results_scored_{}_{}.pkl'.format(suffix, subjob))
     print('SAVING RESULTS TO {}'.format(out))
     results.to_pickle(out)
 
