@@ -258,6 +258,7 @@ class HelixBin(object):
             self.stop = stop
         else:
             self.stop = self.df.shape[0]
+        print(f'Start: {self.start}; stop: {self.stop}', flush=True)
 
     def setup_bins(self):
         nrbins = int(360//self.degrees) + 1
@@ -307,7 +308,7 @@ class HelixBin(object):
         def update(bins, start_time, unsaved_docs, interval, i, j,
                 final=False):
             print('{} of {} PDBs processed so far.'.format(
-                i, total_proteins))
+                i, total_proteins), flush=True)
             mem_used = psutil.Process(os.getpid()).memory_info().rss
             if self.verbose:
                 print('Currently using {} GB of memory'.format(
@@ -317,7 +318,7 @@ class HelixBin(object):
             if self.verbose:
                 print('Dataframe is using {} GB of memory'.format(
                     df_mem * 10**-9
-                    ))
+                    ), flush=True)
             elapsed = time.time() - start_time
             rate = interval / elapsed
             if total_proteins == 1:
@@ -325,22 +326,22 @@ class HelixBin(object):
                 remaining = (total_combos - j) / rate / 3600
                 print('Analysis of {} rows took {:02f} seconds. Est. {:02f} h remaining'.format(
                     interval, elapsed, remaining
-                ))
+                ), flush=True)
             else:
                 remaining = (total_proteins - i) / rate / 3600
                 print('Analysis of {} pdbs took {:02f} seconds. Est. {:02f} h remaining'.format(
                     interval, elapsed, remaining
-                    ))
+                    ), flush=True)
 
             if len(unsaved_docs) > 0:
                 if self.verbose:
-                    print('Adding to dataframe...')
+                    print('Adding to dataframe...', flush=True)
                 bins = bins.append(unsaved_docs, ignore_index=True)
                 if self.verbose:
-                    print(bins)
+                    print(bins, flush=True)
             else:
                 if self.verbose:
-                    print('Nothing to update for this batch.')
+                    print('Nothing to update for this batch.', flush=True)
 
 
             # Save when memory footprint of dataframe gets larger than 4
@@ -356,13 +357,13 @@ class HelixBin(object):
                                 self.degrees, self.saveno)
 
                     out = os.path.join(outdir, outfile)
-                    print('Saving current dataframe to {}'.format(out))
+                    print('Saving current dataframe to {}'.format(out), flush=True)
                     if not os.path.exists(outdir):
                         os.makedirs(outdir, exist_ok=True)
                     bins.to_pickle(out)
                     self.saveno += 1
                     if self.verbose:
-                        print('Saved.')
+                        print('Saved.', flush=True)
 
                     # If saved to disk, return an empty dataframe.
                     return pd.DataFrame()
