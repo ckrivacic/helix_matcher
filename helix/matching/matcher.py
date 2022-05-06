@@ -55,6 +55,7 @@ from helix import workspace as ws
 from helix.matching.scan_helices import final_vector
 from helix.utils import numeric
 from helix.utils import utils
+from helix import big_jobs
 from itertools import product
 from pyrosetta import init, pose_from_file
 # import graph_tool.all as gt
@@ -870,3 +871,4 @@ if __name__=='__main__':
     # make_hash_table()
     # make_test_hash_table()
     main()
+    big_jobs.debrief()

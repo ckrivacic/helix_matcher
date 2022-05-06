@@ -231,6 +231,15 @@ def run_command(command):
 
     process.wait()
 
+
+def debrief():
+    """
+    Report the amount of memory used by this job, among other things.
+    """
+    job_number = os.environ['JOB_ID'] + '.' + os.environ['SGE_TASK_ID']
+    run_command(['/usr/local/sge/bin/linux-x64/qstat', '-j', job_number])
+
+
 def print_debug_header():
     from datetime import datetime
     from socket import gethostname
