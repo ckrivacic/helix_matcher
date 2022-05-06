@@ -277,7 +277,7 @@ class HelixBin(object):
         from scipy.spatial.transform import Rotation as R
         import subprocess
         import time
-        if verbose:
+        if self.verbose:
             print('Binning dataframes.')
 
         # db = self.client[dbname]
@@ -395,7 +395,7 @@ class HelixBin(object):
             else:
                 idx1_range = range(self.start, self.stop)
                 idx2_range = range(0, group_df.shape[0])
-            if verbose == '2':
+            if self.verbose == '2':
                 print(idx1_range, flush=True)
                 print(idx2_range, flush=True)
             for idx1 in idx1_range:
@@ -425,7 +425,7 @@ class HelixBin(object):
                     #     combination = (group_df.iloc[idx1], group_df.iloc[idx2])
                     # else:
                     combination = (group_df.loc[idx1], group_df.loc[idx2])
-                    if verbose == '2':
+                    if self.verbose == '2':
                         print(combination, flush=True)
 
                     dist, angle1, angle2, dihedral =\
