@@ -29,6 +29,10 @@ Options:
     --max-runtime=10:00:00  How much time to allocate to the job?
     [default: 10:00:00]
 
+    --lucs=PATH  If there are insertion_points*.json files in the same folder as the LUCS models,
+    use this flag to only bin helices that were reshaped using LUCS. Provide the path to the
+    LUCS json files; the name of the files should include the model # for their respective PDB model.
+
 """
 from helix import submit
 from helix.utils import utils
@@ -123,6 +127,9 @@ def main():
 
     if args['--ntasks']:
         cmd += '--tasks', args['--ntasks']
+
+    if args['--lucs']:
+        cmd += '--lucs', args['--lucs']
 
     if args['--verbose']:
         cmd += '--verbose',

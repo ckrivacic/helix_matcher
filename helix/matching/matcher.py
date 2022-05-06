@@ -42,11 +42,14 @@ options:
     --bin-tasks=INT  For binning query helices only. How many tasks to split the binning process into.
 
     --bin-task-id=INT  Task ID for binning (for local runs only)
+
+    --lucs=PATH  If there are insertion_points*.json files in the same folder as the LUCS models,
+    use this flag to only bin helices that were reshaped using LUCS. Provide the path to the
+    LUCS json files; the name of the files should include the model # for their respective PDB model.
 '''
 import collections
 import os, psutil, sys
-import pickle
-import subprocess
+import json
 import docopt
 import numpy as np
 import pandas as pd
@@ -211,11 +214,31 @@ class Match(object):
                     # 'lookup_idx':property_map[v][1]}
 
 
+def get_insertion_points(name, lucs_path):
+    '''Get insertion points for a given name'''
+    number = name.split('_')[1]
+    insertion_json_name = f'insertion_points_{number}.json'
+    insertion_path = os.path.join(lucs_path, insertion_json_name)
+    with open(insertion_path, 'r') as f:
+        insertions = json.load(f)
+    return insertions
+
+
+def check_is_insertion(row, lucs_path):
+    insertion_points = get_insertion_points([row['name']][0], lucs_path)
+    is_insertion = False
+    for ins in insertion_points:
+        if ins['start'] < row['start'] < ins['stop'] or \
+            ins['start'] < row['stop'] < ins['stop']:
+            is_insertion = True
+    return is_insertion
+
+
 class HelixBin(object):
     def __init__(self, helix_db, exposed_cutoff=0.3, length_cutoff=10.8,
             query_df=None, query_name=None, angstroms=2.5, degrees=15,
             verbose=False, start=None, stop=None, min_distance=None, max_distance=None,
-            task=None):
+            task=None, lucs=None):
         self.verbose = verbose
         self.df = helix_db
         self.df['idx'] = self.df.index
@@ -232,6 +255,15 @@ class HelixBin(object):
             self.max_distance = float(max_distance)
         else:
             self.max_distance = max_distance
+
+        self.lucs_path = lucs
+        if self.lucs_path:
+            # self.all_insertions = {}
+            # for model_name in set(self.df.name):
+            #     self.all_insertions[model_name] = get_insertion_points(model_name, self.lucs_path)
+            print('Removing non-insertion helices')
+            self.df['is_insertion'] = self.df.apply(check_is_insertion, args=(self.lucs_path,), axis=1)
+            self.df = self.df[self.df['is_insertion']]
 
         # Binning parameters
         self.degrees = degrees
@@ -758,8 +790,8 @@ def main():
                 angstroms=float(args['--angstroms']),
                 degrees=float(args['--degrees']),
                 verbose=args['--verbose'], min_distance=args['--min-dist'],
-                max_distance=args['--max-dist'],)
-        lookup.bin_db(outdir=dbpath, bin_length=args['--length'])
+                max_distance=args['--max-dist'], lucs=args['--lucs'])
+        lookup.bin_db(outdir=dbpath, bin_length=args['--length'],)
     if args['match'] or args ['bin_query']:
         # import scan_helices
         from helix.matching import scan_helices
