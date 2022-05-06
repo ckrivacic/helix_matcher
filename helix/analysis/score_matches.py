@@ -280,14 +280,15 @@ def apply(scorer, cutoff=50):
                 #         os.path.dirname(query_row['path']),
                 #         'scores.pkl'
                 #         )
-                rosetta_scorepath = os.path.join(
-                    scorer.workspace.cluster_outputs, '..', 'scores','final.pkl'
-                )
-                try:
-                    rosetta_scores = pd.read_pickle(rosetta_scorepath)
-                except:
-                    with open(rosetta_scorepath, 'rb') as f:
-                        rosetta_scores = pickle.load(f)
+                # rosetta_scorepath = os.path.join(
+                #     scorer.workspace.cluster_outputs, '..', 'scores','final.pkl'
+                # )
+                # try:
+                #     rosetta_scores = pd.read_pickle(rosetta_scorepath)
+                # except:
+                #     with open(rosetta_scorepath, 'rb') as f:
+                #         rosetta_scores = pickle.load(f)
+                rosetta_scores = scorer.workspace.get_scores()
                 # In the future, would be more efficient to just open all
                 # the score files once and save them to a dataframe.
                 '''
