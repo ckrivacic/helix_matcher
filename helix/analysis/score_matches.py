@@ -288,7 +288,7 @@ def apply(scorer, cutoff=50):
                 # except:
                 #     with open(rosetta_scorepath, 'rb') as f:
                 #         rosetta_scores = pickle.load(f)
-                rosetta_scores = scorer.workspace.get_scores()
+                rosetta_scores = scorer.workspace.rifdock_workspace.get_scores()
                 # In the future, would be more efficient to just open all
                 # the score files once and save them to a dataframe.
                 '''

@@ -870,12 +870,16 @@ class MatchWorkspace(Workspace):
         return
 
     @property
-    def rifdock_workspace(self):
+    def rifdock_path(self):
         return os.path.join(self.rifdock_outdir, self.focus_name)
 
     @property
+    def rifdock_workspace(self):
+        return workspace_from_dir(self.rifdock_path)
+
+    @property
     def cluster_outputs(self):
-        return os.path.join(self.rifdock_workspace,
+        return os.path.join(self.rifdock_path,
                 'filtered')
 
     @property
