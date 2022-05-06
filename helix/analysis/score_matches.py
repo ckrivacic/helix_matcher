@@ -263,6 +263,7 @@ def apply(scorer, cutoff=50):
                 query_row = scorer.query_helices.loc[query_idx]
                 # Helixpath will follow symlink.
                 helixpath = os.path.realpath(os.path.join(scorer.workspace.root_dir, query_row['path']))
+                print(f'helixpath: {helixpath}')
                 # helixpath = clash.get_relative_path(workspace, helixpath)
                 # turnno = os.path.basename(helixpath).split('_')[0][0]
                 '''
@@ -305,8 +306,10 @@ def apply(scorer, cutoff=50):
                 # print(rosetta_scores)
                 if 'design_file' not in rosetta_scores.columns:
                     rosetta_scores['design_file']  = rosetta_scores['patchman_file']
+                # I should eventually change it so that 'design_file' is relative to workspace root directory,
+                # as this would be safer than looking for the patchman file in case one wants ot output multiple designs per helix.
                 score_row =\
-                        rosetta_scores[rosetta_scores['design_file']==os.path.relpath(
+                        rosetta_scores[rosetta_scores['patchman_file']==os.path.relpath(
                                 helixpath,
                                 scorer.workspace.root_dir)]
                 for sc in scoredict:

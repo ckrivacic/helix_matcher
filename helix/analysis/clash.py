@@ -10,6 +10,7 @@ import pandas as pd
 import prody
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+import warnings
 from mpl_toolkits.mplot3d import axes3d, Axes3D
 # from descartes import PolygonPatch
 
@@ -266,6 +267,8 @@ def get_alphashape(pdb, chain=None, plot=False):
     Returns an AlphaShape object of a pdb file, outlining its general
     shape for use in a clash filter.
     '''
+    warnings.filterwarnings("ignore", message="Mesh is non-watertight for contained point query!")
+
     print('ALPHASHAPE PDB: {}'.format(pdb))
     if chain:
         atoms = prody.parsePDB(pdb, chain=chain)
@@ -281,7 +284,8 @@ def get_alphashape(pdb, chain=None, plot=False):
 
     # coords = [(0., 0.), (0., 1.), (1., 1.), (1., 0.), (0.5, 0.5)]
 
-    alpha_shape = alphashape.alphashape(coords, 0.1)
+    alpha = 0.2
+    alpha_shape = alphashape.alphashape(coords, alpha)
 
     if plot:
         mpl.use('tkagg')
@@ -294,7 +298,7 @@ def get_alphashape(pdb, chain=None, plot=False):
         ax.scatter(*zip(*helixcoords))
         # # ax.add_patch(PolygonPatch(alpha_shape, alpha=0.2))
         ax.plot_trisurf(*zip(*alpha_shape.vertices),
-                triangles=alpha_shape.faces, alpha=0.3)
+                triangles=alpha_shape.faces, alpha=0.4)
         plt.show()
     return alpha_shape
 
