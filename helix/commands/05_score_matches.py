@@ -42,47 +42,51 @@ def main():
         raise("Error: {} does not exist.".format(script_path))
 
     if args['--target']:
+        targets = [os.path.abspath(args['--target'])]
+    else:
+        targets = workspace.all_match_workspaces
+    for target in targets:
         match_workspace = \
-                ws.workspace_from_dir(workspace.target_match_path(args['--target']))
+                ws.workspace_from_dir(workspace.target_match_path(target))
         dataframes = match_workspace.outputs
-    else:
-        dataframes = workspace.all_match_outputs
+    # else:
+    #     dataframes = workspace.all_match_outputs
 
-    if args['--clear']:
-        workspace.clear_scores()
+        if args['--clear']:
+            workspace.clear_scores()
 
-    ntasks = int(args['--ntasks']) * len(dataframes)
+        ntasks = int(args['--ntasks']) * len(dataframes)
 
-    cmd = workspace.python_path, script_path
-    cmd += workspace.root_dir,
-    if args['--target']:
-        cmd += '--target', args['--target']
-    if args['--plot-alphashape']:
-        cmd += '--plot-alphashape',
-    if args['--ntasks']:
-        cmd += '--ntasks', args['--ntasks']
-    if args['--threshold']:
-        cmd += '--threshold', args['--threshold']
+        cmd = workspace.python_path, script_path
+        cmd += workspace.root_dir,
+        if args['--target']:
+            cmd += '--target', args['--target']
+        if args['--plot-alphashape']:
+            cmd += '--plot-alphashape',
+        if args['--ntasks']:
+            cmd += '--ntasks', args['--ntasks']
+        if args['--threshold']:
+            cmd += '--threshold', args['--threshold']
 
-    if args['--local']:
-        if args['--task']:
-            cmd += '--task', args['--task']
-            utils.run_command(cmd)
+        if args['--local']:
+            if args['--task']:
+                cmd += '--task', args['--task']
+                utils.run_command(cmd)
+            else:
+                for i in range(1, ntasks + 1):
+                    run_cmd = cmd + ('--task', str(i))
+                    utils.run_command(run_cmd)
+
         else:
-            for i in range(1, ntasks + 1):
-                run_cmd = cmd + ('--task', str(i))
-                utils.run_command(run_cmd)
-
-    else:
-        print('Submitting command {}'.format(cmd))
-        script_name = 'score_matches'
-        big_jobs.submit(workspace, cmd,
-                nstruct=ntasks,
-                max_memory=args['--max-memory'],
-                max_runtime=args['--max-runtime'],
-                test_run=False,
-                job_name=script_name,
-                create_job_info=False,)
+            print('Submitting command {}'.format(cmd))
+            script_name = 'score_matches'
+            big_jobs.submit(match_workspace, cmd,
+                    nstruct=ntasks,
+                    max_memory=args['--max-memory'],
+                    max_runtime=args['--max-runtime'],
+                    test_run=False,
+                    job_name=script_name,
+                    create_job_info=False,)
  
 
 if __name__=='__main__':

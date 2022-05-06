@@ -224,6 +224,13 @@ class Workspace(object):
         return all_target_paths
 
     @property
+    def all_match_workspaces(self):
+        all_match_paths = []
+        for target in self.targets:
+            all_match_paths.append(self.target_match_path(target))
+        return all_match_paths
+
+    @property
     def match_outdir(self):
         return os.path.join(self.root_dir, 'match_outputs')
 
