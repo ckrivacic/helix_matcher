@@ -586,7 +586,7 @@ class HelixLookup(object):
 
         # print('Original name list:')
         # print(names)
-        min_matches = 2
+        min_matches = 1
         names = [item for item, count in
                 collections.Counter(names).items() if
                 count >= min_matches]
