@@ -277,6 +277,8 @@ class HelixBin(object):
         from scipy.spatial.transform import Rotation as R
         import subprocess
         import time
+        if args['--verbose']:
+            print('Binning dataframes.')
 
         # db = self.client[dbname]
         # bins = db['bins_{}A_{}D'.format(
@@ -376,6 +378,8 @@ class HelixBin(object):
 
         groups = self.df.groupby(['name'])
         names = sorted(list(groups.groups.keys()))
+        if args['--verbose']:
+            print(f'Names in dataframe: \n{names}')
         # if self.start:
         #     names = names[self.start:]
         # if self.stop:
