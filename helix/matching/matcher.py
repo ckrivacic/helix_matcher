@@ -904,6 +904,7 @@ def main():
             matcher.submit_cluster(workspace.output_dir, int(args['--tasks']))
         else:
             matcher.submit_cluster(workspace.output_dir, 1)
+    big_jobs.debrief()
 
 
 if __name__=='__main__':
@@ -912,4 +913,3 @@ if __name__=='__main__':
     # make_hash_table()
     # make_test_hash_table()
     main()
-    big_jobs.debrief()
