@@ -84,7 +84,8 @@ def main():
 
         # Filter the final dataframe
         if args['--filter']:
-            filters = yaml.load(args['--filter'])
+            with open(args['--filter'], 'r') as f:
+                filters = yaml.load(f.read())
         else:
             filters = {
                     'threshold': {
