@@ -506,6 +506,7 @@ def main():
 
     match_workspace = ws.workspace_from_dir(os.path.dirname(dataframes[this_job]))
     result = dataframes[this_job]
+    print(f'Loading dataframe {result}')
 
     try:
         output = pd.read_pickle(result)
@@ -524,7 +525,7 @@ def main():
     print("STOP ROW: {}".format(stop))
     output = output.iloc[start:stop]
 
-    suffix = result.split('.')[0].split('_')[-1]
+    suffix = '_'.join(result.split('.')[0].split('_')[-2:])
 
     try:
         df = pd.read_pickle(match_workspace.dataframe_path)
