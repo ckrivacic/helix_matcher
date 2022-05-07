@@ -171,8 +171,8 @@ def main():
         ia_mover.apply(flexpep_pose)
 
         # For delta NPSA, get the two chains
-        poseA = utils.pose_get_chain(pose, chA)
-        poseB = utils.pose_get_chain(pose, chB)
+        poseA = chainA
+        poseB = chainB
         ref(poseA)
         ref(poseB)
 
