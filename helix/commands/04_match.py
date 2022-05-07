@@ -72,6 +72,8 @@ Options:
     Useful for query dataframes where you have lots of helices.
 
     --max-dist=FLOAT  Maximum distance before two helices do not have their relative orientations saved.
+    Useful for query dataframes where you have lots of helices.
+    Typically you would want to set this a little higher than the maximum distance you expect to see in your scaffold dataframe.
 
     --bin-tasks=INT  Split binning into this many tasks. This will also turn this into a bin-only run, i.e.
     no matching. Run this command again to match using the created bins.
