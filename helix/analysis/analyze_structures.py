@@ -73,6 +73,8 @@ def main():
     for input_idx in range(start, stop):
         pdb = inputs[input_idx]
         pose = pose_from_file(pdb)
+        if pose.num_chains() < 2:
+            continue
         flexpep_pose = pose.clone()
         ref(flexpep_pose)
 
