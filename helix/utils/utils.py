@@ -276,7 +276,7 @@ def pose_get_chain(pose, chain):
     for i in range(1, pose.num_chains() + 1):
         chainpose = pose.split_by_chain(i)
         info = chainpose.pdb_info().pose2pdb(1)
-        if info.split(' ')[1] in chain:
+        if info.split(' ')[1].strip() in chain:
             # if chainpose.size() < 5:
                 # raise('Error: chain {} too small.'.format(chain))
             # else:
