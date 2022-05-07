@@ -82,9 +82,9 @@ def main():
         pose.remove_constraints()
         pose.clear_sequence_constraints()
         # chainB = pose.split_by_chain(2)
-        pose = utils.pose_get_chain(pose, chA)
-        chainA = utils.pose_get_chain(pose, chA)
         chainB = utils.pose_get_chain(pose, chB)
+        chainA = utils.pose_get_chain(pose, chA)
+        pose = utils.pose_get_chain(pose, chA)
         ref(chainA)
         ref(chainB)
         # This way we only have chain A and chain B in cases where we are looking at a multimer (particularly in the
