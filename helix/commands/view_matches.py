@@ -106,7 +106,8 @@ def session_from_graph(workspace, results_row, query_df, db_df):
                 )
         db_selstr = "(resi {}-{} and chain {})".format(
                 start, stop,
-                df_row['chain'].split()[1]
+                # df_row['chain'].split()[1]
+                df_row['chain']
                 )
         db_sels.append(db_selstr)
 
@@ -135,7 +136,8 @@ def session_from_graph(workspace, results_row, query_df, db_df):
     cmd.append(pdbpath)
     cmd.append(query_selstr)
     cmd.append(db_selstr)
-    cmd.append(df_row['chain'].split()[1])
+    # cmd.append(df_row['chain'].split()[1])
+    cmd.append(df_row['chain'])
     cmd.extend(pymol_transform)
     cmd.append(qobjs)
 
@@ -182,7 +184,8 @@ def main():
         results = results[results.name != '3g67_1']
         results = results.sort_values(by=['n_matched_helices',
             'binned_match_score',
-            'interface_score_sum'], ascending=True)
+              'rmsd',
+              'interface_score_sum'], ascending=True)
         for i in range(0, 100):
             testrow = results.iloc[i]
             print(testrow)

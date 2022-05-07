@@ -6,17 +6,17 @@ Usage:
 
 Options:
     --task=INT  Only run a certain task
-    --designs-per-task=INT  How many designs to analyze per task
+    --designs-per-task=INT  How many designs to analyze per task  [default: 1]
 """
 
 from pyrosetta import rosetta
-from pyrosetta.rosetta.core.pack.task import TaskFactory
-from pyrosetta.rosetta.core.pack.task import operation
-from pyrosetta.rosetta.core.select import residue_selector
+# from pyrosetta.rosetta.core.pack.task import TaskFactory
+# from pyrosetta.rosetta.core.pack.task import operation
+# from pyrosetta.rosetta.core.select import residue_selector
 from pyrosetta.rosetta.core.scoring.dssp import Dssp
-from pyrosetta.rosetta.core.kinematics import MoveMap
-from pyrosetta.rosetta.core.scoring import ScoreType
-from pyrosetta.rosetta.protocols import constraint_generator
+# from pyrosetta.rosetta.core.kinematics import MoveMap
+# from pyrosetta.rosetta.core.scoring import ScoreType
+# from pyrosetta.rosetta.protocols import constraint_generator
 from pyrosetta import init
 from pyrosetta import pose_from_file
 from pyrosetta import create_score_function
@@ -43,6 +43,14 @@ def main():
         task_id = int(args['--task']) - 1
     elif 'task' in os.environ:
         task_id = int(os.environ['task']) - 1
+    else:
+        task_id = 0
+    rosetta_dir = os.path.expanduser('~/software/rosetta/')
+    dalphaball = os.path.join(rosetta_dir,
+                              'source', 'external', 'DAlpahBall',
+                              'DAlphaBall.gcc')
+    init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro' \
+         ' -holes:dalphaball {} -ignore_unrecognized_res -detect_disulf false'.format(dalphaball))
 
     ref = create_score_function('ref2015')
     inputs = sorted(glob.glob(args['<folder>'] + '/*.pdb.gz'))
@@ -60,8 +68,10 @@ def main():
     print(inputs[start], flush=True)
 
     rowlist = []
+    chA='A'
+    chB='B'
     for input_idx in range(start, stop):
-        pdb = files[input_idx]
+        pdb = inputs[input_idx]
         pose = pose_from_file(pdb)
         flexpep_pose = pose.clone()
         ref(flexpep_pose)
@@ -69,8 +79,15 @@ def main():
         # Need to clear sequence constraints to split the pose
         pose.remove_constraints()
         pose.clear_sequence_constraints()
-        chainB = pose.split_by_chain(2)
+        # chainB = pose.split_by_chain(2)
+        chainA = utils.pose_get_chain(pose, chA)
+        chainB = utils.pose_get_chain(pose, chB)
+        ref(chainA)
         ref(chainB)
+        # This way we only have chain A and chain B in cases where we are looking at a multimer (particularly in the
+        # case of benchamrk examples)
+        pose = rosetta.core.pose.append_pose_to_pose(chainA, chainB)
+        ref(pose)
 
         # Determine helical propensity
         ss_str = Dssp(chainB).get_dssp_secstruct()
@@ -134,10 +151,10 @@ def main():
         interface="A_B" />
         '''
         contact = \
-            '''
+            f'''
         <RESIDUE_SELECTORS>
-            <Chain name="chA" chains="A"/>
-            <Chain name="chB" chains="B"/>
+            <Chain name="chA" chains="{chA}"/>
+            <Chain name="chB" chains="{chB}"/>
         </RESIDUE_SELECTORS>
         <FILTERS>
             <ContactMolecularSurface name="contact" target_selector="chA"
@@ -151,8 +168,8 @@ def main():
         ia_mover.apply(flexpep_pose)
 
         # For delta NPSA, get the two chains
-        poseA = utils.pose_get_chain(pose, 'A')
-        poseB = utils.pose_get_chain(pose, 'B')
+        poseA = utils.pose_get_chain(pose, chA)
+        poseB = utils.pose_get_chain(pose, chB)
         ref(poseA)
         ref(poseB)
 
@@ -196,6 +213,7 @@ def main():
                 'folder': os.path.dirname(pdb),
                'name': os.path.basename(pdb),
                # 'protocol': designtype,
+                'protocol': os.path.basename(args['<folder>']),
                'size': flexpep_pose.size(),
                'pose_score': score,
                'interface_score': interface_score,
@@ -230,3 +248,6 @@ def main():
         os.makedirs(pickle_outdir, exist_ok=True)
     dataframe_out = os.path.join(pickle_outdir, f'task_{task_id}.pkl')
     df.to_pickle(dataframe_out)
+
+if __name__=='__main__':
+    main()
