@@ -12,7 +12,7 @@ Options:
 from pyrosetta import rosetta
 # from pyrosetta.rosetta.core.pack.task import TaskFactory
 # from pyrosetta.rosetta.core.pack.task import operation
-# from pyrosetta.rosetta.core.select import residue_selector
+from pyrosetta.rosetta.core.select import residue_selector
 from pyrosetta.rosetta.core.scoring.dssp import Dssp
 # from pyrosetta.rosetta.core.kinematics import MoveMap
 # from pyrosetta.rosetta.core.scoring import ScoreType
@@ -184,6 +184,8 @@ def main():
         packstat_obj = XmlObjects.static_get_filter(packstat)
         sc_obj = XmlObjects.static_get_filter(sc)
         contact_obj = XmlObjects.create_from_string(contact).get_filter('contact')
+
+        selector = residue_selector.ChainSelector(chB)
 
         # Calculate delta NPSA
         npsa_complex = npsa_obj.report_sm(flexpep_pose)
