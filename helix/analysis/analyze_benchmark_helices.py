@@ -1,20 +1,24 @@
 '''
 Usage:
     analyze_benchmark_helices.py <output_folder> [options]
+
+Options:
+    --ntasks=INT  How many tasks total?  [defualt: 1]
 '''
 from pyrosetta import rosetta
-from pyrosetta.rosetta.core.select import residue_selector
+# from pyrosetta.rosetta.core.select import residue_selector
 from pyrosetta import init
-from pyrosetta import pose_from_file
-from pyrosetta import create_score_function
-from pyrosetta.rosetta.core.scoring.dssp import Dssp
+# from pyrosetta import pose_from_file
+# from pyrosetta import create_score_function
+# from pyrosetta.rosetta.core.scoring.dssp import Dssp
 import docopt
 import os, sys, glob
 import pandas as pd
 from helix.utils import utils
 from helix.analysis import analyze_structures
-from helix.rifdock import interface
-from pyrosetta.rosetta.protocols.rosetta_scripts import XmlObjects
+from helix.benchmark import score_pdb
+# from helix.rifdock import interface
+# from pyrosetta.rosetta.protocols.rosetta_scripts import XmlObjects
 
 
 def make_bench_helix_pose(pose, row, length):
@@ -48,6 +52,11 @@ def make_bench_helix_pose(pose, row, length):
 
 def main():
     args = docopt.docopt(__doc__)
+    if 'SGE_TASK_ID' in os.environ:
+        task = int(os.environ['SGE_TASK_ID']) - 1
+    else:
+        task = 0
+
     rosetta_dir = os.path.expanduser('~/rosetta/')
     dalphaball = os.path.join(rosetta_dir,
                               'source', 'external', 'DAlpahBall',
@@ -56,24 +65,36 @@ def main():
          ' -holes:dalphaball {} -ignore_unrecognized_res -detect_disulf false'.format(dalphaball))
     output_folder = args['<output_folder>']
     benchmark_df = utils.safe_load(os.path.expanduser('~/software/helix_matcher/helix/benchmark/interface_finder/final_consolidated.pkl'))
+    interval =  1 + benchmark_df.shape[0] // int(args['--ntasks'])
+    start = task * interval
+    stop = task * interval + interval
+    benchmark_df = benchmark_df.iloc[start:stop]
 
     outrows = []
     for idx, row in benchmark_df.iterrows():
         print(row)
         for length in [14, 28]:
             initial_pose = utils.pose_from_wynton(row['name'])
+            interface = score_pdb.PDBInterface(initial_pose, minimize=True, cst=True, is_pose=True)
             poses, length = make_bench_helix_pose(initial_pose, row, length)
             print('POSES', poses)
-            j = 0
             for pose in poses:
-                j += 1
-                pose.dump_pdb(f"{row['name']}_{row['target']}_{j}.pdb")
                 outrow = analyze_structures.analyze_pose(pose, row['target'], row['chain'], pdb=row['name'], protocol='benchmark')
                 outrow['length'] = length
+                outrow['minimized'] = False
+                print(outrow)
+                outrows.append(outrow)
+            minimized_pose = interface.pose
+            poses, length = make_bench_helix_pose(minimized_pose, row, length)
+            print('POSES', poses)
+            for pose in poses:
+                outrow = analyze_structures.analyze_pose(pose, row['target'], row['chain'], pdb=row['name'], protocol='benchmark')
+                outrow['length'] = length
+                outrow['minimized'] = True
                 print(outrow)
                 outrows.append(outrow)
 
-    outfile = os.path.join(output_folder, 'benchmark_scored.pkl')
+    outfile = os.path.join(output_folder, f'benchmark_scored_{task}.pkl')
     print(f'Saving to file: {outfile}')
     pd.DataFrame(outrows).to_pickle(outfile)
 

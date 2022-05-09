@@ -47,7 +47,7 @@ def get_resolution(pdbid):
 class PDBInterface(object):
     '''Retrieves scoring information from an interface.'''
     def __init__(self, pdbpath, sfxn=None, pdbid=None, dist=8.0,
-            minimize=True, cst=False, cst_sc=False):
+            minimize=True, cst=False, cst_sc=False, is_pose=False):
         if not sfxn:
             self.sfxn = create_score_function('ref2015')
             if cst:
@@ -56,7 +56,10 @@ class PDBInterface(object):
                         1.0)
         else:
             self.sfxn = sfxn
-        self.pose = pose_from_file(pdbpath)
+        if is_pose:
+            self.pose = pdbpath.clone()
+        else:
+            self.pose = pose_from_file(pdbpath)
         if cst:
             coord_cst = constraint_generator.CoordinateConstraintGenerator()
             if not cst_sc:
