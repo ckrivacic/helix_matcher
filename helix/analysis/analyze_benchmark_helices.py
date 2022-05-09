@@ -64,7 +64,10 @@ def main():
             initial_pose = utils.pose_from_wynton(row['name'])
             poses, length = make_bench_helix_pose(initial_pose, row, length)
             print('POSES', poses)
+            j = 0
             for pose in poses:
+                j += 1
+                pose.dump_pdb(f"{row['name']}_{row['target']}_{j}.pdb")
                 outrow = analyze_structures.analyze_pose(pose, row['target'], row['chain'], pdb=row['name'], protocol='benchmark')
                 outrow['length'] = length
                 print(outrow)
