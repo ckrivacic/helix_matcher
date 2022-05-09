@@ -12,7 +12,8 @@ palette = {
     'darkpink': '#d14d99',
     'lightgray': '#b7bbad',
     'darkgray': '#84887a',
-    'white': '#f6f6f4'
+    'white': '#f6f6f4',
+    'black': '#000000',
 }
 
 def hex_to_rgb(hex):

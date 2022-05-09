@@ -53,6 +53,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pyrosetta import *
 from pyrosetta.rosetta.core.select import residue_selector
+from helix.utils.colors import palette
 
 
 def first3_res_correct(pose, res, seq):
@@ -205,7 +206,7 @@ def plot_sequence_recovery(df, args):
     for protocol in order:
         mean = df[df['protocol']==protocol][args['--yaxis']].mean()
         means.append(mean)
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(4,4), dpi=300)
     if args['--yaxis'] == 'n_hbonds':
         bw = 0.2
     elif args['--yaxis'] == 'helix_percent_identity':
@@ -214,12 +215,13 @@ def plot_sequence_recovery(df, args):
         bw = 0.2
     else:
         bw = None
-    sns.violinplot(data=df, x='protocol', y=args['--yaxis'],
-            order=order, bw=bw)
+    sns_ax = sns.violinplot(data=df, x='protocol', y=args['--yaxis'],
+            order=order, bw=bw, inner=None, linewidth=1)
     plt.scatter(x=range(len(means)), y=means, c='k', marker='_', s=200)
     if args['--xaxis'] == 'protocol':
-        ax.set_xticklabels(labels)
+        ax.set_xticklabels(labels, ha='right')
         plt.xticks(rotation=70)
+    plt.ylabel('Sequence identity (%)')
     plt.tight_layout()
     plt.show()
 
@@ -261,7 +263,7 @@ def barplot(df, args):
     # sns.stripplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
             # order=order, color='.5', alpha=0.5, ax=ax)
     sns.barplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
-            hue=hue, order=order, ax=ax, ci=None)
+            hue=hue, order=order, ax=ax, ci=None, saturation=1)
     if args['--xaxis'] == 'protocol':
         ax.set_xticklabels(labels)
         plt.xticks(rotation=70)
@@ -504,36 +506,38 @@ def main():
         global order
         global labels
         order = ['base',
-                 'buns_penalty', 'buns_penalty_pruned',
-                 'deleteme', 'specialres', 'combined',
+                 'buns_penalty', #'buns_penalty_pruned',
+                 #'deleteme',
+                 'specialres', 'combined',
                  'residue_lock', 'residue_lock_combined', 'residue_lock_combined_ramp',
                  'specialrot',
                  'specialrot_combined', 'special_combined_ramp', #'combined_nomin',
                  'specialrot_3', 'specialrot_3_combined', 'specialrot_3_combined_ramp',] #'interface']
         labels = ['Base',
-                  'BUNS penalty', 'BUNS pen. pruned',
-                  'NativeResidue', 'Special residue', 'Special res + BUNS',
-                  'Residue lock',  'Residue lock + BUNS', 'Residue lock + BUNS\n(ramp cst.)',
-                  'Special rotamer',
-                  'Special rot. + BUNS', 'Special rot. + BUNS\n(ramp cst.)', #'Special rot. + BUNS\n(no cst)',
-                  'Special rot. weight 3', 'Special rot. weight 3\n+ BUNS', 'Special rot. weight 3\n+ BUNS (ramp cst.)',] #'INTERFACE']
+                  'BUNS penalty', #'BUNS pen. pruned',
+                  #'NativeResidue',
+                  'Special res.', '+ BUNS',
+                  'Res. lock',  '+ BUNS', '+ ramp cst.',
+                  'Special rot.',
+                  '+ BUNS', '+ ramp cst.', #'Special rot. + BUNS\n(no cst)',
+                  'Special rot. (wt. 3)', '+ BUNS', '+ ramp cst.',] #'INTERFACE']
         color_dict = {
-            'base': '#A5AA99',
-            'buns_penalty': '#F0E442',
-            'buns_penalty_pruned': '#F0E442',
-            'deleteme': '#CC79A7',
-            'specialres': '#CC79A7',
-            'combined': '#CC79A7',
-            'residue_lock': '#009E73',
-            'residue_lock_combined': '#009E73',
-            'residue_lock_combined_ramp': '#009E73',
-            'specialrot': '#56B4E9',
-            'specialrot_combined': '#56B4E9',
-            'special_combined_ramp': '#56B4E9',
-            'combined_nomin': '#56B4E9',
-            'specialrot_3': '#0072B2',
-            'specialrot_3_combined': '#0072B2',
-            'specialrot_3_combined_ramp': '#0072B2',
+            'base': palette['darkgray'],
+            'buns_penalty': palette['yellow'],
+            'buns_penalty_pruned': palette['yellow'],
+            'deleteme': palette['red'],
+            'specialres': palette['red'],
+            'combined': palette['red'],
+            'residue_lock': palette['green'],
+            'residue_lock_combined': palette['green'],
+            'residue_lock_combined_ramp': palette['green'],
+            'specialrot': palette['purple'],
+            'specialrot_combined': palette['purple'],
+            'special_combined_ramp': palette['purple'],
+            'combined_nomin': palette['purple'],
+            'specialrot_3': palette['blue'],
+            'specialrot_3_combined': palette['blue'],
+            'specialrot_3_combined_ramp': palette['blue'],
             'interface' : '#A5AA99',
         }
         global colors

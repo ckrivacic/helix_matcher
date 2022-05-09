@@ -159,13 +159,13 @@ def analyze_pose(pose, chA='A', chB='B', pdb='', protocol=''):
     jump="1"  write_int_area="false" />
     '''
     ia = \
-        '''
+        f'''
     <InterfaceAnalyzerMover name="interface_analyzer" 
     pack_separated="false" pack_input="false"
     resfile="false" packstat="true"
     interface_sc="false" tracer="false"
     use_jobname="false" 
-    interface="A_B" />
+    interface="{chA}_{chB}" />
     '''
     contact = \
         f'''
