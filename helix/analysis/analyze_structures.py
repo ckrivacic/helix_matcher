@@ -218,8 +218,8 @@ def analyze_pose(pose, chA='A', chB='B', pdb='', protocol=''):
     contact_score = contact_obj.report_sm(flexpep_pose)
 
     score = ref(flexpep_pose)
-    # interface_scorer = interface.InterfaceScore(flexpep_pose)
-    # interface_score = interface_scorer.apply()
+    interface_scorer = interface.InterfaceScore(flexpep_pose)
+    interface_score = interface_scorer.apply()
     n_hbonds = interface_scorer.n_hbonds
 
     # Can't pickle a C++ set, so put it in a Python list
@@ -235,7 +235,7 @@ def analyze_pose(pose, chA='A', chB='B', pdb='', protocol=''):
             'protocol': protocol,
            'size': flexpep_pose.size(),
            'pose_score': score,
-           # 'interface_score': interface_score,
+           'interface_score': interface_score,
            'n_hbonds': n_hbonds,
            'shape_complementarity': sc_score,
            'contact_molecular_surface': contact_score,
