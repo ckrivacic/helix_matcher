@@ -65,10 +65,10 @@ def main():
             poses, length = make_bench_helix_pose(initial_pose, row, length)
             print('POSES', poses)
             for pose in poses:
-                row = analyze_structures.analyze_pose(pose, row['target'], row['chain'], pdb=row['name'], protocol='benchmark')
-                row['length'] = length
-                print(row)
-                outrows.append(row)
+                outrow = analyze_structures.analyze_pose(pose, row['target'], row['chain'], pdb=row['name'], protocol='benchmark')
+                outrow['length'] = length
+                print(outrow)
+                outrows.append(outrow)
 
     outfile = os.path.join(output_folder, 'benchmark_scored.pkl')
     print(f'Saving to file: {outfile}')
