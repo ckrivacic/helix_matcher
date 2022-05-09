@@ -19,6 +19,7 @@ from pyrosetta.rosetta.protocols.rosetta_scripts import XmlObjects
 
 def make_bench_helix_pose(pose, row, length):
     pose_clone = pose.clone()
+    print(row)
     target = utils.pose_get_chain(pose, row['target'])
     print('TARGET POSE: ', target)
     start = min(row['rosetta_resis'])
