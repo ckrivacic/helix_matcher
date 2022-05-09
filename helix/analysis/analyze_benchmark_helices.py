@@ -20,12 +20,15 @@ from pyrosetta.rosetta.protocols.rosetta_scripts import XmlObjects
 def make_bench_helix_pose(pose, row, length):
     pose_clone = pose.clone()
     target = utils.pose_get_chain(pose, row['target'])
+    print('TARGET POSE: ', target)
     start = min(row['rosetta_resis'])
     stop = max(row['rosetta_resis'])
     poses = []
+    print('RESIDUE RANGE: ', start, stop)
     for i in range(start, stop - length + 1):
         this_stop = i + length
         this_target = target.clone()
+        print('THIS TARGET: ', this_target)
         this_pose = rosetta.core.pose.append_subpose_to_pose(this_target, pose_clone, i, this_stop)
         poses.append(this_pose)
 
