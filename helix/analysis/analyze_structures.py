@@ -219,6 +219,7 @@ def analyze_pose(pose, chA='A', chB='B', pdb='', protocol=''):
 
     score = ref(flexpep_pose)
     interface_scorer = interface.InterfaceScore(flexpep_pose)
+    interface_scorer.chains=f'{chA}_{chB}'
     interface_score = interface_scorer.apply()
     n_hbonds = interface_scorer.n_hbonds
 
