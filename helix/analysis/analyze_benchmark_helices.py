@@ -37,6 +37,7 @@ def make_bench_helix_pose(pose, row, length):
         print('THIS POSE SIZE: ', this_target.size())
         print('CHAIN 1 letter: ', this_target.pdb_info().pose2pdb(1))
         print('CHAIN 2 letter: ', this_target.pdb_info().pose2pdb(this_target.chain_begin(2)))
+        print('CHAIN 2 SEQ: ', this_target.chain_sequence(2))
         poses.append(this_target)
 
     return poses, length
