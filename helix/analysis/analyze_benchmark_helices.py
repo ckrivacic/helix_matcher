@@ -58,3 +58,7 @@ def main():
     outfile = os.path.join(output_folder, 'benchmark_scored.pkl')
     print(f'Saving to file: {outfile}')
     pd.DataFrame(outrows).to_pickle(outfile)
+
+
+if __name__=='__main__':
+    main()
