@@ -51,7 +51,7 @@ def make_bench_helix_pose(pose, row, length):
         print('CHAIN 2 SEQ: ', this_target.chain_sequence(2))
         poses.append(this_target)
 
-    return poses, length
+    return poses, length + 1
 
 
 def main():
