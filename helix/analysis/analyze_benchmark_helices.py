@@ -35,6 +35,8 @@ def make_bench_helix_pose(pose, row, length):
         rosetta.core.pose.append_subpose_to_pose(this_target, pose_clone, i, this_stop, True)
         print('THIS POSE: ', this_target)
         print('THIS POSE SIZE: ', this_target.size())
+        print('CHAIN 1 letter: ', this_target.pdb_info().pose2pdb(1))
+        print('CHAIN 2 letter: ', this_target.pdb_info().pose2pdb(this_target.chain_begin(2)))
         poses.append(this_target)
 
     return poses, length
