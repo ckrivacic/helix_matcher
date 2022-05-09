@@ -3,7 +3,7 @@ Usage:
     analyze_benchmark_helices.py <output_folder> [options]
 
 Options:
-    --ntasks=INT  How many tasks total?  [defualt: 1]
+    --ntasks=INT  How many tasks total?  [default: 1]
 '''
 from pyrosetta import rosetta
 # from pyrosetta.rosetta.core.select import residue_selector
@@ -65,7 +65,7 @@ def main():
          ' -holes:dalphaball {} -ignore_unrecognized_res -detect_disulf false'.format(dalphaball))
     output_folder = args['<output_folder>']
     benchmark_df = utils.safe_load(os.path.expanduser('~/software/helix_matcher/helix/benchmark/interface_finder/final_consolidated.pkl'))
-    interval =  1 + benchmark_df.shape[0] // int(args['--ntasks'])
+    interval =  1 + (benchmark_df.shape[0] // int(args['--ntasks']))
     start = task * interval
     stop = task * interval + interval
     benchmark_df = benchmark_df.iloc[start:stop]
