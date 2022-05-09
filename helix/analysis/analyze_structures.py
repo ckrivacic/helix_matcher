@@ -53,7 +53,6 @@ def main():
     init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro' \
          ' -holes:dalphaball {} -ignore_unrecognized_res -detect_disulf false'.format(dalphaball))
 
-    ref = create_score_function('ref2015')
     inputs = sorted(glob.glob(args['<folder>'] + '/*.pdb.gz'))
     nstruct = int(args['--designs-per-task'])
     total_jobs = len(inputs)
@@ -69,12 +68,12 @@ def main():
     print(inputs[start], flush=True)
 
     rowlist = []
-    chA='A'
-    chB='B'
     for input_idx in range(start, stop):
         pdb = inputs[input_idx]
         pose = pose_from_file(pdb)
-        row = analyze_pose(pose)
+        if pose.num_chains() < 2:
+            continue
+        row = analyze_pose(pose, chA='A', chB='B')
         rowlist.append(row)
 
     df = pd.DataFrame(rowlist)
@@ -86,10 +85,9 @@ def main():
     dataframe_out = os.path.join(pickle_outdir, f'task_{task_id}.pkl')
     df.to_pickle(dataframe_out)
 
-def analyze_pose(pose):
-    if pose.num_chains() < 2:
-        continue
+def analyze_pose(pose, chA='A', chB='B'):
     flexpep_pose = pose.clone()
+    ref = create_score_function('ref2015')
     ref(flexpep_pose)
 
     # Need to clear sequence constraints to split the pose

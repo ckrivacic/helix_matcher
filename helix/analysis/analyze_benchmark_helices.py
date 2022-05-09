@@ -50,11 +50,11 @@ def main():
             initial_pose = utils.pose_from_wynton(row['name'])
             poses = make_bench_helix_pose(row['name'], row, length)
             for pose in poses:
-                row = analyze_structures.analyze_pose(pose)
+                row = analyze_structures.analyze_pose(pose, row['target'], row['chain'])
                 row['length'] = f'len_{length}'
                 print(row)
                 outrows.append(row)
 
     outfile = os.path.join(output_folder, 'benchmark_scored.pkl')
-    print(f'Saving to file: {outifle}')
+    print(f'Saving to file: {outfile}')
     pd.DataFrame(outrows).to_pickle(outfile)
