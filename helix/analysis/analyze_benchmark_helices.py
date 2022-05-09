@@ -47,7 +47,7 @@ def make_bench_helix_pose(pose, row, length):
 
 def main():
     args = docopt.docopt(__doc__)
-    rosetta_dir = os.path.expanduser('~/software/rosetta/')
+    rosetta_dir = os.path.expanduser('~/rosetta/')
     dalphaball = os.path.join(rosetta_dir,
                               'source', 'external', 'DAlpahBall',
                               'DAlphaBall.gcc')

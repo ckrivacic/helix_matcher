@@ -46,7 +46,7 @@ def main():
         task_id = int(os.environ['task']) - 1
     else:
         task_id = 0
-    rosetta_dir = os.path.expanduser('~/software/rosetta/')
+    rosetta_dir = os.path.expanduser('~/rosetta/')
     dalphaball = os.path.join(rosetta_dir,
                               'source', 'external', 'DAlpahBall',
                               'DAlphaBall.gcc')
