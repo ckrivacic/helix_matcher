@@ -23,6 +23,8 @@ def make_bench_helix_pose(pose, row, length):
     print('TARGET POSE: ', target)
     start = min(row['rosetta_resis'])
     stop = max(row['rosetta_resis'])
+    if stop - start + 1 < length:
+        length = stop - start + 1
     poses = []
     print('RESIDUE RANGE: ', start, stop)
     for i in range(start, stop - length + 1):
@@ -30,9 +32,10 @@ def make_bench_helix_pose(pose, row, length):
         this_target = target.clone()
         print('THIS TARGET: ', this_target)
         this_pose = rosetta.core.pose.append_subpose_to_pose(this_target, pose_clone, i, this_stop)
+        print('THIS POSE: ', this_pose)
         poses.append(this_pose)
 
-    return poses
+    return poses, length
 
 
 def main():
