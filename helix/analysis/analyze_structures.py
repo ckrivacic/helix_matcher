@@ -101,9 +101,9 @@ def analyze_pose(pose, chA='A', chB='B', pdb='', protocol=''):
     ref(chainB)
     # This way we only have chain A and chain B in cases where we are looking at a multimer (particularly in the
     # case of benchamrk examples)
-    rosetta.core.pose.append_pose_to_pose(chainA, chainB)
-    print('COMBINED POSE CHAINS')
-    print(pose.num_chains())
+    # rosetta.core.pose.append_pose_to_pose(chainA, chainB)
+    # print('COMBINED POSE CHAINS')
+    # print(pose.num_chains())
     ref(pose)
 
     # Determine helical propensity
