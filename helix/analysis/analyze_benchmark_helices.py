@@ -48,8 +48,8 @@ def main():
         print(row)
         for length in [14, 28]:
             initial_pose = utils.pose_from_wynton(row['name'])
-            poses = make_bench_helix_pose(row['name'], row, length)
-            print(poses)
+            poses = make_bench_helix_pose(initial_pose, row, length)
+            print('POSES', poses)
             for pose in poses:
                 row = analyze_structures.analyze_pose(pose, row['target'], row['chain'])
                 row['length'] = f'len_{length}'
