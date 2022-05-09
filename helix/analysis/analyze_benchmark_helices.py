@@ -64,7 +64,7 @@ def main():
             poses, length = make_bench_helix_pose(initial_pose, row, length)
             print('POSES', poses)
             for pose in poses:
-                row = analyze_structures.analyze_pose(pose, row['target'], row['chain'])
+                row = analyze_structures.analyze_pose(pose, row['target'], row['chain'], pdb=row['name'], protocol='benchmark')
                 row['length'] = length
                 print(row)
                 outrows.append(row)

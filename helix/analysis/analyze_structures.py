@@ -85,7 +85,7 @@ def main():
     dataframe_out = os.path.join(pickle_outdir, f'task_{task_id}.pkl')
     df.to_pickle(dataframe_out)
 
-def analyze_pose(pose, chA='A', chB='B'):
+def analyze_pose(pose, chA='A', chB='B', pdb='', protocol=''):
     flexpep_pose = pose.clone()
     ref = create_score_function('ref2015')
     ref(flexpep_pose)
@@ -218,8 +218,8 @@ def analyze_pose(pose, chA='A', chB='B'):
     contact_score = contact_obj.report_sm(flexpep_pose)
 
     score = ref(flexpep_pose)
-    interface_scorer = interface.InterfaceScore(flexpep_pose)
-    interface_score = interface_scorer.apply()
+    # interface_scorer = interface.InterfaceScore(flexpep_pose)
+    # interface_score = interface_scorer.apply()
     n_hbonds = interface_scorer.n_hbonds
 
     # Can't pickle a C++ set, so put it in a Python list
@@ -232,10 +232,10 @@ def analyze_pose(pose, chA='A', chB='B'):
             'folder': os.path.dirname(pdb),
            'name': os.path.basename(pdb),
            # 'protocol': designtype,
-            'protocol': os.path.basename(args['<folder>']),
+            'protocol': protocol,
            'size': flexpep_pose.size(),
            'pose_score': score,
-           'interface_score': interface_score,
+           # 'interface_score': interface_score,
            'n_hbonds': n_hbonds,
            'shape_complementarity': sc_score,
            'contact_molecular_surface': contact_score,
