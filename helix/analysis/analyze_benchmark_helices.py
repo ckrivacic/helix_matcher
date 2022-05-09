@@ -28,8 +28,12 @@ def make_bench_helix_pose(pose, row, length):
     print('TARGET POSE: ', target)
     start = min(row['rosetta_resis'])
     stop = max(row['rosetta_resis'])
-    if stop - start + 1 < length:
+    if not length:
         length = stop - start
+    elif stop - start + 1 < length:
+        length = stop - start
+    else:
+        length -= 1
     poses = []
     print('RESIDUE RANGE: ', start, stop)
     for i in range(start, stop - length + 1):
@@ -73,26 +77,26 @@ def main():
     outrows = []
     for idx, row in benchmark_df.iterrows():
         print(row)
-        for length in [14, 28]:
-            initial_pose = utils.pose_from_wynton(row['name'])
-            interface = score_pdb.PDBInterface(initial_pose, minimize=True, cst=True, is_pose=True)
-            poses, length = make_bench_helix_pose(initial_pose, row, length)
-            print('POSES', poses)
-            for pose in poses:
-                outrow = analyze_structures.analyze_pose(pose, row['target'], row['chain'], pdb=row['name'], protocol='benchmark')
-                outrow['length'] = length
-                outrow['minimized'] = False
-                print(outrow)
-                outrows.append(outrow)
-            minimized_pose = interface.pose
-            poses, length = make_bench_helix_pose(minimized_pose, row, length)
-            print('POSES', poses)
-            for pose in poses:
-                outrow = analyze_structures.analyze_pose(pose, row['target'], row['chain'], pdb=row['name'], protocol='benchmark')
-                outrow['length'] = length
-                outrow['minimized'] = True
-                print(outrow)
-                outrows.append(outrow)
+        # for length in [14, 28]:
+        initial_pose = utils.pose_from_wynton(row['name'])
+        interface = score_pdb.PDBInterface(initial_pose, minimize=True, cst=True, is_pose=True)
+        poses, length = make_bench_helix_pose(initial_pose, row, None)
+        print('POSES', poses)
+        for pose in poses:
+            outrow = analyze_structures.analyze_pose(pose, row['target'], row['chain'], pdb=row['name'], protocol='benchmark')
+            outrow['length'] = length
+            outrow['minimized'] = False
+            print(outrow)
+            outrows.append(outrow)
+        minimized_pose = interface.pose
+        poses, length = make_bench_helix_pose(minimized_pose, row, length)
+        print('POSES', poses)
+        for pose in poses:
+            outrow = analyze_structures.analyze_pose(pose, row['target'], row['chain'], pdb=row['name'], protocol='benchmark')
+            outrow['length'] = length
+            outrow['minimized'] = True
+            print(outrow)
+            outrows.append(outrow)
 
     outfile = os.path.join(output_folder, f'benchmark_scored_{task}.pkl')
     print(f'Saving to file: {outfile}')

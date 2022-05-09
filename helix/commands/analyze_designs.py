@@ -202,6 +202,14 @@ def plot_sequence_recovery(df, args):
     # sns.stripplot(data=df, x='protocol', y=args['--yaxis'],
             # order=order, color='.5', alpha=0.5)
     # df = df[df['protocol'] != 'deleteme']
+    sns.categorical._Old_Violin = sns.categorical._ViolinPlotter
+    class _My_ViolinPlotter(sns.categorical._Old_Violin):
+
+        def __init__(self, *args, **kwargs):
+            super(_My_ViolinPlotter, self).__init__(*args, **kwargs)
+            self.gray = 'black'
+
+    sns.categorical._ViolinPlotter = _My_ViolinPlotter
     means = []
     for protocol in order:
         mean = df[df['protocol']==protocol][args['--yaxis']].mean()
@@ -259,13 +267,13 @@ def barplot(df, args):
         hue = args['--hue']
     else:
         hue = None
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(4,4), dpi=300)
     # sns.stripplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
             # order=order, color='.5', alpha=0.5, ax=ax)
     sns.barplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
-            hue=hue, order=order, ax=ax, ci=None, saturation=1)
+            hue=hue, order=order, ax=ax, saturation=1)
     if args['--xaxis'] == 'protocol':
-        ax.set_xticklabels(labels)
+        ax.set_xticklabels(labels, ha='right')
         plt.xticks(rotation=70)
     fig.tight_layout()
     plt.xlabel(None)
@@ -505,6 +513,12 @@ def main():
     if args['--xaxis'] == 'protocol':
         global order
         global labels
+        global y_names
+        y_names = {
+            'contact_molecular_surface': 'Contact molecular surface',
+            'buns_all': 'Interface buried unsatisfied hydrogen bonds',
+            'n_hbonds': 'Cross-interface hydrogen bonds',
+        }
         order = ['base',
                  'buns_penalty', #'buns_penalty_pruned',
                  #'deleteme',
