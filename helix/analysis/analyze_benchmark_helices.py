@@ -24,7 +24,7 @@ def make_bench_helix_pose(pose, row, length):
     start = min(row['rosetta_resis'])
     stop = max(row['rosetta_resis'])
     if stop - start + 1 < length:
-        length = stop - start + 1
+        length = stop - start
     poses = []
     print('RESIDUE RANGE: ', start, stop)
     for i in range(start, stop - length + 1):
@@ -56,11 +56,11 @@ def main():
         print(row)
         for length in [14, 28]:
             initial_pose = utils.pose_from_wynton(row['name'])
-            poses = make_bench_helix_pose(initial_pose, row, length)
+            poses, length = make_bench_helix_pose(initial_pose, row, length)
             print('POSES', poses)
             for pose in poses:
                 row = analyze_structures.analyze_pose(pose, row['target'], row['chain'])
-                row['length'] = f'len_{length}'
+                row['length'] = length
                 print(row)
                 outrows.append(row)
 
