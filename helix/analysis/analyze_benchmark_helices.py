@@ -32,7 +32,7 @@ def make_bench_helix_pose(pose, row, length):
         this_target = target.clone()
         print('THIS TARGET: ', this_target)
         print('TARGET SIZE: ', this_target.size())
-        rosetta.core.pose.append_subpose_to_pose(this_target, pose_clone, i, this_stop)
+        rosetta.core.pose.append_subpose_to_pose(this_target, pose_clone, i, this_stop, True)
         print('THIS POSE: ', this_target)
         print('THIS POSE SIZE: ', this_target.size())
         poses.append(this_target)
