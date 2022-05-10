@@ -38,6 +38,10 @@ Options:
     --protocol=STR  Only show results for this protocol
 
     --length=#, -l  Only show results for docked helices of this length (14 orr 28)
+
+    --perres  Plot the per-residue #
+
+    --buns-vs-bonds  (for bar plot) plot BUNS & # HBONDS side by side
 '''
 import docopt
 import os
@@ -267,14 +271,47 @@ def barplot(df, args):
         hue = args['--hue']
     else:
         hue = None
+    if args['--perres']:
+        cols = [args['--yaxis']]
+        if args['--buns-vs-bonds']:
+            cols = ['buns_all', 'n_hbonds']
+        for col in cols:
+            df[f"{col}_perres"] = df.apply(lambda x: \
+                                                       x[col] / int(x['patch_len'].split('_')[1]),
+                                                       axis=1)
     fig, ax = plt.subplots(figsize=(4,4), dpi=300)
     # sns.stripplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
             # order=order, color='.5', alpha=0.5, ax=ax)
-    sns.barplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
+    y_axis = args['--yaxis']
+    if args['--perres']:
+        y_axis += '_perres'
+    if args['--buns-vs-bonds']:
+        cols = ['design_file', 'protocol', 'value', 'type']
+        if args['--perres']:
+            df_buns = df[['design_file', 'protocol', 'buns_all_perres']]
+            df_buns['type'] = 'buns_perres'
+            df_bonds = df[['design_file', 'protocol', 'n_hbonds_perres']]
+            df_bonds['type'] = 'hbonds_perres'
+        else:
+            df_buns = df[['design_file', 'protocol', 'buns_all']]
+            df_buns['type'] = 'buns_all'
+            df_bonds = df[['design_file', 'protocol', 'n_hbonds']]
+            df_bonds['type'] = 'hbonds'
+        df_buns.columns = cols
+        df_bonds.columns = cols
+        df =pd.concat([df_buns, df_bonds], ignore_index=True)
+        y_axis = 'value'
+        hue = 'type'
+    sns_ax = sns.barplot(data=df, x=args['--xaxis'], y=y_axis,
             hue=hue, order=order, ax=ax, saturation=1)
     if args['--xaxis'] == 'protocol':
         ax.set_xticklabels(labels, ha='right')
         plt.xticks(rotation=70)
+    plt.ylabel(y_names[y_axis])
+    import matplotlib.patches
+
+    for patch in sns_ax.patches:
+        patch.set_edgecolor('black')
     fig.tight_layout()
     plt.xlabel(None)
     plt.show()
@@ -518,6 +555,10 @@ def main():
             'contact_molecular_surface': 'Contact molecular surface',
             'buns_all': 'Interface buried unsatisfied hydrogen bonds',
             'n_hbonds': 'Cross-interface hydrogen bonds',
+            'contact_molecular_surface_perres': 'Per-residue contact\nmolecular surface',
+            'buns_all': 'Per-residue interface\nburied unsatisfied hydrogen bonds',
+            'n_hbonds': 'Per-residue cross-interface\nhydrogen bonds',
+            'value': 'Per-residue #\nH-bonds or BUNS',
         }
         order = ['base',
                  'buns_penalty', #'buns_penalty_pruned',

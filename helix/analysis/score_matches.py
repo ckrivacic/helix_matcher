@@ -17,6 +17,7 @@ options:
         Threshold over which results will not be saved.  [default: 50]
 '''
 from helix.analysis import clash
+from helix.commands.view_matches import get_pymol_transform
 from helix import workspace as ws
 import docopt
 import prody
@@ -196,6 +197,9 @@ def apply(scorer, cutoff=50):
         df_vectors = scorer.get_vectors(df_rows)
         query_vectors = scorer.get_vectors(query_rows)
         transform = numeric.Transformation(df_vectors, query_vectors)
+        print(f'ROTATION: {transform.rotation}')
+        print(f'TRANSLATION: {transform.translation}')
+        print(f'PYMOL TRANFORMATION: {get_pymol_transform(transform)}')
 
         # Don't like that I have to use a try/except here, but I'm having some trouble in a test case, potentially
         # due to it being an old database? Shouldn't see these errors when matching to a de novo scaffold library.
