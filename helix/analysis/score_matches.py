@@ -70,11 +70,11 @@ def session_from_graph(workspace, results_row, query_df, db_df, alpha):
     clash_score = clash.Score(workspace, results_row, db_df, query_df,
             alpha=alpha)
     clash_score.apply()
-    print('SCORE IS {}'.format(clash_score.score))
+    print('SCORE IS {}'.format(clash_score.score), flush=True)
     if clash_score.score > 150:
         return
     subgraph = clash_score.subgraph
-    print(subgraph)
+    print(subgraph, flush=True)
     query_selstr = ""
     db_selstr = "db and "
 
@@ -133,15 +133,15 @@ def session_from_graph(workspace, results_row, query_df, db_df, alpha):
         db_selstr += ' or '
         db_selstr += db_sels[i]
     db_selstr += ')'
-    print(db_selstr)
+    print(db_selstr, flush=True)
 
     query_selstr = query_selstr[:-4]
     query_selstr += ' and chain A'
 
     qobjs = qobjs[:-3] + ')'
 
-    print(query_selstr)
-    print(db_selstr)
+    print(query_selstr, flush=True)
+    print(db_selstr, flush=True)
 
     script_path = os.path.dirname(os.path.realpath(__file__))
     script_path = os.path.join(script_path, '..', 'analysis',
@@ -155,13 +155,13 @@ def session_from_graph(workspace, results_row, query_df, db_df, alpha):
     cmd.extend(pymol_transform)
     cmd.append(qobjs)
 
-    print(cmd)
+    print(cmd, flush=True)
 
     subprocess.call(cmd)
 
 
 def collect_scores(results_row, query_df):
-    print(results_row)
+    print(results_row, flush=True)
     query_path = os.readlink(query_df.loc[0]['path'])
 
 
@@ -184,8 +184,8 @@ def apply(scorer, cutoff=50):
     best_interweave_score = 9999
     best_clash_score = 9999
     best_subgraph = None
-    print(f"PDB PATH: {scorer.pdb_path}")
-    print(f"CHAIN: {scorer.chain}")
+    print(f"PDB PATH: {scorer.pdb_path}", flush=True)
+    print(f"CHAIN: {scorer.chain}", flush=True)
     original_atoms = prody.parsePDB(scorer.pdb_path,
             chain=scorer.chain).select('backbone')
     subgraphs = []
@@ -197,9 +197,9 @@ def apply(scorer, cutoff=50):
         df_vectors = scorer.get_vectors(df_rows)
         query_vectors = scorer.get_vectors(query_rows)
         transform = numeric.Transformation(df_vectors, query_vectors)
-        print(f'ROTATION: {transform.rotation}')
-        print(f'TRANSLATION: {transform.translation}')
-        print(f'PYMOL TRANFORMATION: {get_pymol_transform(transform)}')
+        print(f'ROTATION: {transform.rotation}', flush=True)
+        print(f'TRANSLATION: {transform.translation}', flush=True)
+        print(f'PYMOL TRANFORMATION: {get_pymol_transform(transform)}', flush=True)
 
         # Don't like that I have to use a try/except here, but I'm having some trouble in a test case, potentially
         # due to it being an old database? Shouldn't see these errors when matching to a de novo scaffold library.
@@ -228,8 +228,8 @@ def apply(scorer, cutoff=50):
         # assert(self.interweave_score is not None)
 
         ## print(self.interweave_score)
-        print(f'Current clash score: {score}')
-        print(f'Current RMSD: {rmsd}')
+        print(f'Current clash score: {score}', flush=True)
+        print(f'Current RMSD: {rmsd}', flush=True)
 
         if score + interweave_score < best_score:
             best_interweave_score = interweave_score
@@ -266,7 +266,7 @@ def apply(scorer, cutoff=50):
                 query_row = scorer.query_helices.loc[query_idx]
                 # Helixpath will follow symlink.
                 helixpath = os.path.realpath(os.path.join(scorer.workspace.root_dir, query_row['path']))
-                print(f'helixpath: {helixpath}')
+                print(f'helixpath: {helixpath}', flush=True)
                 # helixpath = clash.get_relative_path(workspace, helixpath)
                 # turnno = os.path.basename(helixpath).split('_')[0][0]
                 '''
@@ -328,10 +328,10 @@ def apply(scorer, cutoff=50):
             # print('ROSETTA SCORE IS {}'.format(rosetta_score))
             # # print('ROSETTA NORMALIZED SCORE IS {}'.format(rosetta_score
             #     / length))
-            print('CLASH SCORE IS {}'.format(score))
-            print('INTERWEAVE SCORE IS {}'.format(interweave_score))
+            print('CLASH SCORE IS {}'.format(score), flush=True)
+            print('INTERWEAVE SCORE IS {}'.format(interweave_score), flush=True)
             # session_from_graph(workspace, row, query_df, db_df, alpha)
-            print('====================================')
+            print('====================================', flush=True)
             rows.append(row)
 
     scorer.interweave_score = best_interweave_score
@@ -357,14 +357,14 @@ def score_matches(workspace, results, query_df, db_df, plot=False,
     scored_results = []
     for idx, row in results.iterrows():
         curr += 1
-        print('Row {} out of {}'.format(curr, numrows))
+        print('Row {} out of {}'.format(curr, numrows), flush=True)
         clash_score = clash.Score(workspace, row, db_df, query_df,
                 alpha=alpha)
         # clash_score.apply()
         candidates = apply(clash_score, cutoff=threshold)
         if verbose:
-            print('Candidates:')
-            print(candidates)
+            print('Candidates:', flush=True)
+            print(candidates, flush=True)
         scored_results.extend(candidates)
         # print('CLASH SCORE IS {}'.format(clash_score.score))
         # results.at[idx,'clash_score'] = clash_score.score
@@ -460,7 +460,7 @@ def test_scoring():
                 with open(match_workspace.dataframe_path, 'rb') as f:
                     df = pickle.load(f)
             # df = pd.read_pickle('dataframes_clash/final.pkl')
-            print(match_workspace.dataframe_path)
+            print(match_workspace.dataframe_path, flush=True)
             results = score_matches(match_workspace, output, helices,
                     df, plot=args['--plot-alphashape'])
  
@@ -492,7 +492,7 @@ def main():
     args = docopt.docopt(__doc__)
     workspace = ws.workspace_from_dir(args['<workspace>'])
     if not hasattr(workspace, 'relative_orientations'):
-        print('ERROR: Not a match workspace.')
+        print('ERROR: Not a match workspace.', flush=True)
         sys.exit()
     # targets = workspace.targets
     if 'SGE_TASK_ID' in os.environ:
@@ -512,7 +512,7 @@ def main():
 
     # match_workspace = ws.workspace_from_dir(os.path.dirname(dataframes[this_job]))
     result = dataframes[this_job]
-    print(f'Loading dataframe {result}')
+    print(f'Loading dataframe {result}', flush=True)
 
     try:
         output = pd.read_pickle(result)
@@ -527,8 +527,8 @@ def main():
     # print(subjob)
     start = subjob * interval
     stop = start + interval
-    print("START ROW: {}".format(start))
-    print("STOP ROW: {}".format(stop))
+    print("START ROW: {}".format(start), flush=True)
+    print("STOP ROW: {}".format(stop), flush=True)
     output = output.iloc[start:stop]
 
     suffix = '_'.join(result.split('.')[0].split('_')[-2:])
@@ -542,13 +542,13 @@ def main():
         with open(workspace.all_scaffold_dataframe, 'rb') as f:
             helices = pickle.load(f)
     print('Using the following helix dataframe: {}'.format(
-        workspace.dataframe_path))
+        workspace.dataframe_path), flush=True)
 
     results = score_matches(workspace, output, helices, df,
             plot=args['--plot-alphashape'],
             threshold=float(args['--threshold']))
     out = os.path.join(workspace.output_dir,'results_scored_{}_{}.pkl'.format(suffix, subjob))
-    print('SAVING RESULTS TO {}'.format(out))
+    print('SAVING RESULTS TO {}'.format(out), flush=True)
     results.to_pickle(out)
 
 
