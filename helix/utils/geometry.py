@@ -26,7 +26,42 @@ def dihedral(p1, p2, p3, p4):
     c = np.dot(n1, n2)
     s = np.dot(v2, np.cross(n1, n2))
 
-    return np.arctan2(s, c) 
+    return np.arctan2(s, c)
+
+
+def zero_vector(v):
+    return v[1] - v[0]
+
+
+# def perpendicular_plane(v, xyz):
+#     v0 = zero_vector(v)
+#     x_coef = v0[0]
+#     y_coef = v0[1]
+#     z_coef = v0[2]
+#     C = -np.sum(v0 * xyz)
+#
+#     return (x_coef, y_coef, z_coef, C)
+
+
+def vector_intersects_plane(v, xyz, vnorm, epsilon=1e-6):
+    '''Check if line segment v intersects the plane defined by
+    the point xyz and the normal vector vnorm. All input should be
+    numpy arrays.
+    Returns value betwen 0 and 1 if the line segment intersects the
+    plane; <0 indicates the plane is behind the segment; >1 indicates the
+    plane is in front of the segment.
+    A return value of None indicates the segment is parallel to the plane.'''
+    u = zero_vector(v)
+    vnorm = zero_vector(vnorm)
+    dot = np.dot(vnorm, u)
+
+    if abs(dot) > epsilon:
+        w = v[0] - xyz
+        fac = -np.dot(vnorm, w) / dot
+        return fac
+    else:
+        return None
+
 
 def perpendicular_vector(v):
     '''Get a perpendicular vector to a vector v.'''

@@ -1,6 +1,7 @@
 from helix.utils import numeric
 from helix.utils.utils import max_subgraph
 from helix.utils.utils import download_and_clean_pdb
+from helix.utils.geometry import vector_intersects_plane
 import alphashape
 from copy import deepcopy
 import math
@@ -114,6 +115,55 @@ class Score(object):
                 scores.append(-1)
 
         return sum(scores)
+
+    def parallel_rmsd(self, atoms, df_rows, query_rows):
+        '''Finds the RMSD of only the overlapping portions of helices'''
+        rmsds = []
+        lengths = []
+        for i in range(0, len(df_rows)):
+            row = df_rows[i]
+            vector = row['vector']
+            target_helix_CAs = atoms.copy()
+            subselection = target_helix_CAs.select('resindex {}:{} and name' \
+                                                   ' CA'.format(row['start'] - 1, row['stop']))
+            tar_CAs = subselection.getCoords()
+
+            query_path = get_relative_path(self.workspace,
+                                           query_rows[i]['path'], depth=5)
+            query_path = os.path.relpath(query_path,
+                                         start=self.workspace.root_dir)
+            query_CAs = self.query_CAs[query_path]
+
+            start_ca_query = query_CAs[0]
+            overlap_query = []
+            for atom in range(1, len(query_CAs) + 1):
+                query_vector = np.array([start_ca_query, query_CAs[atom]])
+                # NOTE: Need to add logic to handle "none" returns, or change the function to return >1 if parallel.
+                if vector_intersects_plane(query_vector, vector[0], vector) < 1 and \
+                        vector_intersects_plane(query_vector, vector[1], vector) > 1:
+                    overlap_query.append(query_CAs[atom])
+            overlap_scaffold = []
+            start_ca_scaffold = tar_CAs[0]
+            for atom in range(1, len(tar_CAs) + 1):
+                scaffold_vector = np.array([start_ca_scaffold, tar_CAs[atom]])
+                # NOTE: Need to add logic to handle "none" returns, or change the function to return >1 if parallel.
+                if vector_intersects_plane(scaffold_vector, query_vector[0], query_vector) < 1 and \
+                        vector_intersects_plane(scaffold_vector, query_vector[1], query_vector) > 1:
+                    overlap_scaffold.append(query_CAs[atom])
+
+            rmsd = find_best_rmsd(overlap_query, overlap_scaffold)
+            if len(overlap_scaffold) > len(overlap_query):
+                length = len(overlap_query)
+            else:
+                length = len(overlap_scaffold)
+            rmsds.append(rmsd)
+            lengths.append(length)
+
+        weighted = 0
+        for rmsd, length in zip(rmsds, lengths):
+            weighted += rmsd * length
+
+        return weighted / sum(lengths)
 
     def calc_rmsd(self, atoms, df_rows, query_rows):
         '''Calculate the best possible RMSD of each matched helix to the docked helices'''
@@ -326,6 +376,16 @@ def test():
         clash_score.apply()
         print(row['name'])
         print(clash_score.score)
+
+
+def test_rmsd():
+    import helix.workspace as ws
+    from helix.utils.utils import safe_load
+    workspace = ws.workspace_from_dir(os.path.expanduser('~/intelligent_design/2022_01_05_denovo/rifdock_outputs/5U8R/'))
+    query_helices = os.path.join(workspace.focus_dir, 'filtered', 'query_helices.pkl')
+    query_helices = safe_load(query_helices)
+    df_helices = os.path.join(workspace.project_params_dir, 'database', 'helixdf_custom_08-13-2021.pkl')
+    df_helices = safe_load(df_helices)
 
 
 if __name__=='__main__':

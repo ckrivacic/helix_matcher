@@ -185,7 +185,7 @@ def apply(scorer, cutoff=50):
     best_clash_score = 9999
     best_subgraph = None
     print(f"PDB PATH: {scorer.pdb_path}", flush=True)
-    print(f"CHAIN: {scorer.chain}", flush=True)
+    print(f"CHAIN: {scorer.chain}")
     original_atoms = prody.parsePDB(scorer.pdb_path,
             chain=scorer.chain).select('backbone')
     subgraphs = []
@@ -211,6 +211,7 @@ def apply(scorer, cutoff=50):
             score = scorer.calculate(atoms)
             interweave_score = scorer.calc_interweave_score(atoms, df_rows, query_rows)
             rmsd = scorer.calc_rmsd(atoms, df_rows, query_rows)
+            parallel_rmsd = scorer.parallel_rmsd(atoms, df_rows, query_rows)
         except Exception as e:
             print("\033[91mError ocurred for the following.")
             print(f"\033[91mPDB: {scorer.pdb_path}")
@@ -245,6 +246,7 @@ def apply(scorer, cutoff=50):
                     'clash_score': score,
                     'interweave_score': interweave_score,
                     'rmsd': rmsd,
+                    'parallel_rmsd': parallel_rmsd,
                     'total_match_score': score + interweave_score,
                     'subgraph': subgraph,
                     'n_matched_helices': len(df_rows),
@@ -366,65 +368,6 @@ def score_matches(workspace, results, query_df, db_df, plot=False,
             print('Candidates:', flush=True)
             print(candidates, flush=True)
         scored_results.extend(candidates)
-        # print('CLASH SCORE IS {}'.format(clash_score.score))
-        # results.at[idx,'clash_score'] = clash_score.score
-        # length = 0
-        # rifdock_score = 0
-        # rosetta_score = 0
-        # if clash_score.subgraph:
-            # for node in clash_score.subgraph:
-                # query_idx = node[1]
-                # query_row = query_df.loc[query_idx]
-                # # Helixpath will follow symlink.
-                # helixpath = os.path.realpath(query_row['path'])
-                # # helixpath = clash.get_relative_path(workspace, helixpath)
-                # # turnno = os.path.basename(helixpath).split('_')[0][0]
-                # score_file = \
-                        # match_scaffold(workspace, helixpath)\
-                        # + '.scores'
-                # scorepath = os.path.join(
-                        # os.path.dirname(query_row['path']),
-                        # score_file
-                        # )
-                # scorepath = clash.get_relative_path(workspace, scorepath)
-                # rosetta_scorepath = os.path.join(
-                        # os.path.dirname(query_row['path']),
-                        # 'scores.pkl'
-                        # )
-                # try:
-                    # rosetta_scores = pd.read_pickle(rosetta_scorepath)
-                # except:
-                    # with open(rosetta_scorepath, 'rb') as f:
-                        # rosetta_scores = pickle.load(f)
-                # # In the future, would be more efficient to just open all
-                # # the score files once and save them to a dataframe.
-                # with open(scorepath, 'r') as f:
-                    # for line in f:
-                        # line = line.strip('\n')
-                        # if line.startswith(os.path.basename(query_row['path'])):
-                            # print(line)
-                            # score_line = line
-                            # break
-                # score = float(score_line.split()[11])
-                # score_row =\
-                        # rosetta_scores[rosetta_scores['original_path']==os.path.relpath(helixpath,
-                        # workspace.root_dir)]
-                # rosetta_score += float(score_row['score'])
-                # length += float(score_row['size'])
-                # rifdock_score += score
-            # print('RIFDOCK SCORE IS {}'.format(rifdock_score))
-            # print('ROSETTA SCORE IS {}'.format(rosetta_score))
-            # print('ROSETTA NORMALIZED SCORE IS {}'.format(rosetta_score
-                # / length))
-            # print('CLASH SCORE IS {}'.format(clash_score.score))
-            # print('INTERWEAVE SCORE IS {}'.format(clash_score.interweave_score))
-            # # session_from_graph(workspace, row, query_df, db_df, alpha)
-            # print(type(clash_score.subgraph))
-            # print('====================================')
-            # results.at[idx,'rifdock_score'] = rifdock_score
-            # # results.at[idx, 'best_subgraph'] = (clash_score.subgraph)
-        # print(row)
-        # print(results.iloc[idx])
 
     return pd.DataFrame(scored_results)
 

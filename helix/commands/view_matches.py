@@ -186,6 +186,7 @@ def main():
             'binned_match_score',
               'rmsd',
               'interface_score_sum'], ascending=True)
+        results = results.sort_values(by='rmsd', ascending=False)
         for i in range(0, 100):
             testrow = results.iloc[i]
             print(testrow)
