@@ -116,13 +116,14 @@ class Score(object):
 
         return sum(scores)
 
-    def parallel_rmsd(self, atoms, df_rows, query_rows):
+    def parallel_rmsd(self, atoms, df_rows, query_rows, transformer):
         '''Finds the RMSD of only the overlapping portions of helices'''
         rmsds = []
         lengths = []
         for i in range(0, len(df_rows)):
             row = df_rows[i]
             vector = row['vector']
+            vector = numeric.apply_transformation(transformer, vector)
             target_helix_CAs = atoms.copy()
             subselection = target_helix_CAs.select('resindex {}:{} and name' \
                                                    ' CA'.format(row['start'] - 1, row['stop']))
@@ -136,7 +137,7 @@ class Score(object):
 
             start_ca_query = query_CAs[0]
             overlap_query = []
-            for atom in range(1, len(query_CAs) + 1):
+            for atom in range(1, len(query_CAs)):
                 query_vector = np.array([start_ca_query, query_CAs[atom]])
                 # NOTE: Need to add logic to handle "none" returns, or change the function to return >1 if parallel.
                 if vector_intersects_plane(query_vector, vector[0], vector) < 1 and \
@@ -144,12 +145,12 @@ class Score(object):
                     overlap_query.append(query_CAs[atom])
             overlap_scaffold = []
             start_ca_scaffold = tar_CAs[0]
-            for atom in range(1, len(tar_CAs) + 1):
+            for atom in range(1, len(tar_CAs)):
                 scaffold_vector = np.array([start_ca_scaffold, tar_CAs[atom]])
                 # NOTE: Need to add logic to handle "none" returns, or change the function to return >1 if parallel.
                 if vector_intersects_plane(scaffold_vector, query_vector[0], query_vector) < 1 and \
                         vector_intersects_plane(scaffold_vector, query_vector[1], query_vector) > 1:
-                    overlap_scaffold.append(query_CAs[atom])
+                    overlap_scaffold.append(tar_CAs[atom])
 
             rmsd = find_best_rmsd(overlap_query, overlap_scaffold)
             if len(overlap_scaffold) > len(overlap_query):
@@ -285,7 +286,7 @@ def find_best_rmsd(CAs_1, CAs_2):
         flipped = False
 
     long_combos = []
-    for i in range(1, len(longer) - len(shorter) + 1):
+    for i in range(1, len(longer) - len(shorter) + 2):
         # Say longer is 5 atoms, shorter is 4 atoms; 5 - 4 = 1, but there are 2 possibilities for overlap
         resi_stop = i + len(shorter) - 1
         # long_combos.append(longer.select(f'resindex {i} to {resi_stop}'))
@@ -308,6 +309,16 @@ def find_best_rmsd(CAs_1, CAs_2):
                 best_rmsd = rmsd
                 # short_seq = short_sele.getSequence()
                 # long_seq = long_sele.getSequence()
+    if best_rmsd == 99999:
+        print('Error with best RMSD')
+        print('Short combos:', flush=True)
+        print(long_combos, flush=True)
+        print('Long combos:', flush=True)
+        print(short_combos, flush=True)
+        print('CAs_1:', flush=True)
+        print(CAs_1, flush=True)
+        print('CAs_2:', flush=True)
+        print(CAs_2, flush=True)
 
     return best_rmsd
 

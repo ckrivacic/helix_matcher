@@ -211,7 +211,7 @@ def apply(scorer, cutoff=50):
             score = scorer.calculate(atoms)
             interweave_score = scorer.calc_interweave_score(atoms, df_rows, query_rows)
             rmsd = scorer.calc_rmsd(atoms, df_rows, query_rows)
-            parallel_rmsd = scorer.parallel_rmsd(atoms, df_rows, query_rows)
+            parallel_rmsd = scorer.parallel_rmsd(atoms, df_rows, query_rows, transform)
         except Exception as e:
             print("\033[91mError ocurred for the following.")
             print(f"\033[91mPDB: {scorer.pdb_path}")
@@ -231,6 +231,7 @@ def apply(scorer, cutoff=50):
         ## print(self.interweave_score)
         print(f'Current clash score: {score}', flush=True)
         print(f'Current RMSD: {rmsd}', flush=True)
+        print(f'Current parallel RMSD: {parallel_rmsd}', flush=True)
 
         if score + interweave_score < best_score:
             best_interweave_score = interweave_score
