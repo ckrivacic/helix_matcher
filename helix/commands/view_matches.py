@@ -184,7 +184,7 @@ def main():
         results = results[results.name != '3g67_1']
         results = results.sort_values(by=['n_matched_helices',
             'binned_match_score',
-              'rmsd',
+              'parallel_rmsd',
               'interface_score_sum'], ascending=True)
         results = results.sort_values(by='rmsd', ascending=False)
         for i in range(0, 100):

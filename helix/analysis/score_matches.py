@@ -14,7 +14,7 @@ options:
     --target=TAR, -t
         Only run scoring analysis for a certain target
     --threshold=NUM
-        Threshold over which results will not be saved.  [default: 50]
+        Threshold over which results will not be saved.  [default: 20]
 '''
 from helix.analysis import clash
 from helix.commands.view_matches import get_pymol_transform
@@ -233,12 +233,12 @@ def apply(scorer, cutoff=50):
         print(f'Current RMSD: {rmsd}', flush=True)
         print(f'Current parallel RMSD: {parallel_rmsd}', flush=True)
 
-        if score + interweave_score < best_score:
+        if score < best_score and parallel_rmsd < 2.0:
             best_interweave_score = interweave_score
             best_clash_score = score
             best_score = score + interweave_score
             best_subgraph = subgraph
-        if score + interweave_score < cutoff:
+        if score < cutoff and parallel_rmsd < 2.0:
             subgraphs.append(subgraph)
             row = {
                     'name': scorer.name,
