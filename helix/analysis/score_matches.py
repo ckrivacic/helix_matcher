@@ -211,7 +211,7 @@ def apply(scorer, cutoff=50):
             score = scorer.calculate(atoms)
             interweave_score = scorer.calc_interweave_score(atoms, df_rows, query_rows)
             rmsd = scorer.calc_rmsd(atoms, df_rows, query_rows)
-            parallel_rmsd = scorer.parallel_rmsd(atoms, df_rows, query_rows, transform)
+            parallel_rmsd, rmsd_lengths = scorer.parallel_rmsd(atoms, df_rows, query_rows, transform)
         except Exception as e:
             print("\033[91mError ocurred for the following.")
             print(f"\033[91mPDB: {scorer.pdb_path}")
@@ -248,6 +248,7 @@ def apply(scorer, cutoff=50):
                     'interweave_score': interweave_score,
                     'rmsd': rmsd,
                     'parallel_rmsd': parallel_rmsd,
+                    'parallel_rmsd_lengths': rmsd_lengths,
                     'total_match_score': score + interweave_score,
                     'subgraph': subgraph,
                     'n_matched_helices': len(df_rows),

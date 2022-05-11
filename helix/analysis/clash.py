@@ -164,7 +164,7 @@ class Score(object):
         for rmsd, length in zip(rmsds, lengths):
             weighted += rmsd * length
 
-        return weighted / sum(lengths)
+        return weighted / sum(lengths), lengths
 
     def calc_rmsd(self, atoms, df_rows, query_rows):
         '''Calculate the best possible RMSD of each matched helix to the docked helices'''
@@ -310,7 +310,7 @@ def find_best_rmsd(CAs_1, CAs_2):
                 # short_seq = short_sele.getSequence()
                 # long_seq = long_sele.getSequence()
     if best_rmsd == 99999:
-        print('Error with best RMSD')
+        print('Error with best RMSD', flush=True)
         print('Short combos:', flush=True)
         print(long_combos, flush=True)
         print('Long combos:', flush=True)

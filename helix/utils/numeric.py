@@ -170,11 +170,7 @@ def inverse_np_transformation(T):
 
 def RMSD(points1, points2):
     '''Calcualte RMSD between two lists of numpy points.'''
-    # print(points1, flush=True)
-    # print(points2, flush=True)
-    # print('RMSD:', flush=True)
     diff = [points1[i] - points2[i] for i in range(len(points1))]
-    # print(np.sqrt(sum(np.dot(d, d) for d in diff) / len(diff)), flush=True)
     return np.sqrt(sum(np.dot(d, d) for d in diff) / len(diff))
 
 
