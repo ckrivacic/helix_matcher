@@ -181,9 +181,9 @@ def apply(scorer, cutoff=50):
     of the best-scoring transformation
     '''
     best_score = 9999
-    best_interweave_score = 9999
-    best_clash_score = 9999
-    best_subgraph = None
+    # best_interweave_score = 9999
+    # best_clash_score = 9999
+    # best_subgraph = None
     print(f"PDB PATH: {scorer.pdb_path}", flush=True)
     print(f"CHAIN: {scorer.chain}")
     original_atoms = prody.parsePDB(scorer.pdb_path,
@@ -197,9 +197,11 @@ def apply(scorer, cutoff=50):
         df_vectors = scorer.get_vectors(df_rows)
         query_vectors = scorer.get_vectors(query_rows)
         transform = numeric.Transformation(df_vectors, query_vectors)
-        print(f'ROTATION: {transform.rotation}', flush=True)
-        print(f'TRANSLATION: {transform.translation}', flush=True)
-        print(f'PYMOL TRANFORMATION: {get_pymol_transform(transform)}', flush=True)
+        # print(f'ROTATION: {transform.rotation}', flush=True)
+        # print(f'TRANSLATION: {transform.translation}', flush=True)
+        # print(f'PYMOL TRANFORMATION: {get_pymol_transform(transform)}', flush=True)
+        # print([x.path for x in df_rows])
+        # print([x.path for x in query_rows])
 
         # Don't like that I have to use a try/except here, but I'm having some trouble in a test case, potentially
         # due to it being an old database? Shouldn't see these errors when matching to a de novo scaffold library.
@@ -216,6 +218,8 @@ def apply(scorer, cutoff=50):
             print("\033[91mError ocurred for the following.")
             print(f"\033[91mPDB: {scorer.pdb_path}")
             print(f"\033[91mChain: {scorer.chain}")
+            print("RMSD:")
+            print(rmsd)
             print("\033[91mDF rows:")
             print('\033[0m')
             print(df_rows)
@@ -233,11 +237,11 @@ def apply(scorer, cutoff=50):
         print(f'Current RMSD: {rmsd}', flush=True)
         print(f'Current parallel RMSD: {parallel_rmsd}', flush=True)
 
-        if score < best_score and parallel_rmsd < 2.0:
-            best_interweave_score = interweave_score
-            best_clash_score = score
-            best_score = score + interweave_score
-            best_subgraph = subgraph
+        # if score < best_score and parallel_rmsd < 2.0:
+            # best_interweave_score = interweave_score
+            # best_clash_score = score
+            # best_score = score
+            # best_subgraph = subgraph
         if score < cutoff and parallel_rmsd < 2.0:
             subgraphs.append(subgraph)
             row = {
@@ -245,11 +249,11 @@ def apply(scorer, cutoff=50):
                     'path': scorer.pdb_path,
                     'chain': scorer.chain,
                     'clash_score': score,
-                    'interweave_score': interweave_score,
+                    # 'interweave_score': interweave_score,
                     'rmsd': rmsd,
                     'parallel_rmsd': parallel_rmsd,
                     'parallel_rmsd_lengths': rmsd_lengths,
-                    'total_match_score': score + interweave_score,
+                    # 'total_match_score': score + interweave_score,
                     'subgraph': subgraph,
                     'n_matched_helices': len(df_rows),
                     }
@@ -338,14 +342,14 @@ def apply(scorer, cutoff=50):
             print('====================================', flush=True)
             rows.append(row)
 
-    scorer.interweave_score = best_interweave_score
-    scorer.score = best_clash_score
-    scorer.subgraph = best_subgraph
+    # scorer.interweave_score = best_interweave_score
+    # scorer.score = best_clash_score
+    # scorer.subgraph = best_subgraph
     return rows
 
 
 def score_matches(workspace, results, query_df, db_df, plot=False,
-        threshold=50, verbose=False):
+        threshold=20, verbose=False):
     '''Go through results dataframe and score the matches'''
     # for i in range(0, 100): # Review top 100 matches for now.
         # testrow = results.iloc[i]

@@ -133,6 +133,7 @@ class Score(object):
                                            query_rows[i]['path'], depth=5)
             query_path = os.path.relpath(query_path,
                                          start=self.workspace.root_dir)
+            query_helix_vector = query_rows[i]['vector']
             query_CAs = self.query_CAs[query_path]
 
             start_ca_query = query_CAs[0]
@@ -148,10 +149,17 @@ class Score(object):
             for atom in range(1, len(tar_CAs)):
                 scaffold_vector = np.array([start_ca_scaffold, tar_CAs[atom]])
                 # NOTE: Need to add logic to handle "none" returns, or change the function to return >1 if parallel.
-                if vector_intersects_plane(scaffold_vector, query_vector[0], query_vector) < 1 and \
-                        vector_intersects_plane(scaffold_vector, query_vector[1], query_vector) > 1:
+                if vector_intersects_plane(scaffold_vector, query_helix_vector[0], query_helix_vector) < 1 and \
+                        vector_intersects_plane(scaffold_vector, query_helix_vector[1], query_helix_vector) > 1:
                     overlap_scaffold.append(tar_CAs[atom])
 
+            # print('OVERLAPS')
+            # print(overlap_query)
+            # print(overlap_scaffold)
+            if len(overlap_scaffold) == 0 or len(overlap_query) == 0:
+                print('Zero?')
+                print(f'Query vector: {query_vector}')
+                print(f'Scaffold vector: {vector}')
             rmsd = find_best_rmsd(overlap_query, overlap_scaffold)
             if len(overlap_scaffold) > len(overlap_query):
                 length = len(overlap_query)
