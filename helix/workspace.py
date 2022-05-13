@@ -314,6 +314,15 @@ class Workspace(object):
         return os.path.join(self.root_dir, 'project_params')
 
     @property
+    def seqprof_dir(self):
+        return os.path.abspath(os.path.join(self.focus_dir,
+                                            'sequence_profiles'))
+
+    @property
+    def fragment_weights_path(self):
+        return os.path.abspath(self.find_path('fragment.wts'))
+
+    @property
     def io_dirs(self):
         return []
 

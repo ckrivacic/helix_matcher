@@ -153,7 +153,7 @@ def count_buried_unsat(pose, resnums):
     return buns_all_obj.report_sm(pose)
 
 
-def select_good_residues(pdbpath, score_df):
+def select_good_residues(pdbpath, score_df, is_pose=False, cst_sc=False, minimize=True):
     '''
     Select residues which have similar crosschain scores to natural
     interfaces and which don't have or interact with any buried
@@ -161,7 +161,7 @@ def select_good_residues(pdbpath, score_df):
     with the intent of turning packing off for these residues.
     '''
     from helix.benchmark import score_pdb
-    interface = score_pdb.PDBInterface(pdbpath, minimize=True, cst=True)
+    interface = score_pdb.PDBInterface(pdbpath, minimize=minimize, cst=True, is_pose=is_pose, cst_sc=cst_sc)
     interface_scores = interface.interface_all_chains()
     nopack = []
     if interface_scores.shape[0] > 0:
