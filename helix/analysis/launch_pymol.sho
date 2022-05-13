@@ -42,9 +42,10 @@ pymol -q $helix_paths $pdb \
     -d "color orange, target and name c*" \
     -d "select mobile, $pdb_name and $dbstr" \
     -d "hide everything, $pdb_name and not chain $chain" \
-    -d "color yellow, mobile" \
+    -d "color cyan, $pdb_name" \
     -d "hide everything, not (($qobjs and (chain A or chain B)) or $pdb_name)" \
     -d "remove resn hoh" \
     -d "cmd.transform_selection('$pdb_name', $matrix, homogenous=0)" \
     -d "center target" \
     #-d "fetch $pdb" \
+#    -d "color yellow, mobile" \

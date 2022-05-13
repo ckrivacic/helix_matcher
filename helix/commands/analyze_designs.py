@@ -30,6 +30,8 @@ Options:
     --patch-id-cutoff=FLOAT  filter out patches that have this amount of
         sequence identity
 
+    --filter=JSON  Path to json file to filter helices on
+
     --buried-identity  Calculate buried sequence identity. WARNING: Do
         not use without a cutoff... slow.
 
@@ -44,6 +46,7 @@ Options:
     --buns-vs-bonds  (for bar plot) plot BUNS & # HBONDS side by side
 '''
 import docopt
+from helix.commands import filter
 import os
 import pandas as pd
 from klab import scripting
@@ -447,7 +450,19 @@ def main():
     plot_type = args['<plot_type>']
     dfpath = os.path.join(workspace.rifdock_outdir,
             'combined_benchmark_rev', 'final.pkl')
+    # dfpath = os.path.join(workspace.root_dir, '..', 'benchmark_analysis', 'final.pkl')
     df_temp = utils.safe_load(dfpath)
+    # df_temp = df_temp[df_temp['minimized']]
+
+    if args['--filter']:
+        import yaml
+        filter_path = args['--filter']
+        with open(filter_path, 'r') as f:
+            filters = yaml.load(f.read())
+        scorelist = []
+        for name, group in df_temp.groupby(['patch_len', 'name_x', 'target']):
+            scorelist.append(filter.parse_filter(filters, group))
+        df_temp = pd.concat(scorelist)
 
     if args['--id-cutoff']:
         id_cutoff_path = os.path.join(workspace.rifdock_outdir,

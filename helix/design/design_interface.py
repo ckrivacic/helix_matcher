@@ -1,12 +1,22 @@
 '''
 Design the interface and surroundings of a matched scaffold.
 Requires score dataframe and match dataframe.
+
+Usage:
+    design_interface.py <workspace> [options]
+
+Options:
+    --nstruct=INT, -n  How many designs to make for each input
+    --task=INT  Run  a specific task
 '''
-import sys, os
+import sys, os, glob
 import pandas as pd
 from helix import workspace as ws
+from helix import big_jobs
 from helix.utils.numeric import euclidean_distance
 from helix.utils import utils
+from helix.patchman.design_patchman import select_good_residues
+import docopt
 # Basic PyRosetta stuff
 from pyrosetta import init
 from pyrosetta import pose_from_file
@@ -50,7 +60,7 @@ def get_resmap(pose1, pose2, pose1_start, pose1_stop, pose2_start, pose2_stop):
     return resmap
 
 
-class InterfaceSetup(object):
+class InterfaceDesign(object):
     '''Class to help manage things for interface design'''
     def __init__(self, workspace, df_group):
         self.workspace = workspace
@@ -60,8 +70,17 @@ class InterfaceSetup(object):
                 self.workspace.root_dir, self.df.iloc[0].superimposed_file
             )
         )
-        self.sfxn = create_score_function('ref2015')
-        self.sfxn.set_weight(ScoreType.coordinate_constraint, 1.0)
+        self.sfxn_cst = create_score_function('ref2015')
+        self.sfxn_cst.set_weight(ScoreType.coordinate_constraint, 1.0)
+
+        self.summarized_residue_scores = utils.safe_load(workspace.find_path(
+            'summarized_res_scores.pkl'
+        ))
+
+    def setup_task_factory(self):
+        '''Set up task factory for design'''
+        tf = TaskFactory()
+        tf.push_back(operation.InitializeFromCommandline())
 
     def transfer_residue(self, pose2, pose1_resnum, pose2_resnum):
         '''Transfers a rotamer from pose2 to pose1'''
@@ -84,7 +103,7 @@ class InterfaceSetup(object):
         packertask = tf.create_task_and_apply_taskoperations(self.design_pose)
 
         # Pack to mutate residue
-        mover = PackRotamersMover(self.sfxn, packertask)
+        mover = PackRotamersMover(self.sfxn_cst, packertask)
         mover.apply(self.design_pose)
 
         # Now add constraints
@@ -100,7 +119,7 @@ class InterfaceSetup(object):
 
         # Repack with constraints
         packertask = tf.create_task_and_apply_taskoperations(self.design_pose)
-        mover = PackRotamersMover(self.sfxn, packertask)
+        mover = PackRotamersMover(self.sfxn_cst, packertask)
         mover.apply(self.design_pose)
 
 
@@ -138,13 +157,14 @@ class InterfaceSetup(object):
                     closest_row = res_distances.sort_values(by='dist').iloc[0]
                     # print(closest_row.res2)
                     # print(closest_row.dist)
-                    if closest_row.dist < 1.0:
+                    if closest_row.dist < 0.5:
                         self.transfer_residue(helix_pose, closest_row.res2, helix_index)
                         final_repack_resis.append(int(closest_row.res2))
 
 
         # Now that all residues have been transferred, repack and minimize
         # For task factory, repack all the interface residues and a clash-based repack shell. Use constraints.
+        self.special_residues = final_repack_resis
         print('Constraints present for the following residues:')
         print(', '.join([str(x) for x in final_repack_resis]))
         idx_selector = utils.list_to_res_selector(final_repack_resis)
@@ -162,7 +182,7 @@ class InterfaceSetup(object):
 
         # Repack with constraints
         packertask = tf.create_task_and_apply_taskoperations(self.design_pose)
-        mover = PackRotamersMover(self.sfxn, packertask)
+        mover = PackRotamersMover(self.sfxn_cst, packertask)
         mover.apply(self.design_pose)
 
         # Add backbone constraints for minimization
@@ -177,10 +197,10 @@ class InterfaceSetup(object):
         movemap = self.setup_movemap()
         minmover = MinMover()
         minmover.movemap(movemap)
-        minmover.score_function(self.sfxn)
+        minmover.score_function(self.sfxn_cst)
         minmover.apply(self.design_pose)
 
-        self.design_pose.dump_pdb('testout.pdb')
+        # self.design_pose.dump_pdb('testout.pdb')
 
     def setup_movemap(self):
         movemap = MoveMap()
@@ -201,8 +221,55 @@ def test_prep():
     workspace = ws.workspace_from_dir(sys.argv[1])
     for name, group in df.groupby('superimposed_file'):
         print(name)
-        setup = InterfaceSetup(workspace, group)
+        setup = InterfaceDesign(workspace, group)
         setup.prep_design()
+
+
+def main():
+    args = docopt.docopt(__doc__)
+    try:
+        workspace, job_info = big_jobs.initiate()
+        job_info['inputs']
+    except:
+        print('Maybe this is local?', flush=True)
+        workspace = ws.workspace_from_dir(args['<workspace>'])
+        job_info = {
+            'task_id': args['--task'],
+        }
+    input_df_path = os.path.join(workspace.complex_dir, 'exported_models.pkl')
+    input_df = utils.safe_load(input_df_path)
+    inputs = sorted(input_df['superimposed_file'].unique())
+    if not job_info['task_id']:
+        if args['--task']:
+            task_id = int(args['--task']) - 1
+        else:
+            task_id = 0
+    else:
+        task_id = int(job_info['task_id'])
+
+    dalphaball = os.path.join(workspace.rosetta_dir,
+                              'source', 'external', 'DAlpahBall',
+                              'DAlphaBall.gcc')
+    init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro' \
+         ' -holes:dalphaball {} -ignore_unrecognized_res -detect_disulf false'.format(dalphaball))
+
+    nstruct = int(args['--nstruct'])
+    total_jobs = len(inputs) * nstruct
+    print('TOTAL JOBS: {}'.format(total_jobs), flush=True)
+
+    # Check if we already completed this task, and if so, exit.
+    pickle_outdir = workspace.design_dir
+    dataframe_out = os.path.join(pickle_outdir, f'task_{task_id}.pkl')
+
+    if os.path.exists(dataframe_out):
+        print(f'Task already completed ({dataframe_out} exists). \nExiting.', flush=True)
+        sys.exit(0)
+
+    idx = task_id % len(inputs)
+    group_name = inputs[idx]
+    group = input_df[input_df['superimposed_file'] == group_name]
+
+    designer = InterfaceDesign(workspace, group)
 
 if __name__=='__main__':
     test_prep()

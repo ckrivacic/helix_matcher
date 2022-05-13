@@ -179,14 +179,14 @@ def main():
             results = pd.concat([results, scores],
                     ignore_index=True)
         bins = [0, 10, 20, 30, 40, 50]
-        results['binned_match_score'] =\
-                pd.cut(results['total_match_score'], bins)
+        results['binned_clash_score'] =\
+                pd.cut(results['clash_score'], bins)
         results = results[results.name != '3g67_1']
         results = results.sort_values(by=['n_matched_helices',
-            'binned_match_score',
+            'binned_clash_score',
               'parallel_rmsd',
               'interface_score_sum'], ascending=True)
-        results = results.sort_values(by='rmsd', ascending=False)
+        # results = results.sort_values(by='rmsd', ascending=False)
         for i in range(0, 100):
             testrow = results.iloc[i]
             print(testrow)

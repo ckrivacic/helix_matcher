@@ -946,6 +946,14 @@ class MatchWorkspace(Workspace):
             dfs.append(utils.safe_load(pkl))
         return pd.concat(dfs)
 
+    @property
+    def complex_dir(self):
+        return os.path.join(self.focus_dir, 'pdbs/')
+
+    @property
+    def design_dir(self):
+        return os.path.join(self.complex_dir, 'designs/')
+
 
 
 def big_job_dir():

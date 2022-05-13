@@ -7,8 +7,10 @@ Usage:
 
 Options:
     --target=STR, -t  Only view matches for the given target
+    --dry-run, -d  Do not actually export matches, just print how many matches will be exported for each target
 '''
 from pyrosetta.rosetta.core.pose import append_pose_to_pose
+from helix.commands import filter
 from helix import workspace as ws
 import docopt
 import pandas as pd
@@ -18,7 +20,7 @@ from pyrosetta import pose_from_file
 from pyrosetta import init
 from helix.utils import numeric
 from helix.utils import utils
-import os
+import os, sys
 
 
 def get_pymol_transform(transformation):
@@ -51,7 +53,12 @@ def session_from_graph(match_workspace, results_row, query_df, db_df):
     query_vectors = []
     df_vectors = []
 
-    match_results = ['rmsd', 'clash_score', 'interweave_score', 'total_match_score']
+    # match_results = ['parallel_rmsd', 'rmsd', 'clash_score']
+    match_results = ['interface_score_sum', 'n_hbonds_sum', 'size_sum', 'shape_complementarity_sum',
+                      'contact_molecular_surface_sum', 'buns_all_sum', 'buns_sc_sum', 'buried_npsa_helix_sum', 'delta_buried_npsa_sum',
+                      'exposed_hydrophobics_sum', 'packstat_sum', 'percent_helical_sum', 'n_interface_residues_sum', 'complex_sasa_sum',
+                      'delta_sasa_sum', 'crossterm_energy_sum', 'interface_packstat_sum', 'delta_unsat_sum', 'interface_dG_sum',
+                      'sequence_identity_sum', 'parallel_rmsd', 'parallel_rmsd_lengths', 'rmsd', 'clash_score', 'subgraph']
     # Put files in os.path.join(workspace.focus_dir, 'pdbs')
     pdbdir = os.path.join(match_workspace.focus_dir, 'pdbs')
     os.makedirs(pdbdir, exist_ok=True)
@@ -114,6 +121,15 @@ def session_from_graph(match_workspace, results_row, query_df, db_df):
     return query_rows
 
 
+def relative_to_root_dir(row):
+    path_split = row['design_file'].split('/')
+    if os.path.basename(workspace.root_dir) not in path_split:
+        return row['design_file']
+    else:
+        idx = path_split.index(os.path.basename(workspace.root_dir)) + 1
+        return os.path.join(*path_split[idx:])
+
+
 def get_realpath(row):
     full = os.path.realpath(os.path.join(
         workspace.root_dir,
@@ -159,13 +175,13 @@ def main():
             results = pd.concat([results, scores],
                     ignore_index=True)
         bins = [0, 10, 20, 30, 40, 50]
-        results['binned_match_score'] = \
-            pd.cut(results['total_match_score'], bins)
+        results['binned_clash_score'] = \
+            pd.cut(results['clash_score'], bins)
         results = results[results.name != '3g67_1']
         results = results.sort_values(by=['n_matched_helices',
-                                          'binned_match_score',
-                                          'rmsd',
-                                          'interface_score_sum',
+                                          'binned_clash_score',
+                                          'parallel_rmsd',
+                                          'interface_dG_sum',
                                           ], ascending=True)
 
         # Get designed helix scores and merge with results
@@ -173,18 +189,32 @@ def main():
         designed_helix_scores = rif_workspace.get_scores()
         if 'design_file' not in designed_helix_scores.columns:
             designed_helix_scores['design_file'] = designed_helix_scores['patchman_file']
+        designed_helix_scores['design_file'] = designed_helix_scores.apply(relative_to_root_dir, axis=1)
 
         helices.drop('name', axis=1, inplace=True)
         helices['design_file'] = helices.apply(get_realpath, axis=1)
         helices['copy_index'] = helices.index
         helices = helices.merge(designed_helix_scores, how='left', on='design_file').set_index('copy_index')
 
+        filters = {'threshold':
+                   {
+                    'clash_score': ['<', 10],
+                    'parallel_rmsd': ['<', 1.0],
+                    # 'buns_all_sum': ['<', 2]
+                    }
+        }
+        filtered_results = filter.parse_filter(filters, results)
+        print(f'Target {target} will export {filtered_results.shape[0]} PDB files')
         exported_df = []
-        for i in range(0, 100):
-            if i < results.shape[0]:
-                testrow = results.iloc[i]
-                print(testrow)
-                exported_df.extend(session_from_graph(match_workspace, testrow, helices, df))
+        if args['--dry-run']:
+            continue
+        for idx, row in filtered_results.iterrows():
+            exported_df.extend(session_from_graph(match_workspace, row, helices, df))
+        # for i in range(0, 100):
+        #     if i < results.shape[0]:
+        #         testrow = results.iloc[i]
+        #         print(testrow)
+        #         exported_df.extend(session_from_graph(match_workspace, testrow, helices, df))
 
         final = pd.DataFrame(exported_df)
         final.set_index('design_file')
