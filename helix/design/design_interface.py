@@ -9,6 +9,7 @@ Options:
     --nstruct=INT, -n  How many designs to make for each input
     --task=INT  Run  a specific task
     --special-rot  Use special rotamer bonus to keep good residues instead of turning off packing
+    --suffix=STR  Add a suffix to all output names
 '''
 import sys, os, json
 import pandas as pd
@@ -343,8 +344,9 @@ class InterfaceDesign(object):
     will simply be frozen. Rotamers will only be considered "good" if they are comparable to natural
     rotamers in similar environments in terms of cross-chain score AND were transferred from a docked helix.
     '''
-    def __init__(self, workspace, df_group, special_rot=False, special_rot_weight=-3.0, buns_penalty=True,
-                 ramp_cst=True, task_id=None, test_run=False, interface_upweight=True, total_inputs=0):
+    def __init__(self, workspace, df_group, task_id, special_rot=False, special_rot_weight=-3.0, buns_penalty=True,
+                 ramp_cst=True, test_run=False, interface_upweight=True, total_inputs=0,
+                 suffix=False):
         self.workspace = workspace
         self.df = df_group
         self.task_id = task_id
@@ -382,7 +384,10 @@ class InterfaceDesign(object):
         self.ramp_cst = ramp_cst
         self.interface_upweight=interface_upweight
         self.test_run=test_run
-        basename = os.path.basename(self.pdb_path).split('.')[0] + f'_{self.task_id//total_inputs}' + '.pdb.gz'
+        basename = os.path.basename(self.pdb_path).split('.')[0] + f'_{self.task_id//total_inputs}'
+        if suffix:
+            basename += suffix
+        basename += '.pdb.gz'
         self.output_file = os.path.join(self.workspace.design_dir, basename)
 
 
@@ -519,13 +524,7 @@ class InterfaceDesign(object):
         '''
         sap_cst_mvr = XmlObjects.static_get_mover(sap_cst_str)
         sap_cst_mvr.apply(self.design_pose)
-        movemap_str = '''
-        <MoveMap name="MM" >
-                <Chain number="1" chi="true" bb="true" /> # 2 / 3 -- flexible binder backbone. We haven't explicitly tested this, but we feel it's important
-                <Chain number="2" chi="true" bb="false" /> # 1 / 3 -- fixed target backbone. Cuts down on metric noise and prevents rosetta from doing bad things
-                <Jump number="1" setting="true" /> # 3 / 3 -- You absolutely must let the two proteins move relative to one another
-        '''
-        movemap = XmlObjects.static_get_movemap()
+        movemap = self.setup_design_movemap()
         if not self.special_rot:
             fastdes = rosetta.protocols.denovo_design.movers.FastDesign(self.sfxn_cst,
                                                                                   interface_script_path)
@@ -534,6 +533,7 @@ class InterfaceDesign(object):
                                        bb_cst=True, rosettadir=self.workspace.rosetta_dir,
                                        script=interface_script_path, taskfactory=self.taskfactory)
             fastdes.set_scorefxn(self.sfxn_cst)
+            fastdes.set_movemap(movemap)
         if self.ramp_cst:
             fastdes.ramp_down_constraints(True)
         else:
@@ -659,23 +659,24 @@ class InterfaceDesign(object):
         self.special_residues = final_repack_resis
         print('Constraints present for the following residues:')
         print(', '.join([str(x) for x in final_repack_resis]))
-        idx_selector = utils.list_to_res_selector(final_repack_resis)
-        clash_selector = ClashBasedShellSelector()
-        clash_selector.set_focus(idx_selector)
-        clash_selector.set_include_focus(True)
-        clash_selector.set_num_shells(2)
-        clash_selector.invert(True)
+        if len(final_repack_resis) > 0:
+            idx_selector = utils.list_to_res_selector(final_repack_resis)
+            clash_selector = ClashBasedShellSelector()
+            clash_selector.set_focus(idx_selector)
+            clash_selector.set_include_focus(True)
+            clash_selector.set_num_shells(2)
+            clash_selector.invert(True)
 
-        tf = TaskFactory()
-        no_packing = operation.PreventRepackingRLT()
-        static = operation.OperateOnResidueSubset(no_packing,
-                                                  clash_selector)
-        tf.push_back(static)
+            tf = TaskFactory()
+            no_packing = operation.PreventRepackingRLT()
+            static = operation.OperateOnResidueSubset(no_packing,
+                                                      clash_selector)
+            tf.push_back(static)
 
-        # Repack with constraints
-        packertask = tf.create_task_and_apply_taskoperations(self.design_pose)
-        mover = PackRotamersMover(self.sfxn_cst, packertask)
-        mover.apply(self.design_pose)
+            # Repack with constraints
+            packertask = tf.create_task_and_apply_taskoperations(self.design_pose)
+            mover = PackRotamersMover(self.sfxn_cst, packertask)
+            mover.apply(self.design_pose)
 
         # Add backbone constraints for minimization
         coord_cst = constraint_generator.CoordinateConstraintGenerator()
@@ -706,6 +707,20 @@ class InterfaceDesign(object):
 
         return movemap
 
+    def setup_design_movemap(self):
+        movemap = MoveMap()
+        movemap.set_bb(False)
+        movemap.set_chi(False)
+        chA_selector = residue_selector.ChainSelector('A')
+        chB_selector = residue_selector.ChainSelector('B')
+        chA_selection = chA_selector.apply(self.design_pose)
+        chB_selection = chB_selector.apply(self.design_pose)
+        movemap.set_chi(chA_selection)
+        movemap.set_bb(chA_selection)
+        movemap.set_chi(chB_selection)
+        movemap.set_jump(True)
+        return movemap
+
     def apply(self):
         self.prep_design()
         self.design()
@@ -733,7 +748,7 @@ def main():
         job_info = {
             'task_id': args['--task'],
         }
-    input_df_path = os.path.join(workspace.complex_dir, 'exported_models.pkl')
+    input_df_path = os.path.join(workspace.complex_dir, 'exported_pdbs.pkl')
     input_df = utils.safe_load(input_df_path)
     inputs = sorted(input_df['superimposed_file'].unique())
     if not job_info['task_id']:
@@ -766,8 +781,9 @@ def main():
     group_name = inputs[idx]
     group = input_df[input_df['superimposed_file'] == group_name]
 
-    designer = InterfaceDesign(workspace, group, task_id, total_inputs=len(inputs), special_rot=args['--special-rot'])
+    designer = InterfaceDesign(workspace, group, task_id, total_inputs=len(inputs), special_rot=args['--special-rot'], suffix=args['--suffix'])
     designer.apply()
 
 if __name__=='__main__':
-    test_prep()
+    # test_prep()
+    main()

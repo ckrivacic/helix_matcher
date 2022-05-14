@@ -2,7 +2,7 @@
 Run FastDesign + FlexPepDock on PatchMAN outputs.
 
 Usage:
-    helix design_patchman <workspace> [options]
+    helix 06_design_scaffolds <workspace> [options]
 
 Options:
     --local, -l  Run locally
@@ -17,7 +17,7 @@ Options:
     --prune-buns  Prune rotamers that cause BUNS
     --max-memory=GB  How much memory to allocate  [default: 6G]
     --max-runtime=HH:MM:SS  How long to allocate the CPUs  [default: 36:00:00]
-    --designs-per-task=INT  How many designs per task  [default: 60]
+    --nstruct=INT, -n  How many designs per input  [default: 10]
     --keep-good-rotamers  Keep rotamers on docked helix that beat the
         average score for its environment in the PDB as long as it does not
         cause buried unsatisfied hbonds.
@@ -55,7 +55,7 @@ def main():
     workspace = ws.workspace_from_dir(args['<workspace>'])
     script_path = os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
-            '..', 'patchman', 'design_patchman.py'
+            '..', 'design', 'design_interface.py'
             )
     if not os.path.exists(script_path):
         raise Exception("Error: {} does not exist.".format(script_path))
@@ -70,27 +70,18 @@ def main():
         if not os.path.exists(match_workspace.log_dir):
             os.makedirs(match_workspace.log_dir, exist_ok=True)
 
-        if args['--clear']:
-            rif_workspace.clear_patchman_designs()
+        # if args['--clear']:
+        #     rif_workspace.clear_patchman_designs()
 
-        initial_inputs = sorted(glob.glob(
-            os.path.join(rif_workspace.focus_dir, 'patch_*',
-                workspace.scaffold_prefix + '*', 'docked_full', '*.pdb.gz')
+        inputs = sorted(glob.glob(
+            os.path.join(match_workspace.complex_dir, '*.pdb.gz')
             ))
-        if args['--suffix']:
-            inputs = []
-            for pdb in initial_inputs:
-                if not args['--suffix'] in os.path.basename(pdb):
-                    inputs.append(pdb)
-        else:
-            inputs = initial_inputs
 
-        # ntasks = len(inputs)
-        des_per_task = int(args['--designs-per-task'])
-        ntasks = math.ceil(len(inputs) / des_per_task)
+        nstruct = args['--nstruct']
+        ntasks = int(nstruct) * len(inputs)
 
         cmd = workspace.python_path, script_path
-        cmd += rif_workspace.focus_dir,
+        cmd += match_workspace.focus_dir,
         # cmd += '--align-thresh', args['--align-thresh']
 
         if args['--delete']:
@@ -99,22 +90,11 @@ def main():
         if args['--nocst']:
             cmd += '--nocst',
 
-        if args['--buns-penalty']:
-            cmd += '--buns-penalty',
-
         if args['--prune-buns']:
             cmd += '--prune-buns',
 
-        if args['--keep-good-rotamers']:
-            cmd += '--keep-good-rotamers',
-
         if args['--special-rot']:
             cmd += '--special-rot',
-        if args['--special-rot-weight'] and not args['--benchmark']:
-            cmd += '--special-rot-weight', args['--special-rot-weight']
-
-        if args['--upweight-interface']:
-            cmd += '--upweight-interface', args['--upweight-interface']
 
         if args['--task']:
             cmd += '--task', args['--task']
@@ -132,8 +112,7 @@ def main():
         if args['--ramp-cst']:
             cmd += '--ramp-cst',
 
-        cmd += '--designs-per-task', str(des_per_task)
-
+        cmd += '--nstruct', args['--nstruct']
 
         if args['--local']:
             print('Runinng locally')
@@ -154,7 +133,7 @@ def main():
             # submit.submit(rif_workspace, cmd, distributor='sge',
                     # make_dirs=args['--make-dirs'],
                     # test_run=args['--test-run'], clear=args['--clear'],)
-            script_name='design_patchman'
+            script_name='design_scaffold'
             print('Submitting jobs for {}'.format(target))
             # submit.submit(rif_workspace, cmd, distributor='sge',
                     # make_dirs=args['--make-dirs'],
@@ -167,7 +146,7 @@ def main():
             print(args['--max-memory'])
             try:
                 big_jobs.submit(
-                        rif_workspace, cmd,
+                        match_workspace, cmd,
                         nstruct=ntasks,
                         inputs=inputs,
                         max_runtime=args['--max-runtime'],

@@ -87,6 +87,7 @@ setuptools.setup(
             define_command("export_matches"),
             define_command('docking_benchmark'),
             define_command('plot_filter'),
+            define_command('06_design_scaffolds')
             ],
         }
 )
