@@ -561,7 +561,7 @@ class InterfaceDesign(object):
         fastdes_initial.set_movemap(movemap)
         print('Performing initial design')
         fastdes_initial.apply(self.design_pose)
-        self.design_pose.dump_pdb('test_design.pdb')
+        # self.design_pose.dump_pdb('test_design.pdb')
 
         tf_final = self.setup_design_task_factory(initial_design=False)
 
@@ -649,6 +649,7 @@ class InterfaceDesign(object):
             reference = AtomID(1, 1)
             func = HarmonicFunc(0, 1)
             cst = CoordinateConstraint(id, reference, xyz, func)
+            self.sc_constraints.append(cst)
             self.design_pose.add_constraint(cst)
 
         # Repack with constraints
@@ -666,6 +667,7 @@ class InterfaceDesign(object):
         '''
 
         final_repack_resis = []
+        self.sc_constraints = []
         for idx, row in self.df.iterrows():
             # Helix residue positions are for just that chain
             docked_pose = pose_from_file(
@@ -745,7 +747,12 @@ class InterfaceDesign(object):
         minmover.score_function(self.sfxn_cst)
         minmover.apply(self.design_pose)
 
-        self.design_pose.dump_pdb('testout.pdb')
+        # Get rid of backbone constraints and add back sc constraints
+        self.design_pose.remove_constraints()
+        for cst in self.sc_constraints:
+            self.design_pose.add_constraint(cst)
+
+        # self.design_pose.dump_pdb('testout.pdb')
 
     def setup_movemap(self):
         # Deprecated
