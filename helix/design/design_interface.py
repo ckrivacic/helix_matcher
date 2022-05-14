@@ -280,7 +280,7 @@ def apply_filters(pose, input_pose=None):
     return row
 
 
-def calculate_fsf(workspace, pose, insertion, task_id, test_run=False):
+def calculate_fsf(workspace, pose, insertion, suffix, test_run=False):
     fsf_worst = '''
       <FragmentScoreFilter
         name="Worst. 9-Residue Fragment Crmsd ({largest_loop_start})"
@@ -292,7 +292,7 @@ def calculate_fsf(workspace, pose, insertion, task_id, test_run=False):
         end_res="{largest_loop_end}"
         compute="maximum"
         outputs_folder="{seqprof_dir}"
-        outputs_name="{task_id}" 
+        outputs_name="{suffix}" 
         csblast="/wynton/home/kortemme/krivacic/software/fragments/csblast-2.2.3_linux64"  
         blast_pgp="/wynton/home/kortemme/krivacic/software/fragments/blast/blast-2.2.26/bin/blastpgp" 
         psipred="/wynton/home/kortemme/krivacic/software/fragments/psipred/runpsipred_single" 
@@ -308,7 +308,7 @@ def calculate_fsf(workspace, pose, insertion, task_id, test_run=False):
       />
     '''.format(largest_loop_start=insertion['start'],
                largest_loop_end=insertion['stop'],
-               seqprof_dir=workspace.seqprof_dir, task_id=task_id,
+               seqprof_dir=workspace.seqprof_dir, suffix=suffix,
                fragment_weights_path=workspace.fragment_weights_path,
                vall_path=workspace.rosetta_vall_path(test_run))
 
@@ -413,10 +413,12 @@ class InterfaceDesign(object):
         row['superimposed_file'] = self.df.iloc[0]['superimposed_file']
         row['design_file'] = os.path.relpath(self.output_file, self.workspace.root_dir)
         row['suffix'] = self.suffix
+        # self.design_pose.dump_pdb(self.output_file)
+        # self.row.to_pickle(self.output_pickle)
 
         for insertion in self.get_json():
             row[f"frag_score_filter_{insertion['start']}"] = calculate_fsf(self.workspace, self.design_pose, insertion,
-                                                                           self.task_id, test_run=self.test_run)
+                                                                           self.suffix + '_' + str(self.task_id), test_run=self.test_run)
         self.row = row
 
     def setup_relax_task_factory(self):
@@ -433,6 +435,7 @@ class InterfaceDesign(object):
         <TASKOPERATIONS>
             <OperateOnResidueSubset name="restrict_target_not_interface" selector="chainB_not_interface">
                 <PreventRepackingRLT/>
+            </OperateOnResidueSubset>
             <ExtraRotamersGeneric name="ex1_ex2" ex1="1" ex2aro="1" ex2="0" />
             <LimitAromaChi2 name="limitchi2" chi2max="110" chi2min="70" include_trp="True" />
             <PruneBuriedUnsats name="prune_buried_unsats" allow_even_trades="false" atomic_depth_cutoff="3.5" minimum_hbond_energy="-0.5" />
@@ -569,7 +572,7 @@ class InterfaceDesign(object):
         fastdes_initial.set_task_factory(tf_initial)
         fastdes_initial.set_movemap(movemap)
         print('Performing initial design')
-        fastdes_initial.apply(self.design_pose)
+        # fastdes_initial.apply(self.design_pose)
         # self.design_pose.dump_pdb('test_design.pdb')
 
         tf_final = self.setup_design_task_factory(initial_design=False)
@@ -589,7 +592,7 @@ class InterfaceDesign(object):
             fastdes.ramp_down_constraints(False)
 
         fastdes.set_task_factory(tf_final)
-        for i in range(0, 2):
+        for i in range(0, 0):
             fastdes.apply(self.design_pose)
 
         # Relax w/o constraints
@@ -612,7 +615,7 @@ class InterfaceDesign(object):
         fastrelax_mover = fastrelax_xml.get_mover('FastRelax')
         fastrelax_mover.set_task_factory(self.setup_relax_task_factory())
         fastrelax_mover.set_movemap(movemap)
-        fastrelax_mover.set_score_function(self.sfxn_cst)
+        fastrelax_mover.set_scorefxn(self.sfxn_cst)
         fastrelax_mover.apply(self.design_pose)
 
     def get_good_residues(self):
