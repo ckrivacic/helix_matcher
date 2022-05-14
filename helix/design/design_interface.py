@@ -571,7 +571,7 @@ class InterfaceDesign(object):
         else:
             fastdes = SpecialRotDesign(special_rotamers=self.nopack,
                                        bb_cst=True, rosettadir=self.workspace.rosetta_dir,
-                                       script=interface_script_path, taskfactory=self.taskfactory)
+                                       script=interface_script_path, taskfactory=tf_final)
             fastdes.set_scorefxn(self.sfxn_cst)
             fastdes.set_movemap(movemap)
         if self.ramp_cst:
