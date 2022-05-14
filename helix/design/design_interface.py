@@ -406,7 +406,7 @@ class InterfaceDesign(object):
     def filter(self):
         row = apply_filters(self.design_pose, self.input_pose)
         row['superimposed_file'] = self.df.iloc[0]['superimposed_file']
-        row['design_file'] = self.output_file
+        row['design_file'] = os.path.relpath(self.output_file, self.workspace.root_dir)
 
         for insertion in self.get_json():
             row[f"frag_score_filter_{insertion['start']}"] = calculate_fsf(self.workspace, self.design_pose, insertion,
