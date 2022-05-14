@@ -260,7 +260,7 @@ def apply_filters(workspace, pose, input_pose=None):
     for filter_name in filter_objs:
         row[filter_name] = filter_objs[filter_name].report_sm(pose)
     for metric_name in metric_objs:
-        row[metric_name] = metric_objs[filter_name].calculate(pose)
+        row[metric_name] = metric_objs[metric_name].calculate(pose)
 
     interface_scorer = interface.InterfaceScore(pose)
     interface_score = interface_scorer.apply()
@@ -268,8 +268,8 @@ def apply_filters(workspace, pose, input_pose=None):
     row['n_hbonds'] = interface_scorer.n_hbonds
 
     npsa_complex = row['npsa']
-    npsa_A = npsa_obj.report_sm(poseA)
-    npsa_B = npsa_obj.report_sm(poseB)
+    npsa_A = filter_objs['npsa'].report_sm(poseA)
+    npsa_B = filter_objs['npsa'].report_sm(poseB)
     row['delta_npsa'] = npsa_complex - npsa_B - npsa_A
 
     ia_mover.apply(pose)
