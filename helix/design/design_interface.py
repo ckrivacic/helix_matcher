@@ -411,6 +411,7 @@ class InterfaceDesign(object):
         for insertion in self.get_json():
             row[f"frag_score_filter_{insertion['start']}"] = calculate_fsf(self.workspace, self.design_pose, insertion,
                                                                            self.task_id, test_run=self.test_run)
+        self.row = row
 
     def setup_relax_task_factory(self):
         tf_str = '''
@@ -555,7 +556,6 @@ class InterfaceDesign(object):
         print('Performing initial design')
         fastdes_initial.apply(self.design_pose)
         self.design_pose.dump_pdb('test_design.pdb')
-        sys.exit()
 
         tf_final = self.setup_design_task_factory(initial_design=False)
 
@@ -609,7 +609,6 @@ class InterfaceDesign(object):
         print('SPECIAL RESIDUES: ', self.special_residues)
         self.nopack = [x for x in self.nopack if x in self.special_residues]
         print("NOPACK RESIDUES: ", self.nopack)
-        sys.exit()
 
     def transfer_residue(self, pose2, pose1_resnum, pose2_resnum):
         '''Transfers a rotamer from pose2 to pose1'''
@@ -774,6 +773,8 @@ class InterfaceDesign(object):
         self.prep_design()
         self.design()
         self.filter()
+        self.design_pose.dump_pdb(self.output_file)
+        self.row.to_pickle(self.output_pickle)
 
 
 def test_prep():
