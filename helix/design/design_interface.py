@@ -98,7 +98,7 @@ def get_layer_design():
 
 
 def apply_filters(pose, input_pose=None):
-    psipred_single = os.path.expanduser('~/software/psipred/runpsipred_single')
+    psipred_single = os.path.expanduser('~/software/fragments/psipred/runpsipred_single')
     filter_objs = {}
     filters_string = f'''
     <FILTERS>
