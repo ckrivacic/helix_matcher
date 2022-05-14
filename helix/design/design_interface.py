@@ -422,9 +422,8 @@ class InterfaceDesign(object):
                                   'selected_designs_for_state_count')
         insertion_file = os.path.join(lhl_folder, f'insertion_points_{model_no}.json')
         with open(insertion_file, 'r') as f:
-            self.insertions = json.load(f)
-            print(f'Insertions loaded from {insertion_file}:')
-            print(f'{self.insertions}')
+            insertions = json.load(f)
+        return insertions
 
     def filter(self):
         row = apply_filters(self.workspace, self.design_pose, self.input_pose)
