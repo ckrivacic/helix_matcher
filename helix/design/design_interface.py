@@ -359,6 +359,8 @@ class InterfaceDesign(object):
         self.input_pose = self.design_pose.clone()
         sfxn = create_score_function('ref2015')
         sfxn.set_weight(ScoreType.coordinate_constraint, 1.0)
+        sfxn.set_weight(ScoreType.aa_composition, 1.0)
+        sfxn.set_weight(ScoreType.arg_cation_pi, 3.0)
 
         self.summarized_residue_scores = utils.safe_load(workspace.find_path(
             'summarized_res_scores.pkl'
@@ -371,13 +373,11 @@ class InterfaceDesign(object):
             <ScoreFunction name="sfxn" weights="ref2015" >
                 <Reweight scoretype="approximate_buried_unsat_penalty" weight="5.0" />
                 <Set approximate_buried_unsat_penalty_hbond_energy_threshold="-0.5" />
-                <Set approximate_buried_unsat_penalty_burial_atomic_depth="4.0" />
-                # Set this to false if you don't know where you might want prolines
-                <Set approximate_buried_unsat_penalty_assume_const_backbone="true" />
+                <Set approximate_buried_unsat_penalty_burial_atomic_depth="3.5" />
+                <Set approximate_buried_unsat_penalty_hbond_bonus_cross_chain="-1" />
             </ScoreFunction>
             '''
             sfxn = XmlObjects.static_get_score_function(buns_sfxn)
-            sfxn.set_weight(ScoreType.coordinate_constraint, 1.0)
         if special_rot:
             sfxn.set_weight(rosetta.core.scoring.special_rot,
                             special_rot_weight)
@@ -555,11 +555,21 @@ class InterfaceDesign(object):
         </RESIDUE_SELECTORS>
         <MOVERS>
             <AddSapConstraintMover name="add_sap" speed="lightning" sap_goal="0" penalty_per_sap="1" score_selector="chainA" sap_calculate_selector="chainA" /> 
+            <AddCompositionConstraintMover name="3trp" > # 2 / 3 -- penalize TRP by 3. This leads to a reasonable number of TRP given everything else
+                <Comp entry="PENALTY_DEFINITION;TYPE TRP;ABSOLUTE 0;PENALTIES 0 3;DELTA_START 0;DELTA_END 1;BEFORE_FUNCTION CONSTANT;AFTER_FUNCTION LINEAR;END_PENALTY_DEFINITION;" />
+            </AddCompositionConstraintMover>
+            <AddCompositionConstraintMover name="2met" > # 2 / 3 -- Rosetta loves MET, but the Bakerlab doesn't.
+                <Comp entry="PENALTY_DEFINITION;TYPE MET;ABSOLUTE 0;PENALTIES 0 2;DELTA_START 0;DELTA_END 1;BEFORE_FUNCTION CONSTANT;AFTER_FUNCTION LINEAR;END_PENALTY_DEFINITION;" />
+            </AddCompositionConstraintMover>
         </MOVERS>
         '''
         sap_cst_xml = XmlObjects.create_from_string(sap_cst_str)
         sap_cst_mvr = sap_cst_xml.get_mover("add_sap")
         sap_cst_mvr.apply(self.design_pose)
+        trp_mvr = sap_cst_xml.get_mover('3trp')
+        trp_mvr.apply(self.design_pose)
+        met_mvr = sap_cst_xml.get_mover('2met')
+        met_mvr.apply(self.design_pose)
         movemap = self.setup_design_movemap()
 
         tf_initial = self.setup_design_task_factory(initial_design=True)
@@ -795,8 +805,8 @@ class InterfaceDesign(object):
         return movemap
 
     def apply(self):
-        self.prep_design()
-        self.design()
+        # self.prep_design()
+        # self.design()
         self.filter()
         self.design_pose.dump_pdb(self.output_file)
         self.row.to_pickle(self.output_pickle)
