@@ -97,26 +97,41 @@ def get_layer_design():
    return layer_design
 
 
-def apply_filters(pose, input_pose=None):
+def apply_filters(workspace, pose, input_pose=None):
     psipred_single = os.path.expanduser('~/software/fragments/psipred/runpsipred_single')
     filter_objs = {}
+    ss_vall = workspace.find_path('ss_grouped_vall_all.h5')
+    if os.path.exists(ss_vall):
+        worst_9mer_filters = f'''
+        <FILTERS>
+            <worst9mer name="worst_9mer" confidence="0" rmsd_lookup_threshold="0.01" report_mean_median="true" />
+            <worst9mer name="worst_9mer_helix" confidence="0" rmsd_lookup_threshold="0.01" report_mean_median="true" 
+            only_helices="true" />
+        </FILTERS>
+        '''
+        # fragments_xml = XmlObjects.create_from_string(worst_9mer_filters)
+        # for filter_name in ['worst_9mer', 'worst_9mer_helix']:
+        #     filter_objs[filter_name] = fragments_xml.get_filter(filter_name)
     filters_string = f'''
     <FILTERS>
         <ResidueCount name="res_count_all" max_residue_count="9999" confidence="0"/>
         <ResidueCount name="ala_count" residue_types="ALA" max_residue_count="6" confidence="0"/>
         <SSPrediction name="mismatch_probability" confidence="0" cmd="{psipred_single}" use_probability="1" mismatch_probability="1" use_svm="0" />
         <SSShapeComplementarity name="ss_sc" verbose="0" confidence="0" min_sc="0.800" />
-        <worst9mer name="worst_9mer" confidence="0" rmsd_lookup_threshold="0.01" report_mean_median="true" />
-        <worst9mer name="worst_9mer_helix" confidence="0" rmsd_lookup_threshold="0.01" report_mean_median="true" only_helices="true"/>
         <Time name="time"/>
     </FILTERS>
     '''
     filter_xml = XmlObjects.create_from_string(filters_string)
-    for filter_name in ['re_count_all', 'ala_count', 'mismatch_probability',
-                        'ss_sc', 'worst_9mer', 'worst_9mer_helix', 'time']:
-        filter_objs[filter_name] = (filter_xml.get_filter(filter_name))
+    for filter_name in ['res_count_all', 'ala_count', 'mismatch_probability',
+                        'ss_sc', 'time']:
+        filter_objs[filter_name] = filter_xml.get_filter(filter_name)
 
     sap = '''
+    <RESIDUE_SELECTORS>
+        <Chain name="chainA" chains="A"/>
+        <Chain name="chainB" chains="B"/>
+        <True name="true_sel" />
+    </RESIDUE_SELECTORS>
     <SIMPLE_METRICS>
 
         <SapScoreMetric name="sap_score" score_selector="chainA" />
@@ -233,7 +248,8 @@ def apply_filters(pose, input_pose=None):
 
     filter_objs['buns_all'] = XmlObjects.static_get_filter(buns_all)
     filter_objs['buns_sc'] = XmlObjects.static_get_filter(buns_sc)
-    filter_objs['buns_interface'] = XmlObjects.static_get_filter(buns_interface)
+    buns_int_xml = XmlObjects.create_from_string(buns_interface)
+    filter_objs['buns_interface'] = buns_int_xml.get_filter('buns_interface')
     filter_objs['npsa'] = XmlObjects.static_get_filter(npsa)
     filter_objs['exposed_hydrophobics'] = XmlObjects.static_get_filter(exposed_hydrophobics)
     filter_objs['packstat']= XmlObjects.static_get_filter(packstat)
@@ -409,7 +425,7 @@ class InterfaceDesign(object):
             self.insertions = json.load(f)
 
     def filter(self):
-        row = apply_filters(self.design_pose, self.input_pose)
+        row = apply_filters(self.workspace, self.design_pose, self.input_pose)
         row['superimposed_file'] = self.df.iloc[0]['superimposed_file']
         row['design_file'] = os.path.relpath(self.output_file, self.workspace.root_dir)
         row['suffix'] = self.suffix
@@ -847,8 +863,10 @@ def main():
     dalphaball = os.path.join(workspace.rosetta_dir,
                               'source', 'external', 'DAlpahBall',
                               'DAlphaBall.gcc')
+    ss_vall = workspace.find_path('ss_grouped_vall_all.h5')
     init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro' \
-         ' -holes:dalphaball {} -ignore_unrecognized_res -detect_disulf false'.format(dalphaball))
+         ' -holes:dalphaball {} -ignore_unrecognized_res -detect_disulf false ' \
+         '-indexed_structure_store:fragment_store {}'.format(dalphaball, ss_vall))
 
     nstruct = int(args['--nstruct'])
     total_jobs = len(inputs) * nstruct
