@@ -47,6 +47,8 @@ from pyrosetta.rosetta.core.scoring import ScoreType
 
 
 def get_layer_design():
+    # Not used
+
    '''
     <RESIDUE_SELECTORS>
         # These are the default paramters to the old TaskOperation LayerDesign
@@ -387,6 +389,7 @@ class InterfaceDesign(object):
         basename = os.path.basename(self.pdb_path).split('.')[0] + f'_{self.task_id//total_inputs}'
         if suffix:
             basename += suffix
+        self.output_pickle = os.path.join(self.workspace.design_dir, basename + '.pkl')
         basename += '.pdb.gz'
         self.output_file = os.path.join(self.workspace.design_dir, basename)
 
@@ -427,22 +430,18 @@ class InterfaceDesign(object):
         return tf
 
 
-    def setup_design_task_factory(self):
+    def setup_design_task_factory(self, initial_design=False):
         '''Set up task factory for design'''
-        self.get_good_residues()
         selector = residue_selector.ChainSelector('A')
         interface_selector_str = \
         '''
-        <InterfaceByVector name="interface_selector" cb_dist_cut="11" nearby_atom_cut="6.5" vector_angle_cutoff="75">
+        <InterfaceByVector name="interface_selector" cb_dist_cut="11" nearby_atom_cut="6.5" vector_angle_cut="75">
            <Chain chains='A'/>
            <Chain chains='B'/>
         </InterfaceByVector>
         '''
         interface_selector = XmlObjects.static_get_residue_selector(interface_selector_str)
 
-        consensus_loop = XmlObjects.static_get_task_operation(
-            '''<ConsensusLoopDesign name="consensus_loop" include_adjacent_residues="true" />'''
-        )
         include_current = XmlObjects.static_get_task_operation(
             '''<IncludeCurrent name="include_current" />'''
         )
@@ -466,45 +465,57 @@ class InterfaceDesign(object):
         tf.push_back(exchi)
         tf.push_back(no_gly)
         tf.push_back(no_pro)
-        tf.push_back(consensus_loop)
-        no_packing = operation.PreventRepackingRLT()
 
-        if not self.special_rot:
+        no_packing = operation.PreventRepackingRLT()
+        no_design = operation.RestrictToRepackingRLT()
+
+        if initial_design:
+            nopack = self.special_residues
+        else:
+            self.get_good_residues()
+            nopack = self.nopack
+        if not self.special_rot and not initial_design:
             # If not using special rot score term, freeze the "good rotamers" in place
             if len(self.nopack) > 0:
-                nopack_selector = utils.list_to_res_selector(self.nopack)
+                nopack_selector = utils.list_to_res_selector(nopack)
                 good_rots = operation.OperateOnResidueSubset(no_packing,
                                                              nopack_selector)
                 tf.push_back(good_rots)
+        elif initial_design:
+            nopack_selector = utils.list_to_res_selector(nopack)
+            good_rots = operation.OperateOnResidueSubset(no_design, nopack_selector)
+            tf.push_back(good_rots)
+        else:
+            nopack_selector = residue_selector.FalseResidueSelector()
 
-        or_selector = residue_selector.OrResidueSelector(selector,
-                                                         interface_selector)
+        # or_selector = residue_selector.OrResidueSelector(selector,
+        #                                                  interface_selector)
 
-        clash_selector = rosetta.core.pack.task.residue_selector.ClashBasedShellSelector(or_selector)
-        clash_selector.set_num_shells(3)
+        clash_selector = rosetta.core.pack.task.residue_selector.ClashBasedShellSelector(interface_selector)
+        clash_selector.set_num_shells(2)
         clash_selector.invert(False)
         clash_selector.set_include_focus(True)
 
-        not_selector = residue_selector.NotResidueSelector(clash_selector)
-        no_design = operation.RestrictToRepackingRLT()
-        if self.upweight_interface:
+        if self.interface_upweight:
             upweight = \
             '''
             <ProteinProteinInterfaceUpweighter name="upweight_interface" interface_weight="2" />
             '''
             upweight_taskop = XmlObjects.static_get_task_operation(upweight)
             tf.push_back(upweight_taskop)
-        static = operation.OperateOnResidueSubset(no_packing,
-                                                  not_selector)
-        # notaa = operation.ProhibitSpecifiedBaseResidueTypes(
-        #     strlist_to_vector1_str(['GLY']),
-        #     selector)
+
         # Interface and chain B
         and_selector = residue_selector.AndResidueSelector(interface_selector,
                                                            selector)
         not_interface = residue_selector.NotResidueSelector(and_selector)
         notdesign = operation.OperateOnResidueSubset(no_design,
                                                      not_interface)
+
+        # Clash-based repack shell (including focus) and nopack selector
+        or_selector = residue_selector.OrResidueSelector(clash_selector, nopack_selector)
+        not_selector = residue_selector.NotResidueSelector(or_selector)
+        static = operation.OperateOnResidueSubset(no_packing,
+                                                  not_selector)
 
         # tf.push_back(notaa)
         tf.push_back(notdesign)
@@ -528,9 +539,26 @@ class InterfaceDesign(object):
         </MOVERS>
         '''
         sap_cst_xml = XmlObjects.create_from_string(sap_cst_str)
-        sap_cst_mvr = sap_cst_xml.get_mover(sap_cst_str)
+        sap_cst_mvr = sap_cst_xml.get_mover("add_sap")
         sap_cst_mvr.apply(self.design_pose)
         movemap = self.setup_design_movemap()
+
+        tf_initial = self.setup_design_task_factory(initial_design=True)
+        # Quick FastDesign ( 1 repeat ) just to get things in the right place so we can determine if we want
+        # to keep special rotamers.
+        # fastdes_initial = rosetta.protocols.denovo_design.movers.FastDesign(self.sfxn_cst,
+        #                                                                     interface_script_path)
+        fastdes_initial = rosetta.protocols.denovo_design.movers.FastDesign(self.sfxn_cst,
+                                                                    1)
+        fastdes_initial.set_task_factory(tf_initial)
+        fastdes_initial.set_movemap(movemap)
+        print('Performing initial design')
+        fastdes_initial.apply(self.design_pose)
+        self.design_pose.dump_pdb('test_design.pdb')
+        sys.exit()
+
+        tf_final = self.setup_design_task_factory(initial_design=False)
+
         if not self.special_rot:
             fastdes = rosetta.protocols.denovo_design.movers.FastDesign(self.sfxn_cst,
                                                                                   interface_script_path)
@@ -545,12 +573,11 @@ class InterfaceDesign(object):
         else:
             fastdes.ramp_down_constraints(False)
 
-        tf = self.setup_design_task_factory()
-
-        fastdes.set_task_factory(tf)
+        fastdes.set_task_factory(tf_final)
         for i in range(0, 2):
             fastdes.apply(self.design_pose)
 
+        # Relax w/o constraints
         self.design_pose.remove_constraints()
         self.design_pose.clear_sequence_constraints()
 
@@ -570,18 +597,23 @@ class InterfaceDesign(object):
         fastrelax_xml = XmlObjects.create_from_string(fastrelax_str)
         fastrelax_mover = fastrelax_xml.get_mover('FastRelax')
         fastrelax_mover.set_task_factory(self.setup_relax_task_factory())
+        fastrelax_mover.set_movemap(movemap)
         fastrelax_mover.apply(self.design_pose)
-
 
     def get_good_residues(self):
         '''Find good rotamers as compared to natural protein interfaces'''
         # No need to save the pose because we already have a minimized pose
         self.nopack, pose = select_good_residues(self.design_pose, self.summarized_residue_scores, is_pose=True,
-                                                          cst_sc=True, minimize=False,)
+                                                          cst_sc=True, minimize=False, chain='A')
+        print('ORIGINAL NOPACK RESIDUES: ', self.nopack)
+        print('SPECIAL RESIDUES: ', self.special_residues)
         self.nopack = [x for x in self.nopack if x in self.special_residues]
+        print("NOPACK RESIDUES: ", self.nopack)
+        sys.exit()
 
     def transfer_residue(self, pose2, pose1_resnum, pose2_resnum):
         '''Transfers a rotamer from pose2 to pose1'''
+        print(f"Transferring residue {pose2_resnum}, {pose2.residue(pose2_resnum).name3()} from helix to design position {pose1_resnum}.")
         pose2_residue = pose2.residue(pose2_resnum)
 
         # Define operations
@@ -604,7 +636,7 @@ class InterfaceDesign(object):
         mover = PackRotamersMover(self.sfxn_cst, packertask)
         mover.apply(self.design_pose)
 
-        # Now add constraints
+        # Now add and save constraints
         for atom in range(pose2_residue.first_sidechain_atom(), pose2_residue.natoms()):
             if pose2_residue.atom_is_hydrogen(atom):
                 continue
@@ -619,7 +651,6 @@ class InterfaceDesign(object):
         packertask = tf.create_task_and_apply_taskoperations(self.design_pose)
         mover = PackRotamersMover(self.sfxn_cst, packertask)
         mover.apply(self.design_pose)
-
 
     def prep_design(self):
         '''
@@ -640,6 +671,7 @@ class InterfaceDesign(object):
             )
             helix_pose = docked_pose.split_by_chain(2)
 
+            print('')
             resmap = get_resmap(helix_pose, self.design_pose, row.start, row.stop, row.rosetta_helix_start, row.rosetta_helix_stop)
 
             # print(row.interfac_residues)
@@ -655,7 +687,8 @@ class InterfaceDesign(object):
                     closest_row = res_distances.sort_values(by='dist').iloc[0]
                     # print(closest_row.res2)
                     # print(closest_row.dist)
-                    if closest_row.dist < 0.5:
+                    if closest_row.dist < 1.5:
+                        # Relatively relaxed threshold because it might minimize into position
                         self.transfer_residue(helix_pose, closest_row.res2, helix_index)
                         final_repack_resis.append(int(closest_row.res2))
 
@@ -673,10 +706,15 @@ class InterfaceDesign(object):
             clash_selector.set_num_shells(2)
             clash_selector.invert(True)
 
+
             tf = TaskFactory()
+            true_selector = residue_selector.TrueResidueSelector()
+            no_design = operation.RestrictToRepackingRLT()
+            no_des = operation.OperateOnResidueSubset(no_design, true_selector)
             no_packing = operation.PreventRepackingRLT()
             static = operation.OperateOnResidueSubset(no_packing,
                                                       clash_selector)
+            tf.push_back(no_des)
             tf.push_back(static)
 
             # Repack with constraints
@@ -692,16 +730,21 @@ class InterfaceDesign(object):
         for cst in constraints:
             self.design_pose.add_constraint(cst)
 
+        packertask = tf.create_task_and_apply_taskoperations(self.design_pose)
+        mover = PackRotamersMover(self.sfxn_cst, packertask)
+        mover.apply(self.design_pose)
+
         # Minimize with constraints
-        movemap = self.setup_movemap()
+        movemap = self.setup_design_movemap()
         minmover = MinMover()
         minmover.movemap(movemap)
         minmover.score_function(self.sfxn_cst)
         minmover.apply(self.design_pose)
 
-        # self.design_pose.dump_pdb('testout.pdb')
+        self.design_pose.dump_pdb('testout.pdb')
 
     def setup_movemap(self):
+        # Deprecated
         movemap = MoveMap()
         movemap.set_bb(False)
         movemap.set_chi(False)
