@@ -590,8 +590,7 @@ class InterfaceDesign(object):
         fastrelax_str = '''
         <MOVERS>
             <FastRelax name="FastRelax" scorefxn="sfxn_design" repeats="1" batch="false" ramp_down_constraints="false" 
-            cartesian="false" bondangle="false" bondlength="false" min_type="dfpmin_armijo_nonmonotone" 
-            task_operations="restrict_target_not_interface,ex1_ex2,limitchi2,prune_buried_unsats" >
+            cartesian="false" bondangle="false" bondlength="false" min_type="dfpmin_armijo_nonmonotone" >
                 <MoveMap name="MM" >
                     <Chain number="1" chi="true" bb="true" />
                     <Chain number="2" chi="true" bb="false" />
