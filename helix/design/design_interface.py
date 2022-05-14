@@ -113,7 +113,7 @@ def apply_filters(pose, input_pose=None):
     '''
     filter_xml = XmlObjects.create_from_string(filters_string)
     for filter_name in ['re_count_all', 'ala_count', 'mismatch_probability',
-                        'ss_sc', 'worst_9mer', 'worst_9mer_helix']:
+                        'ss_sc', 'worst_9mer', 'worst_9mer_helix', 'time']:
         filter_objs[filter_name] = (filter_xml.get_filter(filter_name))
 
     sap = '''
