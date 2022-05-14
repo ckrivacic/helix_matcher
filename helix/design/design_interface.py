@@ -436,7 +436,7 @@ class InterfaceDesign(object):
             <ExtraRotamersGeneric name="ex1_ex2" ex1="1" ex2aro="1" ex2="0" />
             <LimitAromaChi2 name="limitchi2" chi2max="110" chi2min="70" include_trp="True" />
             <PruneBuriedUnsats name="prune_buried_unsats" allow_even_trades="false" atomic_depth_cutoff="3.5" minimum_hbond_energy="-0.5" />
-        </TASKOPERATIONS
+        </TASKOPERATIONS>
         '''
         tf_obj = XmlObjects.create_from_string(tf_str)
         tf = TaskFactory()
