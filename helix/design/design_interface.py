@@ -418,7 +418,7 @@ class InterfaceDesign(object):
     def get_json(self):
         model_no = os.path.basename(self.pdb_path).split('_')[1]
         lhl_folder = os.path.join(self.workspace.root_dir, '..', 'regenerated_data_sets_2020_03',
-                                  'sequence_design_for_LHL_reshaping_2lv8_two_HLH',
+                                  'sequence_design_for_LHL_reshaping_2lv8_two_LHL',
                                   'selected_designs_for_state_count')
         insertion_file = os.path.join(lhl_folder, f'insertion_points_{model_no}.json')
         with open(insertion_file, 'r') as f:
