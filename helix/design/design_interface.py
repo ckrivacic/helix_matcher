@@ -392,6 +392,8 @@ class InterfaceDesign(object):
             self.suffix = suffix
         else:
             self.suffix = ''
+        if not os.path.exists(self.workspace.design_dir):
+            os.makedirs(self.workspace.design_dir, exist_ok=True)
         self.output_pickle = os.path.join(self.workspace.design_dir, basename + '.pkl')
         basename += '.pdb.gz'
         self.output_file = os.path.join(self.workspace.design_dir, basename)
