@@ -520,9 +520,15 @@ class InterfaceDesign(object):
             'relax_scripts', 'InterfaceDesign2019.txt'
         )
         sap_cst_str = '''
-        <AddSapConstraintMover name="add_sap" speed="lightning" sap_goal="0" penalty_per_sap="1" score_selector="chainA" sap_calculate_selector="chainA" /> 
+        <RESIDUE_SELECTORS>
+            <Chain name="chainA" chains="A"/>
+        </RESIDUE_SELECTORS>
+        <MOVERS>
+            <AddSapConstraintMover name="add_sap" speed="lightning" sap_goal="0" penalty_per_sap="1" score_selector="chainA" sap_calculate_selector="chainA" /> 
+        </MOVERS>
         '''
-        sap_cst_mvr = XmlObjects.static_get_mover(sap_cst_str)
+        sap_cst_xml = XmlObjects.create_from_string(sap_cst_str)
+        sap_cst_mvr = sap_cst_xml.get_mover(sap_cst_str)
         sap_cst_mvr.apply(self.design_pose)
         movemap = self.setup_design_movemap()
         if not self.special_rot:
