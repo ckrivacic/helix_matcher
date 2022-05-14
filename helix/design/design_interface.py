@@ -426,7 +426,8 @@ class InterfaceDesign(object):
         return insertions
 
     def filter(self):
-        row = apply_filters(self.workspace, self.design_pose, self.input_pose)
+        row = {}
+        # row = apply_filters(self.workspace, self.design_pose, self.input_pose)
         row['superimposed_file'] = self.df.iloc[0]['superimposed_file']
         row['design_file'] = os.path.relpath(self.output_file, self.workspace.root_dir)
         row['suffix'] = self.suffix
@@ -599,7 +600,7 @@ class InterfaceDesign(object):
         fastdes_initial.set_task_factory(tf_initial)
         fastdes_initial.set_movemap(movemap)
         print('Performing initial design')
-        # fastdes_initial.apply(self.design_pose)
+        fastdes_initial.apply(self.design_pose)
         # self.design_pose.dump_pdb('test_design.pdb')
 
         tf_final = self.setup_design_task_factory(initial_design=False)
@@ -619,7 +620,7 @@ class InterfaceDesign(object):
             fastdes.ramp_down_constraints(False)
 
         fastdes.set_task_factory(tf_final)
-        for i in range(0, 0):
+        for i in range(0, 2):
             fastdes.apply(self.design_pose)
 
         # Relax w/o constraints
