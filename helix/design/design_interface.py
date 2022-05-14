@@ -421,6 +421,15 @@ class InterfaceDesign(object):
 
     def setup_relax_task_factory(self):
         tf_str = '''
+        <RESIDUE_SELECTORS>
+            <InterfaceByVector name="interface_selector" cb_dist_cut="11" nearby_atom_cut="6.5" vector_angle_cut="75">
+               <Chain chains='A'/>
+               <Chain chains='B'/>
+            </InterfaceByVector>
+            <Chain name="chainB" chains="B"/>
+            <Not name="not_interface"  selector="interface_selector" />
+            <And name="chainB_not_interface" selectors="not_interface,chainB" />
+        </RESIDUE_SELECTORS>
         <TASKOPERATIONS>
             <OperateOnResidueSubset name="restrict_target_not_interface" selector="chainB_not_interface">
                 <PreventRepackingRLT/>
@@ -589,7 +598,7 @@ class InterfaceDesign(object):
 
         fastrelax_str = '''
         <MOVERS>
-            <FastRelax name="FastRelax" scorefxn="sfxn_design" repeats="1" batch="false" ramp_down_constraints="false" 
+            <FastRelax name="FastRelax" repeats="1" batch="false" ramp_down_constraints="false" 
             cartesian="false" bondangle="false" bondlength="false" min_type="dfpmin_armijo_nonmonotone" >
                 <MoveMap name="MM" >
                     <Chain number="1" chi="true" bb="true" />
@@ -603,6 +612,7 @@ class InterfaceDesign(object):
         fastrelax_mover = fastrelax_xml.get_mover('FastRelax')
         fastrelax_mover.set_task_factory(self.setup_relax_task_factory())
         fastrelax_mover.set_movemap(movemap)
+        fastrelax_mover.set_score_function(self.sfxn_cst)
         fastrelax_mover.apply(self.design_pose)
 
     def get_good_residues(self):
