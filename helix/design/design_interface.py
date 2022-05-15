@@ -760,7 +760,11 @@ class InterfaceDesign(object):
                                                   not_selector)
         # Apply operations to task factory
         tf = TaskFactory()
+        not_idx = residue_selector.NotResidueSelector(idx_selector)
+        no_design = operation.RestrictToRepackingRLT()
+        no_des = operation.OperateOnResidueSubset(no_design, not_idx)
         tf.push_back(operation.InitializeFromCommandline())
+        tf.push_back(no_des)
         tf.push_back(restypes)
         tf.push_back(static)
         packertask = tf.create_task_and_apply_taskoperations(self.design_pose)
