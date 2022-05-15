@@ -13,6 +13,7 @@ Options:
 '''
 import sys, os, json
 import pandas as pd
+import numpy as np
 from helix import workspace as ws
 from helix import big_jobs
 from helix.utils.numeric import euclidean_distance
@@ -391,9 +392,21 @@ class InterfaceDesign(object):
                  ramp_cst=True, test_run=False, interface_upweight=True, total_inputs=0,
                  suffix=False):
         self.workspace = workspace
+
         self.df = df_group
         self.task_id = task_id
         self.pdb_path = os.path.join(self.workspace.root_dir, self.df.iloc[0].superimposed_file)
+
+        # Initiate Rosetta
+        dalphaball = os.path.join(self.workspace.rosetta_dir,
+                                  'source', 'external', 'DAlpahBall',
+                                  'DAlphaBall.gcc')
+        ss_vall = self.workspace.find_path('ss_grouped_vall_all.h5')
+        init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro' \
+             ' -holes:dalphaball {} -ignore_unrecognized_res -detect_disulf false ' \
+             '-indexed_structure_store:fragment_store {}' \
+             '-in:file:s {}'.format(dalphaball, ss_vall, self.pdb_path))
+
         self.design_pose = pose_from_file(
             self.pdb_path
         )
@@ -462,8 +475,12 @@ class InterfaceDesign(object):
         i = 0
         for insertion in self.get_json():
             i += 1
-            row[f"frag_score_filter_{i}"] = calculate_fsf(self.workspace, self.design_pose, insertion,
-                                                                           self.suffix + '_' + str(self.task_id), test_run=self.test_run)
+            try:
+                row[f"frag_score_filter_{i}"] = calculate_fsf(self.workspace, self.design_pose, insertion,
+                                                            self.suffix + '_' + str(self.task_id),
+                                                            test_run=self.test_run)
+            except:
+                row[f"frag_score_filter_{i}"] = np.nan
         self.row = row
 
     def setup_relax_task_factory(self):
@@ -888,14 +905,6 @@ def main():
             task_id = 0
     else:
         task_id = int(job_info['task_id'])
-
-    dalphaball = os.path.join(workspace.rosetta_dir,
-                              'source', 'external', 'DAlpahBall',
-                              'DAlphaBall.gcc')
-    ss_vall = workspace.find_path('ss_grouped_vall_all.h5')
-    init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro' \
-         ' -holes:dalphaball {} -ignore_unrecognized_res -detect_disulf false ' \
-         '-indexed_structure_store:fragment_store {}'.format(dalphaball, ss_vall))
 
     nstruct = int(args['--nstruct'])
     total_jobs = len(inputs) * nstruct
