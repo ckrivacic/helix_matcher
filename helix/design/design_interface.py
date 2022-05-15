@@ -882,7 +882,7 @@ class InterfaceDesign(object):
         # if not self.sc_cst:
         #     coord_cst.set_sidechain(False)
         self.bb_constraints = coord_cst.apply(self.design_pose)
-        for cst in constraints:
+        for cst in self.bb_constraints:
             self.design_pose.add_constraint(cst)
 
         packertask = tf.create_task_and_apply_taskoperations(self.design_pose)
