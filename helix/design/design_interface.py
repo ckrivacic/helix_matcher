@@ -686,7 +686,8 @@ class InterfaceDesign(object):
             print(f'Adding sidechain constraints for residue {resi}')
             for cst in self.sc_constraints[resi]:
                 self.design_pose.add_constraint(cst)
-        self.design_pose.add_constraint(self.bb_constraints)
+        for cst in self.bb_constraints:
+            self.design_pose.add_constraint(cst)
 
 
         if not self.special_rot:
