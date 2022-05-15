@@ -868,8 +868,8 @@ class InterfaceDesign(object):
         return movemap
 
     def apply(self):
-        # self.prep_design()
-        # self.design()
+        self.prep_design()
+        self.design()
         self.filter()
         self.design_pose.dump_pdb(self.output_file)
         df = pd.DataFrame([self.row])
