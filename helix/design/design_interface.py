@@ -675,6 +675,7 @@ class InterfaceDesign(object):
                                                                     1)
         fastdes_initial.set_task_factory(tf_initial)
         fastdes_initial.set_movemap(movemap)
+        fastdes_initial.ramp_down_constraints(False)
         print('Performing initial design')
         fastdes_initial.apply(self.design_pose)
         # self.design_pose.dump_pdb('test_design.pdb')
