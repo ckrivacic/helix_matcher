@@ -499,8 +499,12 @@ class InterfaceDesign(object):
             <Chain name="chainB" chains="B"/>
             <Not name="not_interface"  selector="interface_selector" />
             <And name="chainB_not_interface" selectors="not_interface,chainB" />
+            <True name="true_sel" />
         </RESIDUE_SELECTORS>
         <TASKOPERATIONS>
+            <OperateOnResidueSubset name="restrict_to_repacking" selector="true_sel">
+                <RestrictToRepackingRLT/>
+            </OperateOnResidueSubset>
             <OperateOnResidueSubset name="restrict_target_not_interface" selector="chainB_not_interface">
                 <PreventRepackingRLT/>
             </OperateOnResidueSubset>
@@ -511,7 +515,7 @@ class InterfaceDesign(object):
         '''
         tf_obj = XmlObjects.create_from_string(tf_str)
         tf = TaskFactory()
-        for taskop in ['restrict_target_not_interface', 'ex1_ex2', 'limitchi2', 'prune_buried_unsats']:
+        for taskop in ['restrict_to_repacking', 'restrict_target_not_interface', 'ex1_ex2', 'limitchi2', 'prune_buried_unsats']:
             tf.push_back(tf_obj.get_task_operation(taskop))
 
         return tf
