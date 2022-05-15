@@ -872,7 +872,7 @@ class InterfaceDesign(object):
         # self.design()
         self.filter()
         self.design_pose.dump_pdb(self.output_file)
-        df = pd.DataFrame(self.row)
+        df = pd.DataFrame([self.row])
         df.to_pickle(self.output_pickle)
 
 
