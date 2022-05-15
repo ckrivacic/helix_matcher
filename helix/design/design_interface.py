@@ -329,8 +329,33 @@ def calculate_fsf(workspace, pose, insertion, suffix, test_run=False):
                vall_path=workspace.rosetta_vall_path(test_run))
 
     fsf_obj = XmlObjects.static_get_filter(fsf_worst)
+    try:
+        # First try to run FSF because it needs to generate the
+        # other sequence profile files
+        score = fsf_obj.report_sm(pose)
+    except:
+        import subprocess
+        # Now get rid of the empty .fasta.pssm file it creates
+        # and try again in Python
+        rempath = os.path.join(workspace.seqprof_dir,
+                               '{}.fasta.phipsi'.format(suffix))
+        print('REMOVING {}'.format(rempath))
+        os.remove(rempath)
+        print('CWD: {}'.format(os.getcwd()))
+        print('TASK: {}'.format(suffix))
+        print('FILES IN CWD:')
+        print(os.listdir(os.getcwd()))
+        cmd = [
+            '/wynton/home/kortemme/krivacic/software/fragments/sparks-x/bin/buildinp_query.sh',
+            os.path.join(workspace.seqprof_dir, '{}.fasta'.format(suffix)),
+        ]
 
-    return fsf_obj.report_sm(pose)
+        process = subprocess.run(cmd,
+                                 env=dict(SPARKSXDIR='/wynton/home/kortemme/krivacic/software/fragments/sparks-x',
+                                          **os.environ))
+        score = fsf_obj.report_sm(pose)
+
+    return score
 
 
 def get_resmap(pose1, pose2, pose1_start, pose1_stop, pose2_start, pose2_stop):
@@ -434,8 +459,10 @@ class InterfaceDesign(object):
         # self.design_pose.dump_pdb(self.output_file)
         # self.row.to_pickle(self.output_pickle)
 
+        i = 0
         for insertion in self.get_json():
-            row[f"frag_score_filter_{insertion['start']}"] = calculate_fsf(self.workspace, self.design_pose, insertion,
+            i += 1
+            row[f"frag_score_filter_{i}"] = calculate_fsf(self.workspace, self.design_pose, insertion,
                                                                            self.suffix + '_' + str(self.task_id), test_run=self.test_run)
         self.row = row
 
