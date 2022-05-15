@@ -244,6 +244,7 @@ class SpecialRotDesign(object):
         '''
 
         if not self.taskfactory:
+            print('SETTING UP DEFAULT TASK FACTORY')
             self.setup_default_taskfactory()
 
         self.parse_script(self.script)

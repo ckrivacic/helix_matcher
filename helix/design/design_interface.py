@@ -10,6 +10,7 @@ Options:
     --task=INT  Run  a specific task
     --special-rot  Use special rotamer bonus to keep good residues instead of turning off packing
     --suffix=STR  Add a suffix to all output names
+    --test-run  Make some changes to make this a test run
 '''
 import sys, os, json
 import pandas as pd
@@ -413,8 +414,10 @@ class InterfaceDesign(object):
         self.input_pose = self.design_pose.clone()
         sfxn = create_score_function('ref2015')
         sfxn.set_weight(ScoreType.coordinate_constraint, 1.0)
+        sfxn.set_weight(ScoreType.res_type_constraint, 1.0)
         sfxn.set_weight(ScoreType.aa_composition, 1.0)
         sfxn.set_weight(ScoreType.arg_cation_pi, 3.0)
+        sfxn.set_weight(ScoreType.sap_constraint, 1.0)
 
         self.summarized_residue_scores = utils.safe_load(workspace.find_path(
             'summarized_res_scores.pkl'
@@ -666,7 +669,8 @@ class InterfaceDesign(object):
         movemap = self.setup_design_movemap()
 
         tf_initial = self.setup_design_task_factory(initial_design=True)
-        # self.design_pose.dump_pdb('testout_selectors.pdb')
+        # if self.test_run:
+        #     self.design_pose.dump_pdb('testout_selectors.pdb')
         # Quick FastDesign ( 1 repeat ) just to get things in the right place so we can determine if we want
         # to keep special rotamers.
         # fastdes_initial = rosetta.protocols.denovo_design.movers.FastDesign(self.sfxn_cst,
@@ -678,6 +682,8 @@ class InterfaceDesign(object):
         fastdes_initial.ramp_down_constraints(False)
         print('Performing initial design')
         fastdes_initial.apply(self.design_pose)
+        if self.test_run:
+            self.design_pose.dump_pdb('post_initial_design.pdb')
         # self.design_pose.dump_pdb('test_design.pdb')
 
         tf_final = self.setup_design_task_factory(initial_design=False)
@@ -693,14 +699,24 @@ class InterfaceDesign(object):
 
 
         if not self.special_rot:
-            fastdes = rosetta.protocols.denovo_design.movers.FastDesign(self.sfxn_cst,
-                                                                                  interface_script_path)
+            if self.test_run:
+                fastdes = rosetta.protocols.denovo_design.movers.FastDesign(self.sfxn_cst, 1)
+            else:
+                fastdes = rosetta.protocols.denovo_design.movers.FastDesign(self.sfxn_cst,
+                                                                                      interface_script_path)
         else:
-            fastdes = SpecialRotDesign(special_rotamers=self.nopack,
-                                       bb_cst=True, rosettadir=self.workspace.rosetta_dir,
-                                       script=interface_script_path, taskfactory=tf_final)
+            if self.test_run:
+                fastdes = SpecialRotDesign(special_rotamers=self.nopack,
+                                           bb_cst=True, rosettadir=self.workspace.rosetta_dir,
+                                           script=interface_script_path, taskfactory=tf_final,
+                                           nrepeats=1, ramp_down_constraints=True)
+            else:
+                fastdes = SpecialRotDesign(special_rotamers=self.nopack,
+                                           bb_cst=True, rosettadir=self.workspace.rosetta_dir,
+                                           script=interface_script_path, taskfactory=tf_final, ramp_down_constraints=True)
             fastdes.set_scorefxn(self.sfxn_cst)
-            fastdes.set_movemap(movemap)
+
+        fastdes.set_movemap(movemap)
         if self.ramp_cst:
             fastdes.ramp_down_constraints(True)
         else:
@@ -710,15 +726,18 @@ class InterfaceDesign(object):
         for i in range(0, 2):
             print(f'Performing FastDesign round {i}')
             fastdes.apply(self.design_pose)
+            if self.test_run:
+                self.design_pose.dump_pdb(f'post_design_{i}.pdb')
 
         # Relax w/o constraints
         self.design_pose.remove_constraints()
         self.design_pose.clear_sequence_constraints()
 
-        fastrelax_str = '''
+        if self.test_run:
+            fastrelax_str = '''
         <MOVERS>
             <FastRelax name="FastRelax" repeats="1" batch="false" ramp_down_constraints="false" 
-            cartesian="false" bondangle="false" bondlength="false" min_type="dfpmin_armijo_nonmonotone" >
+            cartesian="false" bondangle="false" bondlength="false" min_type="dfpmin_armijo_nonmonotone" repeats=1 >
                 <MoveMap name="MM" >
                     <Chain number="1" chi="true" bb="true" />
                     <Chain number="2" chi="true" bb="false" />
@@ -727,12 +746,27 @@ class InterfaceDesign(object):
             </FastRelax>
         </MOVERS>
         '''
+        else:
+            fastrelax_str = '''
+            <MOVERS>
+                <FastRelax name="FastRelax" repeats="1" batch="false" ramp_down_constraints="false" 
+                cartesian="false" bondangle="false" bondlength="false" min_type="dfpmin_armijo_nonmonotone" >
+                    <MoveMap name="MM" >
+                        <Chain number="1" chi="true" bb="true" />
+                        <Chain number="2" chi="true" bb="false" />
+                        <Jump number="1" setting="true" />
+                    </MoveMap>
+                </FastRelax>
+            </MOVERS>
+            '''
         fastrelax_xml = XmlObjects.create_from_string(fastrelax_str)
         fastrelax_mover = fastrelax_xml.get_mover('FastRelax')
         fastrelax_mover.set_task_factory(self.setup_relax_task_factory())
         fastrelax_mover.set_movemap(movemap)
         fastrelax_mover.set_scorefxn(self.sfxn_cst)
         fastrelax_mover.apply(self.design_pose)
+        if self.test_run:
+            self.design_pose.dump_pdb('post_relax.pdb')
 
     def get_good_residues(self):
         '''Find good rotamers as compared to natural protein interfaces'''
@@ -860,28 +894,31 @@ class InterfaceDesign(object):
         print('Constraints present for the following residues:')
         print(', '.join([str(x) for x in final_repack_resis]))
         if len(final_repack_resis) > 0:
+            print('Performing final pack')
             idx_selector = utils.list_to_res_selector(final_repack_resis)
-            clash_selector = ClashBasedShellSelector()
-            clash_selector.set_focus(idx_selector)
-            clash_selector.set_include_focus(True)
-            clash_selector.set_num_shells(2)
-            clash_selector.invert(True)
+        else:
+            idx_selector = residue_selector.FalseResidueSelector()
+        clash_selector = ClashBasedShellSelector()
+        clash_selector.set_focus(idx_selector)
+        clash_selector.set_include_focus(True)
+        clash_selector.set_num_shells(2)
+        clash_selector.invert(True)
 
 
-            tf = TaskFactory()
-            true_selector = residue_selector.TrueResidueSelector()
-            no_design = operation.RestrictToRepackingRLT()
-            no_des = operation.OperateOnResidueSubset(no_design, true_selector)
-            no_packing = operation.PreventRepackingRLT()
-            static = operation.OperateOnResidueSubset(no_packing,
-                                                      clash_selector)
-            tf.push_back(no_des)
-            tf.push_back(static)
+        tf = TaskFactory()
+        true_selector = residue_selector.TrueResidueSelector()
+        no_design = operation.RestrictToRepackingRLT()
+        no_des = operation.OperateOnResidueSubset(no_design, true_selector)
+        no_packing = operation.PreventRepackingRLT()
+        static = operation.OperateOnResidueSubset(no_packing,
+                                                  clash_selector)
+        tf.push_back(no_des)
+        tf.push_back(static)
 
-            # Repack with constraints
-            packertask = tf.create_task_and_apply_taskoperations(self.design_pose)
-            mover = PackRotamersMover(self.sfxn_cst, packertask)
-            mover.apply(self.design_pose)
+        # Repack with constraints
+        # packertask = tf.create_task_and_apply_taskoperations(self.design_pose)
+        # mover = PackRotamersMover(self.sfxn_cst, packertask)
+        # mover.apply(self.design_pose)
 
         # Add backbone constraints for minimization
         coord_cst = constraint_generator.CoordinateConstraintGenerator()
@@ -892,9 +929,12 @@ class InterfaceDesign(object):
         for cst in self.bb_constraints:
             self.design_pose.add_constraint(cst)
 
+        print('Performing constrained repack')
         packertask = tf.create_task_and_apply_taskoperations(self.design_pose)
         mover = PackRotamersMover(self.sfxn_cst, packertask)
         mover.apply(self.design_pose)
+        if self.test_run:
+            self.design_pose.dump_pdb('post_transfer.pdb')
 
         # Minimize with constraints
         # movemap = self.setup_design_movemap()
@@ -990,7 +1030,8 @@ def main():
     group_name = inputs[idx]
     group = input_df[input_df['superimposed_file'] == group_name]
 
-    designer = InterfaceDesign(workspace, group, task_id, total_inputs=len(inputs), special_rot=args['--special-rot'], suffix=args['--suffix'])
+    designer = InterfaceDesign(workspace, group, task_id, total_inputs=len(inputs), special_rot=args['--special-rot'],
+                               test_run=args['--test-run'], suffix=args['--suffix'])
     designer.apply()
 
 if __name__=='__main__':
