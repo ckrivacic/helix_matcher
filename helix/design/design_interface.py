@@ -723,11 +723,12 @@ class InterfaceDesign(object):
             fastdes.ramp_down_constraints(False)
 
         fastdes.set_task_factory(tf_final)
-        for i in range(0, 2):
-            print(f'Performing FastDesign round {i}')
-            fastdes.apply(self.design_pose)
-            if self.test_run:
-                self.design_pose.dump_pdb(f'post_design_{i}.pdb')
+        if not self.test_run:
+            for i in range(0, 2):
+                print(f'Performing FastDesign round {i}')
+                fastdes.apply(self.design_pose)
+                if self.test_run:
+                    self.design_pose.dump_pdb(f'post_design_{i}.pdb')
 
         # Relax w/o constraints
         self.design_pose.remove_constraints()
@@ -737,7 +738,7 @@ class InterfaceDesign(object):
             fastrelax_str = '''
         <MOVERS>
             <FastRelax name="FastRelax" repeats="1" batch="false" ramp_down_constraints="false" 
-            cartesian="false" bondangle="false" bondlength="false" min_type="dfpmin_armijo_nonmonotone" repeats=1 >
+            cartesian="false" bondangle="false" bondlength="false" min_type="dfpmin_armijo_nonmonotone" >
                 <MoveMap name="MM" >
                     <Chain number="1" chi="true" bb="true" />
                     <Chain number="2" chi="true" bb="false" />
