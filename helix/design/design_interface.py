@@ -477,8 +477,9 @@ class InterfaceDesign(object):
             i += 1
             try:
                 row[f"frag_score_filter_{i}"] = calculate_fsf(self.workspace, self.design_pose, insertion,
-                                                            self.suffix + '_' + str(self.task_id) _ f'_{i}',
+                                                            f"{self.suffix}_{str(self.task_id)}_{i}",
                                                             test_run=True)
+                                                            # test_run=self.test_run)
             except:
                 row[f"frag_score_filter_{i}"] = np.nan
         self.row = row
