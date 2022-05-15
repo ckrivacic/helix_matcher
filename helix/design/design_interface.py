@@ -469,6 +469,8 @@ class InterfaceDesign(object):
         row['superimposed_file'] = self.df.iloc[0]['superimposed_file']
         row['design_file'] = os.path.relpath(self.output_file, self.workspace.root_dir)
         row['suffix'] = self.suffix
+        ref = create_score_function('ref2015')
+        row['total_score'] = ref(self.design_pose)
         # self.design_pose.dump_pdb(self.output_file)
         # self.row.to_pickle(self.output_pickle)
 
@@ -487,7 +489,7 @@ class InterfaceDesign(object):
     def setup_relax_task_factory(self):
         tf_str = '''
         <RESIDUE_SELECTORS>
-            <InterfaceByVector name="interface_selector" cb_dist_cut="11" nearby_atom_cut="6.5" vector_angle_cut="75">
+            <InterfaceByVector name="interface_selector" cb_dist_cut="12" nearby_atom_cut="6.5" vector_angle_cut="75">
                <Chain chains='A'/>
                <Chain chains='B'/>
             </InterfaceByVector>
@@ -515,23 +517,20 @@ class InterfaceDesign(object):
     def setup_design_task_factory(self, initial_design=False):
         '''Set up task factory for design'''
         selector = residue_selector.ChainSelector('A')
-        # interface_selector_str = \
-        # '''
-        # <InterfaceByVector name="interface_selector" cb_dist_cut="11" nearby_atom_cut="6.5" vector_angle_cut="75">
-        #    <Chain chains='A'/>
-        #    <Chain chains='B'/>
-        # </InterfaceByVector>
-        # '''
-        # interface_selector = XmlObjects.static_get_residue_selector(interface_selector_str)
 
         interface_selector_str = \
         '''
         <RESIDUE_SELECTORS>
+            <InterfaceByVector name="interface_vector" cb_dist_cut="11" nearby_atom_cut="6.5" vector_angle_cut="75">
+               <Chain chains='A'/>
+               <Chain chains='B'/>
+            </InterfaceByVector>
             <Chain name="chainA" chains="A"/>
             <Chain name="chainB" chains="B"/>
             <Neighborhood name="interface_chA" selector="chainB" distance="10.0" /> # 1 / 3 -- interface size. 8 - 12 seems reasonable
             <Neighborhood name="interface_chB" selector="chainA" distance="10.0" /> #          at 8, you have trouble with ARG and LYS though
             <And name="AB_interface" selectors="interface_chA,interface_chB" />
+            <Or name="any_interface" selectors="AB_interface,interface_vector" />
             <Not name="Not_interface" selector="AB_interface" />
             <And name="actual_interface_chA" selectors="AB_interface,chainA" />
             <And name="actual_interface_chB" selectors="AB_interface,chainB" />
@@ -539,7 +538,7 @@ class InterfaceDesign(object):
         </RESIDUE_SELECTORS>
         '''
         interface_selector_xml = XmlObjects.create_from_string(interface_selector_str)
-        interface_selector = interface_selector_xml.get_residue_selector('AB_interface')
+        interface_selector = interface_selector_xml.get_residue_selector('interface_vector')
 
         include_current = XmlObjects.static_get_task_operation(
             '''<IncludeCurrent name="include_current" />'''
@@ -573,6 +572,8 @@ class InterfaceDesign(object):
         else:
             self.get_good_residues()
             nopack = self.nopack
+            print('GOOD RESIDUES: ')
+            print(nopack)
         if not self.special_rot and not initial_design:
             # If not using special rot score term, freeze the "good rotamers" in place
             if len(self.nopack) > 0:
@@ -580,6 +581,8 @@ class InterfaceDesign(object):
                 good_rots = operation.OperateOnResidueSubset(no_packing,
                                                              nopack_selector)
                 tf.push_back(good_rots)
+            else:
+                nopack_selector = residue_selector.FalseResidueSelector()
         elif initial_design:
             nopack_selector = utils.list_to_res_selector(nopack)
             good_rots = operation.OperateOnResidueSubset(no_design, nopack_selector)
@@ -590,10 +593,20 @@ class InterfaceDesign(object):
         # or_selector = residue_selector.OrResidueSelector(selector,
         #                                                  interface_selector)
 
-        clash_selector = rosetta.core.pack.task.residue_selector.ClashBasedShellSelector(interface_selector)
+        if initial_design:
+            clash_selector_input = residue_selector.OrResidueSelector(interface_selector, nopack_selector)
+        else:
+            clash_selector_input = interface_selector
+        clash_selector = rosetta.core.pack.task.residue_selector.ClashBasedShellSelector(clash_selector_input)
         clash_selector.set_num_shells(2)
         clash_selector.invert(False)
         clash_selector.set_include_focus(True)
+        interface_residues = utils.res_selector_to_size_list(interface_selector.apply(self.design_pose))
+        clash_resis = utils.res_selector_to_size_list(clash_selector.apply(self.design_pose), pylist=True)
+        print('INTERFACE SELECTOR:')
+        print(' or resi '.join([str(x) for x in interface_residues]))
+        print('CLASH SELECTOR:')
+        print(' or resi '.join([str(x) for x in clash_resis]))
 
         if self.interface_upweight:
             upweight = \
@@ -653,6 +666,7 @@ class InterfaceDesign(object):
         movemap = self.setup_design_movemap()
 
         tf_initial = self.setup_design_task_factory(initial_design=True)
+        # self.design_pose.dump_pdb('testout_selectors.pdb')
         # Quick FastDesign ( 1 repeat ) just to get things in the right place so we can determine if we want
         # to keep special rotamers.
         # fastdes_initial = rosetta.protocols.denovo_design.movers.FastDesign(self.sfxn_cst,
@@ -666,6 +680,14 @@ class InterfaceDesign(object):
         # self.design_pose.dump_pdb('test_design.pdb')
 
         tf_final = self.setup_design_task_factory(initial_design=False)
+        # Get rid of constraints and only add back those that are determined to be "good residues" after initial fastdesign
+        self.design_pose.remove_constraints()
+        for resi in self.nopack:
+            print(f'Adding sidechain constraints for residue {resi}')
+            for cst in self.sc_constraints[resi]:
+                self.design_pose.add_constraint(cst)
+        self.design_pose.add_constraint(self.bb_constraints)
+
 
         if not self.special_rot:
             fastdes = rosetta.protocols.denovo_design.movers.FastDesign(self.sfxn_cst,
@@ -683,6 +705,7 @@ class InterfaceDesign(object):
 
         fastdes.set_task_factory(tf_final)
         for i in range(0, 2):
+            print(f'Performing FastDesign round {i}')
             fastdes.apply(self.design_pose)
 
         # Relax w/o constraints
@@ -744,6 +767,7 @@ class InterfaceDesign(object):
         mover.apply(self.design_pose)
 
         # Now add and save constraints
+        self.sc_constraints[pose1_resnum] = []
         for atom in range(pose2_residue.first_sidechain_atom(), pose2_residue.natoms()):
             if pose2_residue.atom_is_hydrogen(atom):
                 continue
@@ -752,7 +776,7 @@ class InterfaceDesign(object):
             reference = AtomID(1, 1)
             func = HarmonicFunc(0, 1)
             cst = CoordinateConstraint(id, reference, xyz, func)
-            self.sc_constraints.append(cst)
+            self.sc_constraints[pose1_resnum].append(cst)
             self.design_pose.add_constraint(cst)
 
         # Repack with constraints
@@ -769,8 +793,27 @@ class InterfaceDesign(object):
         Expects a dataframe group where all rows have the same "superimposed_file"
         '''
 
+        # For design, we'll use neighbor selectors for defining the interface to make sure we capture everything.
+        # Here, we want to make sure to only transfer over residues that are pointing towards the interface,
+        # otherwise we might transfer a residue to the back of a helix, and during the initial "equilibration" fastdesign
+        # (where surrounding residues are allowed to mutate to accommodate the residues from the helices), we might
+        # accidentally mess up the protein.
+        interface_selector_str =\
+        '''
+        <InterfaceByVector name="interface_selector" cb_dist_cut="11" nearby_atom_cut="5.5" vector_angle_cut="75">
+           <Chain chains='A'/>
+           <Chain chains='B'/>
+        </InterfaceByVector>
+        '''
+        interface_selector = XmlObjects.static_get_residue_selector(interface_selector_str)
+        selector = residue_selector.ChainSelector('A')
+        and_selector = residue_selector.AndResidueSelector(selector,
+                                                         interface_selector)
+
+        interface_residues = and_selector.apply(self.design_pose)
+        interface_residues = utils.res_selector_to_size_list(interface_residues, pylist=True)
         final_repack_resis = []
-        self.sc_constraints = []
+        self.sc_constraints = {}
         for idx, row in self.df.iterrows():
             # Helix residue positions are for just that chain
             docked_pose = pose_from_file(
@@ -794,6 +837,8 @@ class InterfaceDesign(object):
                     res_distances = resmap[resmap.res1 == helix_index]
                     # print(res_distances)
                     closest_row = res_distances.sort_values(by='dist').iloc[0]
+                    if not closest_row.res2 in interface_residues:
+                        continue
                     # print(closest_row.res2)
                     # print(closest_row.dist)
                     if closest_row.dist < 1.5:
@@ -833,9 +878,10 @@ class InterfaceDesign(object):
 
         # Add backbone constraints for minimization
         coord_cst = constraint_generator.CoordinateConstraintGenerator()
+        coord_cst.set_sidechain(False)
         # if not self.sc_cst:
         #     coord_cst.set_sidechain(False)
-        constraints = coord_cst.apply(self.design_pose)
+        self.bb_constraints = coord_cst.apply(self.design_pose)
         for cst in constraints:
             self.design_pose.add_constraint(cst)
 
@@ -844,16 +890,12 @@ class InterfaceDesign(object):
         mover.apply(self.design_pose)
 
         # Minimize with constraints
-        movemap = self.setup_design_movemap()
-        minmover = MinMover()
-        minmover.movemap(movemap)
-        minmover.score_function(self.sfxn_cst)
-        minmover.apply(self.design_pose)
+        # movemap = self.setup_design_movemap()
+        # minmover = MinMover()
+        # minmover.movemap(movemap)
+        # minmover.score_function(self.sfxn_cst)
+        # minmover.apply(self.design_pose)
 
-        # Get rid of backbone constraints and add back sc constraints
-        self.design_pose.remove_constraints()
-        for cst in self.sc_constraints:
-            self.design_pose.add_constraint(cst)
 
         # self.design_pose.dump_pdb('testout.pdb')
 
