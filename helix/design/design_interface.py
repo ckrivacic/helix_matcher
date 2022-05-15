@@ -682,10 +682,11 @@ class InterfaceDesign(object):
         tf_final = self.setup_design_task_factory(initial_design=False)
         # Get rid of constraints and only add back those that are determined to be "good residues" after initial fastdesign
         self.design_pose.remove_constraints()
-        for resi in self.nopack:
-            print(f'Adding sidechain constraints for residue {resi}')
-            for cst in self.sc_constraints[resi]:
-                self.design_pose.add_constraint(cst)
+        if not self.special_rot:
+            for resi in self.nopack:
+                print(f'Adding sidechain constraints for residue {resi}')
+                for cst in self.sc_constraints[resi]:
+                    self.design_pose.add_constraint(cst)
         for cst in self.bb_constraints:
             self.design_pose.add_constraint(cst)
 
