@@ -478,8 +478,8 @@ class InterfaceDesign(object):
             try:
                 row[f"frag_score_filter_{i}"] = calculate_fsf(self.workspace, self.design_pose, insertion,
                                                             f"{self.suffix}_{str(self.task_id)}_{i}",
-                                                            test_run=True)
-                                                            # test_run=self.test_run)
+                                                            test_run=self.test_run)
+                                                            # test_run=True)
             except:
                 row[f"frag_score_filter_{i}"] = np.nan
         self.row = row
@@ -872,7 +872,8 @@ class InterfaceDesign(object):
         # self.design()
         self.filter()
         self.design_pose.dump_pdb(self.output_file)
-        self.row.to_pickle(self.output_pickle)
+        df = pd.DataFrame(self.row)
+        df.to_pickle(self.output_pickle)
 
 
 def test_prep():
