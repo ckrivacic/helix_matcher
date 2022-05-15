@@ -464,8 +464,8 @@ class InterfaceDesign(object):
         return insertions
 
     def filter(self):
-        row = {}
-        # row = apply_filters(self.workspace, self.design_pose, self.input_pose)
+        # row = {}
+        row = apply_filters(self.workspace, self.design_pose, self.input_pose)
         row['superimposed_file'] = self.df.iloc[0]['superimposed_file']
         row['design_file'] = os.path.relpath(self.output_file, self.workspace.root_dir)
         row['suffix'] = self.suffix
