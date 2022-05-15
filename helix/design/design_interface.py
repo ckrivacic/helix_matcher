@@ -404,7 +404,7 @@ class InterfaceDesign(object):
         ss_vall = self.workspace.find_path('ss_grouped_vall_all.h5')
         init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro' \
              ' -holes:dalphaball {} -ignore_unrecognized_res -detect_disulf false ' \
-             '-indexed_structure_store:fragment_store {}' \
+             '-indexed_structure_store:fragment_store {} ' \
              '-in:file:s {}'.format(dalphaball, ss_vall, self.pdb_path))
 
         self.design_pose = pose_from_file(
