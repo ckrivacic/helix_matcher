@@ -515,14 +515,31 @@ class InterfaceDesign(object):
     def setup_design_task_factory(self, initial_design=False):
         '''Set up task factory for design'''
         selector = residue_selector.ChainSelector('A')
+        # interface_selector_str = \
+        # '''
+        # <InterfaceByVector name="interface_selector" cb_dist_cut="11" nearby_atom_cut="6.5" vector_angle_cut="75">
+        #    <Chain chains='A'/>
+        #    <Chain chains='B'/>
+        # </InterfaceByVector>
+        # '''
+        # interface_selector = XmlObjects.static_get_residue_selector(interface_selector_str)
+
         interface_selector_str = \
         '''
-        <InterfaceByVector name="interface_selector" cb_dist_cut="11" nearby_atom_cut="6.5" vector_angle_cut="75">
-           <Chain chains='A'/>
-           <Chain chains='B'/>
-        </InterfaceByVector>
+        <RESIDUE_SELECTORS>
+            <Chain name="chainA" chains="A"/>
+            <Chain name="chainB" chains="B"/>
+            <Neighborhood name="interface_chA" selector="chainB" distance="10.0" /> # 1 / 3 -- interface size. 8 - 12 seems reasonable
+            <Neighborhood name="interface_chB" selector="chainA" distance="10.0" /> #          at 8, you have trouble with ARG and LYS though
+            <And name="AB_interface" selectors="interface_chA,interface_chB" />
+            <Not name="Not_interface" selector="AB_interface" />
+            <And name="actual_interface_chA" selectors="AB_interface,chainA" />
+            <And name="actual_interface_chB" selectors="AB_interface,chainB" />
+            <And name="chainB_not_interface" selectors="Not_interface,chainB" />
+        </RESIDUE_SELECTORS>
         '''
-        interface_selector = XmlObjects.static_get_residue_selector(interface_selector_str)
+        interface_selector_xml = XmlObjects.create_from_string(interface_selector_str)
+        interface_selector = interface_selector_xml.get_residue_selector('AB_interface')
 
         include_current = XmlObjects.static_get_task_operation(
             '''<IncludeCurrent name="include_current" />'''
