@@ -480,7 +480,7 @@ class InterfaceDesign(object):
         self.output_file = os.path.join(self.workspace.design_dir, basename)
 
     def rerun_9mer(self):
-        row = utils.safe_load(self.output_pickle).iloc
+        row = utils.safe_load(self.output_pickle)
         output_pose = pose_from_file(self.output_file)
         sfxn = create_score_function('ref2015')
         sfxn(output_pose)
