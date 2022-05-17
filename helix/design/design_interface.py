@@ -105,6 +105,9 @@ def rerun_9mer(workspace, pose, row):
     # psipred_single = os.path.expanduser('~/software/fragments/psipred/runpsipred_single')
     filter_objs = {}
     ss_vall = workspace.find_path('ss_grouped_vall_all.h5')
+    chain_1 = pose.split_by_chain(1)
+    sfxn = create_score_function('ref2015')
+    sfxn(chain_1)
     if os.path.exists(ss_vall):
         worst_9mer_filters = f'''
         <FILTERS>
@@ -118,7 +121,7 @@ def rerun_9mer(workspace, pose, row):
             filter_objs[filter_name] = fragments_xml.get_filter(filter_name)
 
     for filter_name in filter_objs:
-        row[filter_name] = filter_objs[filter_name].report_sm(pose)
+        row[filter_name] = filter_objs[filter_name].report_sm(chain_1)
 
     return row
 
@@ -127,6 +130,9 @@ def apply_filters(workspace, pose, input_pose=None):
     psipred_single = os.path.expanduser('~/software/fragments/psipred/runpsipred_single')
     filter_objs = {}
     ss_vall = workspace.find_path('ss_grouped_vall_all.h5')
+    sfxn = create_score_function('ref2015')
+    chain_1 = pose.split_by_chain(1)
+    sfxn(chain_1)
     if os.path.exists(ss_vall):
         worst_9mer_filters = f'''
         <FILTERS>
@@ -284,7 +290,10 @@ def apply_filters(workspace, pose, input_pose=None):
 
     row = {}
     for filter_name in filter_objs:
-        row[filter_name] = filter_objs[filter_name].report_sm(pose)
+        if filter_name.startswith("worst_9mer"):
+            row[filter_name] = filter_objs[filter_name].report_sm(chain_1)
+        else:
+            row[filter_name] = filter_objs[filter_name].report_sm(pose)
     for metric_name in metric_objs:
         row[metric_name] = metric_objs[metric_name].calculate(pose)
 
@@ -479,16 +488,16 @@ class InterfaceDesign(object):
         basename += '.pdb.gz'
         self.output_file = os.path.join(self.workspace.design_dir, basename)
 
-    def rerun_9mer(self):
+    def rerun_9mer(self, force=True):
         row = utils.safe_load(self.output_pickle)
         output_pose = pose_from_file(self.output_file)
-        sfxn = create_score_function('ref2015')
-        sfxn(output_pose)
-        if 'worst_9mer' not in row.columns:
+        if 'worst_9mer' not in row.columns or force:
             row = row.iloc[0]
             row = rerun_9mer(self.workspace, output_pose, row)
-        out = pd.DataFrame([row])
-        out.to_pickle(self.output_pickle)
+            out = pd.DataFrame([row])
+            out.to_pickle(self.output_pickle)
+        else:
+            print('Nothing to do; exiting')
 
     def get_json(self):
         model_no = os.path.basename(self.pdb_path).split('_')[1]
