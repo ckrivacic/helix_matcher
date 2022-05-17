@@ -28,7 +28,14 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 
-def scatterplot(df, workspace, args):
+def normalize(array, min_val=3, max_val=50):
+    array = array - min_val
+    x = max(array) / max_val
+    array = array / x
+    return array
+
+
+def scatterplot(df, workspace, args, use_matplotlib=True):
     # order = ['1b33_K', '1b33_K_buns_noprune', '1b33_K_buns_penalty',
     # '1b33_K_nativelike', '1b33_K_specialrot']
     if not args['--xaxis'] == 'protocol':
@@ -37,15 +44,30 @@ def scatterplot(df, workspace, args):
         hue = args['--hue']
     else:
         hue = None
-    print(df[args['--yaxis']].sort_values())
+    # print(df[args['--yaxis']].sort_values())
+    fig, ax = plt.subplots()
     if args['--size']:
         size = args['--size']
         ax = sns.scatterplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
                              hue=hue, size=size, sizes=(50,300), picker=True)
+    elif use_matplotlib:
+        # Seaborn seems to reorder points, making the on_pick stuff useless. Back to MPL.
+        x = df[args['--xaxis']]
+        y = df[args['--yaxis']]
+        mpl_args = [x, y]
+        kwargs = {}
+        if args['--size']:
+            sizes = df[args['--size']]
+            kwargs['s'] = sizes
+            sizes = normalize(sizes)
+        if hue:
+            kwargs['c'] = df[hue]
+        points = plt.scatter(*mpl_args, s=20, picker=True, **kwargs)
+        fig.colorbar(points)
     else:
         ax = sns.scatterplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
                              hue=hue, picker=True)
-    click = plotting.ClickablePlot(ax, df, args, workspace)
+    click = plotting.ClickablePlot(points, df, args, workspace)
 
     plt.show()
 
@@ -66,6 +88,7 @@ def parse_dataframe(workspace, args):
             df['passed_filters'] = False
             for idx in filtered_df.index:
                 df.loc[idx, 'passed_filters'] = True
+    df = df.reset_index()
 
     return df
 
@@ -85,6 +108,8 @@ def main():
     for match_workspace in workspaces:
         df = parse_dataframe(match_workspace, args)
         print(df)
+        print(df.index)
+        print(df[df.total_score == df.total_score.max()])
 
     if args['<plot_type>'] == 'scatter':
         scatterplot(df, workspace, args)

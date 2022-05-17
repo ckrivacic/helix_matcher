@@ -37,6 +37,7 @@ Options:
     --hold  Submit the jobs with a hold
     --taskrange=TASKS  Run a range of task #s (local only)
     --subprocess  Run the (local) jobs in a background process
+    --rerun-worst-9mer  Rerun worst 9mer (no design)
 """
 import helix.workspace as ws
 from helix import big_jobs
@@ -111,6 +112,9 @@ def main():
 
         if args['--ramp-cst']:
             cmd += '--ramp-cst',
+
+        if args['--rerun-worst-9mer']:
+            cmd += '--rerun-worst-9mer',
 
         cmd += '--nstruct', args['--nstruct']
 

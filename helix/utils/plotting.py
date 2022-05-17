@@ -134,6 +134,8 @@ class ClickablePlot(object):
                 else:
                     self.selected.extend([fpath_x, fpath_y])
             else:
+                print(ind[0])
+                print(self.df.loc[ind[0]])
                 patchman_file = self.df.iloc[ind[0]]['design_file']
                 fpath = self.fetch_file(patchman_file)
                 print('Selected file at {}'.format(fpath))

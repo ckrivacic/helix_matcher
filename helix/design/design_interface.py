@@ -11,6 +11,7 @@ Options:
     --special-rot  Use special rotamer bonus to keep good residues instead of turning off packing
     --suffix=STR  Add a suffix to all output names
     --test-run  Make some changes to make this a test run
+    --rerun-worst-9mer  No design; just rerun worst 9mer
 '''
 import sys, os, json
 import pandas as pd
@@ -97,6 +98,29 @@ def get_layer_design():
    '''
    layer_design = XmlObjects.static_get_task_operation('layer_design_F_boundary_M')
    return layer_design
+
+
+def rerun_9mer(workspace, pose, row):
+    '''Just rerun worst 9mer and add score to dataframe'''
+    # psipred_single = os.path.expanduser('~/software/fragments/psipred/runpsipred_single')
+    filter_objs = {}
+    ss_vall = workspace.find_path('ss_grouped_vall_all.h5')
+    if os.path.exists(ss_vall):
+        worst_9mer_filters = f'''
+        <FILTERS>
+            <worst9mer name="worst_9mer" confidence="0" rmsd_lookup_threshold="0.01" report_mean_median="true" />
+            <worst9mer name="worst_9mer_helix" confidence="0" rmsd_lookup_threshold="0.01" report_mean_median="true" 
+            only_helices="true" />
+        </FILTERS>
+        '''
+        fragments_xml = XmlObjects.create_from_string(worst_9mer_filters)
+        for filter_name in ['worst_9mer', 'worst_9mer_helix']:
+            filter_objs[filter_name] = fragments_xml.get_filter(filter_name)
+
+    for filter_name in filter_objs:
+        row[filter_name] = filter_objs[filter_name].report_sm(pose)
+
+    return row
 
 
 def apply_filters(workspace, pose, input_pose=None):
@@ -455,6 +479,16 @@ class InterfaceDesign(object):
         basename += '.pdb.gz'
         self.output_file = os.path.join(self.workspace.design_dir, basename)
 
+    def rerun_9mer(self):
+        row = utils.safe_load(self.output_pickle).iloc
+        output_pose = pose_from_file(self.output_file)
+        sfxn = create_score_function('ref2015')
+        sfxn(output_pose)
+        if 'worst_9mer' not in row.columns:
+            row = row.iloc[0]
+            row = rerun_9mer(self.workspace, output_pose, row)
+        out = pd.DataFrame([row])
+        out.to_pickle(self.output_pickle)
 
     def get_json(self):
         model_no = os.path.basename(self.pdb_path).split('_')[1]
@@ -1037,7 +1071,10 @@ def main():
 
     designer = InterfaceDesign(workspace, group, task_id, total_inputs=len(inputs), special_rot=args['--special-rot'],
                                test_run=args['--test-run'], suffix=args['--suffix'])
-    designer.apply()
+    if args['--rerun-worst-9mer']:
+        designer.rerun_9mer()
+    else:
+        designer.apply()
 
 if __name__=='__main__':
     # test_prep()
