@@ -111,9 +111,9 @@ def apply_filters(workspace, pose, input_pose=None):
             only_helices="true" />
         </FILTERS>
         '''
-        # fragments_xml = XmlObjects.create_from_string(worst_9mer_filters)
-        # for filter_name in ['worst_9mer', 'worst_9mer_helix']:
-        #     filter_objs[filter_name] = fragments_xml.get_filter(filter_name)
+        fragments_xml = XmlObjects.create_from_string(worst_9mer_filters)
+        for filter_name in ['worst_9mer', 'worst_9mer_helix']:
+            filter_objs[filter_name] = fragments_xml.get_filter(filter_name)
     filters_string = f'''
     <FILTERS>
         <ResidueCount name="res_count_all" max_residue_count="9999" confidence="0"/>

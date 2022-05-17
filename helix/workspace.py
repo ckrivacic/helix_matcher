@@ -963,6 +963,35 @@ class MatchWorkspace(Workspace):
     def design_dir(self):
         return os.path.join(self.complex_dir, 'designs/')
 
+    @property
+    def final_scorefile_path(self):
+        return os.path.join(self.design_dir, 'final.pkl')
+
+    @property
+    def all_scorefile_paths(self):
+        return sorted(glob.glob(os.path.join(self.design_dir, '*.pkl')))
+
+    def get_scores(self, reread=False):
+        # This will go faster if you run helix combine on the "scores"
+        # folder
+        # Reread param makes you open individual datafiles regardless, combining any that are
+        # not present in the final dataframe.
+        if os.path.exists(self.final_scorefile_path) or reread:
+            if reread:
+                old_df = safe_open_dataframe(self.final_scorefile_path)
+            else:
+                return safe_open_dataframe(self.final_scorefile_path)
+
+        dataframes = []
+        for f in self.all_scorefile_paths:
+            df = safe_open_dataframe(f)
+            dataframes.append(df)
+        df = pd.concat(dataframes, ignore_index=True)
+        if reread:
+            df = pd.concat([df, old_df]).drop_duplicates('design_file').reset_index(drop=True)
+        df.to_pickle(self.final_scorefile_path)
+        return df
+
 
 
 def big_job_dir():
