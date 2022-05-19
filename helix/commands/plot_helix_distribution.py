@@ -9,6 +9,7 @@ Options:
     --target=STR  Only plot for the given target
     --overwrite, -o  Recalculate
     --task=INT  Task number
+    --noplot  Don't actually plot
 '''
 
 import os
@@ -395,7 +396,8 @@ def main():
     sheet_ca_positions = get_sheet_ca_positions(pose, sheet_residues)
     sheet_res_frames = get_sheet_residue_local_frames(pose, sheet_residues, strand_directions, z_ref_residue)
 
-    plot_the_underlying_sheet(sheet_ca_positions, sheet_res_frames)
+    if not args['--noplot']:
+        plot_the_underlying_sheet(sheet_ca_positions, sheet_res_frames)
 
     # ca_points = [xyz_to_np_array(pose.residue(i).xyz('CA')) for i in range(1, pose.size() + 1)]
     # plot_test(sheet_ca_positions, sheet_res_frames, ca_points)
@@ -415,7 +417,9 @@ def main():
         model_names += [os.path.basename(x) for x in glob.glob(os.path.join(data_path, '*.pdb.gz'))]
     #     helix_coords = get_all_helix_coords_for_data_set(data_path, sheet_ca_positions, sheet_res_frames)
 
-    base_helix_coords_path = os.path.join(workspace.root_dir, f'all_helices_{taskno}.json')
+    base_helix_coords_path = os.path.join(workspace.root_dir, 'lucs_helix_info', f'all_helices_{taskno}.json')
+    if not os.path.exists(os.path.join(workspace.root_dir, 'lucs_helix_info')):
+        os.makedirs(os.path.join(workspace.root_dir, 'lucs_helix_info'))
     # match_helix_coords_path = os.path.join(workspace.root_dir, 'matched_helices.json')
     if os.path.exists(base_helix_coords_path) and not args['--overwrite']:
         helix_coords = load_helix_coords(base_helix_coords_path)
@@ -442,8 +446,9 @@ def main():
         else:
             unmatched.extend(helix_coords[filename])
 
-    plot_helices(pose, unmatched, sheet_ca_positions, sheet_res_frames, match=False)
-    plot_helices(pose, matched, sheet_ca_positions, sheet_res_frames, match=True)
+    if not args['--noplot']:
+        plot_helices(pose, unmatched, sheet_ca_positions, sheet_res_frames, match=False)
+        plot_helices(pose, matched, sheet_ca_positions, sheet_res_frames, match=True)
 
-    plt.axes().set_aspect('equal')
-    plt.show()
+        plt.axes().set_aspect('equal')
+        plt.show()
