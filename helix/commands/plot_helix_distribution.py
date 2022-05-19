@@ -484,10 +484,12 @@ def main():
         else:
             unmatched.extend(helix_coords[filename])
 
+    print(len(unmatched))
+    print(len(matched))
     if not args['--noplot']:
-        unmatched.extend(matched)
+        # unmatched.extend(matched)
         plot_helices(pose, unmatched, sheet_ca_positions, sheet_res_frames, match=False)
-        # plot_helices(pose, matched, sheet_ca_positions, sheet_res_frames, match=True)
+        plot_helices(pose, matched, sheet_ca_positions, sheet_res_frames, match=True)
 
         plt.axes().set_aspect('equal')
         if args['--save']:
