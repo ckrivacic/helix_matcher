@@ -15,7 +15,6 @@ import docopt
 import os, sys, glob
 import pandas as pd
 from helix.utils import utils
-from helix.analysis import analyze_structures
 from helix.benchmark import score_pdb
 # from helix.rifdock import interface
 # from pyrosetta.rosetta.protocols.rosetta_scripts import XmlObjects
@@ -60,18 +59,13 @@ def main():
 
     outrows = []
     for idx, benchrow in benchmark_df.iterrows():
-        print(row)
-        # for length in [14, 28]:
+        print(benchrow)
         initial_pose = utils.pose_from_wynton(benchrow['name'])
-        # pose = interface.pose
         pose = make_bench_helix_pose(initial_pose, benchrow)
         interface = score_pdb.PDBInterface(pose, minimize=True, cst=True, is_pose=True)
         minimized_pose = interface.pose
         ref = create_score_function('ref2015')
         outrow = apply_filters(workspace, minimized_pose)
-            # outrow['length'] = length
-            # outrow['minimized'] = True
-            # print(outrow)
         outrow['total_score'] = ref(minimized_pose)
         outrow['name'] = f"{benchrow['name']}_{benchrow['target']}"
         outrow['sc_cst'] = False
