@@ -357,11 +357,11 @@ def load_helix_coords(file_name):
 
 # if __name__ == '__main__':
 def main():
-    if not args['--noplot']:
-        mpl.use('tkagg')
     pyrosetta.init()
 
     args = docopt.docopt(__doc__)
+    if not args['--noplot']:
+        mpl.use('tkagg')
     if args['--task']:
         taskno = int(args['--task'])
     else:
