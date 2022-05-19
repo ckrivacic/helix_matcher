@@ -49,30 +49,33 @@ def calc_patch_percent_id(row):
     return 100 * identity / seqlen
 
 
-def get_best_rmsds(patch, rif, benchmark, args, cutoff=False, patch_id=False):
+def get_best_rmsds(patch, rif, benchmark, args, cutoff=False, patch_id=False, calc_rifdock=False):
     '''get the best RMSD for each benchmark helix'''
     no_patch_match = {}
     no_rif_match = []
     outrows = []
     if args['--length'] == '14':
         patch = patch[patch['patch_len'] == 'len_14']
-        rif = rif[rif['patch_len'] == 'len_4turn_dock_helix']
+        if calc_rifdock:
+            rif = rif[rif['patch_len'] == 'len_4turn_dock_helix']
     elif args['--length'] == '28':
         patch = patch[patch['patch_len'] == 'len_28']
-        rif = rif[rif['patch_len'] == 'len_8turn_dock_helix']
+        if calc_rifdock:
+            rif = rif[rif['patch_len'] == 'len_8turn_dock_helix']
     for name, group in benchmark.groupby(['name', 'target']):
         print(name)
         patch_group = patch[(patch['name'] == name[0]) & (patch['target'] == name[1])]
-        rif_group = rif[(rif['name'] == name[0]) & (rif['target'] == name[1])]
-        print(rif_group)
+        if calc_rifdock:
+            rif_group = rif[(rif['name'] == name[0]) & (rif['target'] == name[1])]
+        # print(rif_group)
         for idx, row in group.iterrows():
             benchmark_resis = row['start_stop']
             patch_subgroup = patch_group[patch_group['start_stop'] == benchmark_resis]
+            cutoffs = [10, 30, 50, 70, 90, 95, 100, 110]
             if cutoff:
-                cutoffs = set(patch_subgroup['cutoff'])
+                # cutoffs = set(patch_subgroup['cutoff'])
                 column = 'cutoff'
             elif patch_id:
-                cutoffs = [10, 30, 50, 70, 90, 95, 100, 110]
                 column = 'patch_percent_id'
             else:
                 cutoffs = [0]
@@ -90,21 +93,22 @@ def get_best_rmsds(patch, rif, benchmark, args, cutoff=False, patch_id=False):
                     outrows.append({'name': row['name'], 'target': row.target, 'start_stop': row.start_stop,
                                     'rmsd': best_patchman.best_rmsd, 'protocol': 'PatchMAN', 'cutoff': c})
 
-            rif_subgroup = rif_group[rif_group['start_stop'] == benchmark_resis]
-            best_rifdock = rif_subgroup.sort_values(by='best_rmsd', ascending=True)
-            if best_rifdock.shape[0] == 0:
-                no_rif_match.append(row['name'])
-            else:
-                best_rifdock = best_rifdock.iloc[0]
-                outrows.append({'name': row['name'], 'target': row.target, 'start_stop': row.start_stop,
-                                'rmsd': best_rifdock.best_rmsd, 'protocol': 'RIFDock', 'cutoff': 0})
+            if calc_rifdock:
+                rif_subgroup = rif_group[rif_group['start_stop'] == benchmark_resis]
+                best_rifdock = rif_subgroup.sort_values(by='best_rmsd', ascending=True)
+                if best_rifdock.shape[0] == 0:
+                    no_rif_match.append(row['name'])
+                else:
+                    best_rifdock = best_rifdock.iloc[0]
+                    outrows.append({'name': row['name'], 'target': row.target, 'start_stop': row.start_stop,
+                                    'rmsd': best_rifdock.best_rmsd, 'protocol': 'RIFDock', 'cutoff': 0})
 
     print('No patch match:')
     print(no_patch_match)
     print('No RIF match:')
     print(no_rif_match)
     outdf = pd.DataFrame(outrows)
-    return outdf
+    return outdf, no_patch_match, no_rif_match
 
 
 def plot_distribution(df, args):
@@ -115,7 +119,8 @@ def plot_distribution(df, args):
 
 def plot_subA(df, args):
     '''Plot percentage of sub-Angstrom benchmark helices'''
-    df = df.drop_duplicates(ignore_index=True)
+    # df = df.drop_duplicates(ignore_index=True)
+    print(df)
     order = ['RIFDock_0', 'PatchMAN_110', 'PatchMAN_100', 'PatchMAN_95', 'PatchMAN_90', 'PatchMAN_70', 'PatchMAN_50',
              'PatchMAN_30', 'PatchMAN_10']
     labels = ['RIFDock', 'PatchMAN', '100%', '95%', '90%', '70%', '50%', '30%', '10%']
@@ -131,7 +136,7 @@ def plot_subA(df, args):
             'fraction_subA': fraction_subA
         })
     # plt.figure(figsize=(3,3), dpi=300)
-    fig, ax = plt.subplots(figsize=(3,3), dpi=300)
+    fig, ax = plt.subplots(figsize=(4.1,2), dpi=300)
     subA_df = pd.DataFrame(subA_df)
     sns.barplot(x='protocol', y='fraction_subA', data=subA_df, order=order)
     ax.set_xticklabels(labels)
@@ -167,6 +172,10 @@ def main():
     )
     patchman_workspace = ws.workspace_from_dir(args['<patchman_workspace>'])
     rifdock_workspace = ws.workspace_from_dir(args['<rifdock_workspace>'])
+    print('Loading actual RIFDock dataframe...')
+    rifdock_df_orig = utils.safe_load(os.path.join(
+        rifdock_workspace.rifdock_outdir, 'benchmark_results', 'final.pkl'
+    ))
     if not os.path.exists(outpath) or args['--trim'] or args['--overwrite']:
         benchmark = utils.safe_load(bench_path)
     if not os.path.exists(outpath) or args['--overwrite']:
@@ -174,6 +183,7 @@ def main():
 
         print('Loading patchman DF')
         patchman_df = utils.safe_load(os.path.join(
+            # patchman_workspace.root_dir, 'rifdock_outputs', 'benchmark_results_reverse', 'final.pkl'
             patchman_workspace.root_dir, 'rifdock_outputs', 'benchmark_results_reverse', 'final_aligned.pkl'
         ))
         patchman_df['start_stop'] = patchman_df.apply(get_benchmark_resis, axis=1)
@@ -187,7 +197,7 @@ def main():
             patchman_df['patch_percent_id'] = patchman_df.apply(calc_patch_percent_id, axis=1)
         if not args['--subangstrom']:
             print('Finding best RMSD for each benchmark helix')
-            df = get_best_rmsds(patchman_df, rifdock_df, benchmark, args, patch_id=args['--patch-id'])
+            df, patch_missing, rif_missing = get_best_rmsds(patchman_df, rifdock_df, benchmark, args, patch_id=args['--patch-id'], calc_rifdock=True)
             df.to_pickle(outpath)
             print(df.shape)
     else:
@@ -217,13 +227,15 @@ def main():
         print(df.shape)
 
     if args['--subangstrom']:
-        if not os.path.exists(outpath):
+        if not os.path.exists(outpath) or args['--overwrite']:
             homology_outpath = os.path.join(
                 patchman_workspace.rifdock_outdir,
                 'benchmark_results_reverse',
                 'patchman_results_homology.pkl'
             )
-            if not os.path.exists(homology_outpath):
+            print('Ovewrite?', args['--overwrite'])
+            if not os.path.exists(homology_outpath) or args['--overwrite']:
+                print('CALCULATING')
                 cutoffs = [10, 30, 50, 70, 80, 90, 95, 100, 110]
                 print('Figuring out PDBIDs...')
                 patchman_df['patchman_pdbid'] = patchman_df.apply(get_patchman_pdbid, axis=1)
@@ -245,13 +257,42 @@ def main():
                 print('Loading homology df...')
                 homology_df = utils.safe_load(homology_outpath)
             print(homology_df)
-            rmsd_df = get_best_rmsds(homology_df, rifdock_df, benchmark, args, cutoff=args['--subangstrom'], patch_id=args['--patch-id'])
+            homology_df.to_pickle('testing_homology.pkl')
+            rmsd_df, no_patchman, no_rifdock = get_best_rmsds(homology_df, rifdock_df, benchmark, args, cutoff=args['--subangstrom'], patch_id=args['--patch-id'], calc_rifdock=True)
             rmsd_df.to_pickle(outpath)
         else:
             rmsd_df = utils.safe_load(outpath)
-        plot_subA(rmsd_df, args)
+        # rifdock_df_orig['protocol'] = 'RIFDock_0'
+        # rifdock_df_orig['cutoff'] = 0
+        # rifdock_df_orig['rmsd'] = rifdock_df['best_rmsd']
+        # final_df = pd.concat([rmsd_df, rifdock_df_orig], ignore_index=True)
+        rif_piece = rmsd_df[rmsd_df['protocol']=='RIFDock']
+        patch_piece = rmsd_df[rmsd_df['protocol']=='PatchMAN']
+        for pdbid in rif_piece['name'].unique():
+            if pdbid not in patch_piece['name'].unique():
+                rif_piece = rif_piece[rif_piece['name'] != pdbid]
+
+        for pdbid in patch_piece['name'].unique():
+            if pdbid not in rif_piece['name'].unique():
+                patch_piece = patch_piece[patch_piece['name'] != pdbid]
+
+        final_df = pd.concat([patch_piece, rif_piece], ignore_index=True)
+        # final_df = rmsd_df
+        # final_df.to_csv(f"final_benchmark_df_len_{args['--length']}.csv")
+        # plot_subA(rmsd_df, args)
+        plot_subA(final_df, args)
     elif args['--patch-id']:
-        plot_subA(df, args)
+        rif_piece = df[df['protocol']=='RIFDock']
+        patch_piece = df[df['protocol']=='PatchMAN']
+        for pdbid in rif_piece['name'].unique():
+            if pdbid not in patch_piece['name'].unique():
+                rif_piece = rif_piece[rif_piece['name'] != pdbid]
+
+        for pdbid in patch_piece['name'].unique():
+            if pdbid not in rif_piece['name'].unique():
+                patch_piece = patch_piece[patch_piece['name'] != pdbid]
+        final_df = pd.concat([patch_piece, rif_piece], ignore_index=True)
+        plot_subA(final_df, args)
 
     else:
         plot_distribution(df, args)

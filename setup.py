@@ -89,6 +89,8 @@ setuptools.setup(
             define_command('plot_filter'),
             define_command('06_design_scaffolds'),
             define_command('plot_designs'),
+            define_command('make_filter_session'),
+            define_command('plot_helix_distribution'),
             ],
         }
 )

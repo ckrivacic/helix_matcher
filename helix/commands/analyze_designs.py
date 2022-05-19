@@ -44,6 +44,10 @@ Options:
     --perres  Plot the per-residue #
 
     --buns-vs-bonds  (for bar plot) plot BUNS & # HBONDS side by side
+
+    --test  Load a small dataframe for testing
+
+    --filter-plot  Scatterplot showing unfiltered & filtered designs, as well as metrics for benchmark interfaces
 '''
 import docopt
 from helix.commands import filter
@@ -241,7 +245,40 @@ def plot_sequence_recovery(df, args):
     plt.show()
 
 
+def multi_scatter(groups, args, ax):
+    '''Plot each group separately. Up to 3. The first will have low opacity, the second normal, the third will be
+    marked with Xs.'''
+    colors = ["#abd0e7", palette["blue"], palette["red"]]
+    i = 0
+    if args['--perres']:
+        x = args['--xaxis'] + '_perres'
+        y = args['--yaxis'] + '_perres'
+    else:
+        x = args['--xaxis']
+        y = args['--yaxis']
+    sizes = [3, 5, 5]
+    markers = ['.', 'o', 'X']
+    alphas = [0.3, 1.0, 0.5]
+    linewidths = [0, 1, 0]
+    for group in groups:
+        alpha = alphas[i]
+        sns_ax = sns.scatterplot(data=group, x=x, y=y, #picker=True,
+                        alpha=alpha, ax=ax, color=colors[i], s=sizes[i], marker=markers[i], #linewidth=linewidths[i]
+                                 )
+        i += 1
+    plt.ylabel(y_names[y])
+    plt.xlabel(y_names[x])
+
+    return sns_ax
+
+
 def scatterplot(df, args):
+    def calc_perres(row, col):
+        if type(row['patch_len']) == type('hi'):
+            return row[col] / int(row['patch_len'].split('_')[1])
+        else:
+            return row[col] / int(row['length'])
+
     # order = ['1b33_K', '1b33_K_buns_noprune', '1b33_K_buns_penalty',
             # '1b33_K_nativelike', '1b33_K_specialrot']
     if not args['--xaxis'] == 'protocol':
@@ -250,17 +287,57 @@ def scatterplot(df, args):
         hue = args['--hue']
     else:
         hue = None
-    print(df[args['--yaxis']].sort_values())
-    if args['--size']:
-        size = args['--size']
-        ax = sns.scatterplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
-                hue=hue, size=size, sizes=(50,300), picker=True)
+    fig, ax = plt.subplots(figsize=(4,2), dpi=300)
+
+    if args['--perres']:
+        cols = [args['--yaxis'], args['--xaxis']]
+        if args['--buns-vs-bonds']:
+            cols = [ 'n_hbonds', 'buns_all']
+        for col in cols:
+            df[f"{col}_perres"] = df.apply(calc_perres, args=(col,), axis=1)
+
+    if args['--filter'] and args['--filter-plot']:
+        import yaml
+        filter_path = args['--filter']
+        with open(filter_path, 'r') as f:
+            filters = yaml.load(f.read())
+        scorelist = []
+        df_designed = df[~df['benchmark']]
+        df_bench = df[df['benchmark']]
+        for name, group in df_designed.groupby(['patch_len', 'name_x', 'target']):
+            scorelist.append(filter.parse_filter(filters, group))
+        df_filtered = pd.concat(scorelist)
+        ax = multi_scatter([df_designed, df_filtered, df_bench], args, ax)
+
     else:
-        ax = sns.scatterplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
-                hue=hue, picker=True)
-    click = plotting.ClickablePlot(ax, df, args, workspace)
+        print(df[args['--yaxis']].sort_values())
+        if args['--size']:
+            size = args['--size']
+            ax = sns.scatterplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
+                    hue=hue, size=size, sizes=(50,300), picker=True)
+        else:
+            ax = sns.scatterplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
+                    hue=hue, picker=True)
+    # click = plotting.ClickablePlot(ax, df, args, workspace)
+    plt.tight_layout()
 
     plt.show()
+
+
+def barplot_two_cols(df, y1, y2, args, ax):
+    '''Plot two columns grouped'''
+    xcenters = [i for i in range(len(order))]
+    delt = 0.2
+    xneg = [x - delt for x in xcenters]
+    xpos = [x + delt for x in xcenters]
+    ax1 = sns.barplot(data=df, x=args['--xaxis'], y=y1, palette=colors, order=order, ax=ax, ci=None)
+    # for i, bar in enumerate(ax1.patches):
+    #     bar.set_x(bar.get_x() - delt)
+    ax2 = sns.barplot(data=df, x=args['--xaxis'], y=y2, palette=[palette['lightgray']], order=order, ax=ax, ci=None)
+    # for i, bar in enumerate(ax2.patches):
+    #     bar.set_x(bar.get_x() + delt)
+
+    return ax1
 
 
 def barplot(df, args):
@@ -277,36 +354,40 @@ def barplot(df, args):
     if args['--perres']:
         cols = [args['--yaxis']]
         if args['--buns-vs-bonds']:
-            cols = ['buns_all', 'n_hbonds']
+            cols = [ 'n_hbonds', 'buns_all']
         for col in cols:
             df[f"{col}_perres"] = df.apply(lambda x: \
                                                        x[col] / int(x['patch_len'].split('_')[1]),
                                                        axis=1)
-    fig, ax = plt.subplots(figsize=(4,4), dpi=300)
+    fig, ax = plt.subplots(figsize=(4,3), dpi=300)
     # sns.stripplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
             # order=order, color='.5', alpha=0.5, ax=ax)
     y_axis = args['--yaxis']
     if args['--perres']:
         y_axis += '_perres'
     if args['--buns-vs-bonds']:
-        cols = ['design_file', 'protocol', 'value', 'type']
-        if args['--perres']:
-            df_buns = df[['design_file', 'protocol', 'buns_all_perres']]
-            df_buns['type'] = 'buns_perres'
-            df_bonds = df[['design_file', 'protocol', 'n_hbonds_perres']]
-            df_bonds['type'] = 'hbonds_perres'
-        else:
-            df_buns = df[['design_file', 'protocol', 'buns_all']]
-            df_buns['type'] = 'buns_all'
-            df_bonds = df[['design_file', 'protocol', 'n_hbonds']]
-            df_bonds['type'] = 'hbonds'
-        df_buns.columns = cols
-        df_bonds.columns = cols
-        df =pd.concat([df_buns, df_bonds], ignore_index=True)
-        y_axis = 'value'
-        hue = 'type'
-    sns_ax = sns.barplot(data=df, x=args['--xaxis'], y=y_axis,
-            hue=hue, order=order, ax=ax, saturation=1)
+        # cols = ['design_file', 'protocol', 'value', 'type']
+        # if args['--perres']:
+        #     df_buns = df[['design_file', 'protocol', 'buns_all_perres']]
+        #     df_buns['type'] = 'buns_perres'
+        #     df_bonds = df[['design_file', 'protocol', 'n_hbonds_perres']]
+        #     df_bonds['type'] = 'hbonds_perres'
+        # else:
+        #     df_buns = df[['design_file', 'protocol', 'buns_all']]
+        #     df_buns['type'] = 'buns_all'
+        #     df_bonds = df[['design_file', 'protocol', 'n_hbonds']]
+        #     df_bonds['type'] = 'hbonds'
+        # df_buns.columns = cols
+        # df_bonds.columns = cols
+        # df =pd.concat([df_buns, df_bonds], ignore_index=True)
+        # y_axis = 'value'
+        # hue = 'type'
+        print(df)
+        print(df.columns)
+        sns_ax = barplot_two_cols(df, 'n_hbonds_perres', 'buns_all_perres', args, ax)
+    else:
+        sns_ax = sns.barplot(data=df, x=args['--xaxis'], y=y_axis,
+                hue=hue, order=order, ax=ax, saturation=1, palette=colors)
     if args['--xaxis'] == 'protocol':
         ax.set_xticklabels(labels, ha='right')
         plt.xticks(rotation=70)
@@ -448,13 +529,18 @@ def main():
     global workspace
     workspace = ws.workspace_from_dir(args['<workspace>'])
     plot_type = args['<plot_type>']
-    dfpath = os.path.join(workspace.rifdock_outdir,
+    if args['--test']:
+        dfpath = os.path.join(workspace.rifdock_outdir,
+                              'combined_benchmark_rev',
+                              'test_dataframe.pkl')
+    else:
+        dfpath = os.path.join(workspace.rifdock_outdir,
             'combined_benchmark_rev', 'final.pkl')
     # dfpath = os.path.join(workspace.root_dir, '..', 'benchmark_analysis', 'final.pkl')
     df_temp = utils.safe_load(dfpath)
     # df_temp = df_temp[df_temp['minimized']]
 
-    if args['--filter']:
+    if args['--filter'] and not args['--filter-plot']:
         import yaml
         filter_path = args['--filter']
         with open(filter_path, 'r') as f:
@@ -463,6 +549,15 @@ def main():
         for name, group in df_temp.groupby(['patch_len', 'name_x', 'target']):
             scorelist.append(filter.parse_filter(filters, group))
         df_temp = pd.concat(scorelist)
+
+    if args['--filter-plot']:
+        df_bench = os.path.join(
+            workspace.rifdock_outdir, 'combined_benchmark_rev', 'bench_interfaces_analysis.pkl'
+        )
+        df_bench = utils.safe_load(df_bench)
+        df_bench['benchmark'] = True
+        df_temp['benchmark'] = False
+        df_temp = pd.concat([df_temp, df_bench])
 
     if args['--id-cutoff']:
         id_cutoff_path = os.path.join(workspace.rifdock_outdir,
@@ -561,20 +656,20 @@ def main():
             'bench_start', 'benchmark_resis']):
             create_web_logo(name, group)
 
-
+    global y_names
+    y_names = {
+        'contact_molecular_surface': 'Contact molecular surface',
+        'buns_all': 'Interface buried unsatisfied hydrogen bonds',
+        'n_hbonds': 'Cross-interface hydrogen bonds',
+        'contact_molecular_surface_perres': 'Per-residue contact\nmolecular surface',
+        'n_hbonds_perres': 'Per-residue interface\nhydrogen bonds/BUNS',
+        'buns_all_perres': 'Per-residue interface buried \nunsatisfied hydrogen bonds',
+        'value': 'Per-residue #\nH-bonds or BUNS',
+        'interface_dG_perres': 'Per-residue interface ΔG',
+    }
     if args['--xaxis'] == 'protocol':
         global order
         global labels
-        global y_names
-        y_names = {
-            'contact_molecular_surface': 'Contact molecular surface',
-            'buns_all': 'Interface buried unsatisfied hydrogen bonds',
-            'n_hbonds': 'Cross-interface hydrogen bonds',
-            'contact_molecular_surface_perres': 'Per-residue contact\nmolecular surface',
-            'buns_all': 'Per-residue interface\nburied unsatisfied hydrogen bonds',
-            'n_hbonds': 'Per-residue cross-interface\nhydrogen bonds',
-            'value': 'Per-residue #\nH-bonds or BUNS',
-        }
         order = ['base',
                  'buns_penalty', #'buns_penalty_pruned',
                  #'deleteme',
@@ -614,6 +709,8 @@ def main():
         colors = []
         for prot in order:
             colors.append(color_dict[prot])
+            # if args['--buns-vs-bonds']:
+            #     colors.append(palette['lightgray'])
         sns.set_palette(sns.color_palette(colors))
 
     

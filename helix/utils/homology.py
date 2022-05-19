@@ -23,8 +23,11 @@ query = {
             "value": "NLKASLSLTLKHYVPLSGNLLMPIKSGEMPKFQYSRDEGDSITLIVAESDQDFDYLKGHQLVDSNDLHGLFYVMPRVIRTMQDYKVIPLVAVQVTVFPNRGIAVALTAHHSIADAKSFVMFINAWAYINKFGKDADLLSANLLPSFDRSIIKDLYGLEETFWNEMQDVLEMFSRFGSKPPRFNKVRATYVLSLAEIQKLKNKVLNLRGSEPTIRVTTFTMTCGYVWTCMVKSKDDVVSEESSNDENELEYFSFTADCRGLLTPPCPPNYFGNCLA"
         }
     },
-    "return_type": "entry"
+    "return_type": "entry",
+    "request_options": {
+                "return_all_hits": True}
 }
+# "return_type": "entry"
 
 
 def find_homologs(pdbid, id_cutoff, chain=None):
@@ -50,8 +53,11 @@ def find_homologs(pdbid, id_cutoff, chain=None):
     if str(response) == '<Response [204]>':
         print("No results found for target {}.".format(pdbid))
         results = []
-    else:
+    elif 'result_set' in response.json():
+        print(len(response.json()['result_set']))
         results = [result["identifier"] for result in response.json()["result_set"]]
+    else:
+        return []
 
     print('Results found:')
     print(results)
