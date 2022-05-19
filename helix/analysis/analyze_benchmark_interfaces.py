@@ -32,6 +32,8 @@ def make_bench_helix_pose(pose, row):
     rosetta.core.pose.append_pose_to_pose(chA, target, True)
     for resnum in range(chA.chain_begin(1), chA.size() + 1):
         chA.pdb_info().chain(resnum, 'B')
+    for resnum in range(1, chA.chain_end(1) + 1):
+        chA.pdb_info().chain(resnum, 'A')
 
     return chA
 

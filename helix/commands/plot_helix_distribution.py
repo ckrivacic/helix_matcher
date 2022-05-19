@@ -195,18 +195,18 @@ def plot_helices(pose, helix_coords, sheet_ca_positions, sheet_res_frames, match
     headwidth = 10
     headlength = 6
     scale = 30
-    alpha = 0.2
+    alpha = 0.1
     lw = 0.2
-    ec = palette['white']
+    ec = palette['blue']
     if match:
         headwidth = 3
         headlength = 3
         headaxislength = 2
         scale = 20
-        width = 0.002
+        width = 0.01
         color = palette['teal']
         alpha = 1
-        lw=0.2
+        lw=0.5
         ec = palette['white']
     # else:
     #     color = palette['blue']
@@ -487,7 +487,7 @@ def main():
     if not args['--noplot']:
         # unmatched.extend(matched)
         plot_helices(pose, unmatched, sheet_ca_positions, sheet_res_frames, match=False)
-        # plot_helices(pose, matched, sheet_ca_positions, sheet_res_frames, match=True)
+        plot_helices(pose, matched, sheet_ca_positions, sheet_res_frames, match=True)
 
         plt.axes().set_aspect('equal')
         if args['--save']:
