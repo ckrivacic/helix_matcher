@@ -4,11 +4,12 @@ Usage:
 
 Options:
     --ntasks=INT  How many tasks total?  [default: 1]
+    --task=INT  Run this task
 '''
 from pyrosetta import rosetta
 # from pyrosetta.rosetta.core.select import residue_selector
 from pyrosetta import init
-# from pyrosetta import pose_from_file
+from pyrosetta import pose_from_file
 # from pyrosetta import create_score_function
 # from pyrosetta.rosetta.core.scoring.dssp import Dssp
 import docopt
@@ -21,13 +22,16 @@ from helix.benchmark import score_pdb
 from pyrosetta import create_score_function
 import helix.workspace as ws
 from helix.design.design_interface import apply_filters
+from pyrosetta.rosetta.core.chemical import VariantType
 
 
 def make_bench_helix_pose(pose, row):
     pose_clone = pose.clone()
     print(row)
     target = utils.pose_get_chain(pose, row['target'])
+    rosetta.core.pose.remove_lower_terminus_type_from_pose_residue(target, 1)
     chA = utils.pose_get_chain(pose, row['chain'])
+    rosetta.core.pose.remove_upper_terminus_type_from_pose_residue(chA, chA.size())
     print('TARGET POSE: ', target)
     rosetta.core.pose.append_pose_to_pose(chA, target, True)
     for resnum in range(chA.chain_begin(1), chA.size() + 1):
@@ -43,6 +47,8 @@ def main():
     workspace = ws.workspace_from_dir(args['<workspace>'])
     if 'SGE_TASK_ID' in os.environ:
         task = int(os.environ['SGE_TASK_ID']) - 1
+    elif args['--task']:
+        task = int(args['--task']) - 1
     else:
         task = 0
 
@@ -69,7 +75,10 @@ def main():
     outrows = []
     for idx, benchrow in benchmark_df.iterrows():
         print(benchrow)
-        initial_pose = utils.pose_from_wynton(benchrow['name'])
+        if args['--task']:
+            initial_pose = pose_from_file('1jm7.pdb')
+        else:
+            initial_pose = utils.pose_from_wynton(benchrow['name'])
         pose = make_bench_helix_pose(initial_pose, benchrow)
         interface = score_pdb.PDBInterface(pose, minimize=True, cst=True, is_pose=True)
         minimized_pose = interface.pose
