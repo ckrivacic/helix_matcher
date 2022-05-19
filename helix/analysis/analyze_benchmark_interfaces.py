@@ -50,7 +50,7 @@ def main():
     #                           'DAlphaBall.gcc')
     # init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro' \
     #      ' -holes:dalphaball {} -ignore_unrecognized_res -detect_disulf false'.format(dalphaball))
-    dalphaball = os.path.join(self.workspace.rosetta_dir,
+    dalphaball = os.path.join(workspace.rosetta_dir,
                               'source', 'external', 'DAlpahBall',
                               'DAlphaBall.gcc')
     ss_vall = workspace.find_path('ss_grouped_vall_all.h5')

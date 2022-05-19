@@ -199,14 +199,14 @@ def plot_helices(pose, helix_coords, sheet_ca_positions, sheet_res_frames, match
     lw = 0.2
     ec = palette['white']
     if match:
-        # headwidth = 3
-        # headlength = 3
-        # headaxislength = 2
-        # scale = 30
+        headwidth = 3
+        headlength = 3
+        headaxislength = 2
+        scale = 20
         width = 0.002
         color = palette['teal']
         alpha = 1
-        # lw=0.2
+        lw=0.2
         ec = palette['white']
     # else:
     #     color = palette['blue']
@@ -218,12 +218,12 @@ def plot_helices(pose, helix_coords, sheet_ca_positions, sheet_res_frames, match
     #     alpha = 0.2
     #     lw=0.1
     #     ec=palette['blue']
-    f = plt.figure()
-    ax = plt.subplot(111)
+    # f = plt.figure()
+    # ax = plt.subplot(111)
     plt.quiver(X, Y, U, V, width=width, color=color, headwidth=headwidth, headlength=headlength,
                headaxislength=headaxislength, scale=scale, alpha=alpha, lw=lw, ec=ec)
-    ax.yaxis.tick_right()
-    ax.yaxis.set_label_position("right")
+    # ax.yaxis.tick_right()
+    # ax.yaxis.set_label_position("right")
 
     # plt.show()
 
@@ -484,12 +484,10 @@ def main():
         else:
             unmatched.extend(helix_coords[filename])
 
-    print(len(unmatched))
-    print(len(matched))
     if not args['--noplot']:
         # unmatched.extend(matched)
         plot_helices(pose, unmatched, sheet_ca_positions, sheet_res_frames, match=False)
-        plot_helices(pose, matched, sheet_ca_positions, sheet_res_frames, match=True)
+        # plot_helices(pose, matched, sheet_ca_positions, sheet_res_frames, match=True)
 
         plt.axes().set_aspect('equal')
         if args['--save']:
