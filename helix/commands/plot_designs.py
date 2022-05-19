@@ -136,11 +136,13 @@ def main():
         original_size = df.shape[0]
         df_dropped = df[~df['worst_9mer'].notna()]
         print(df_dropped)
-        print(df_dropped.design_file.iloc[0])
-        print(df_dropped.design_file.iloc[1])
+        if df_dropped.shape[0] > 0:
+            print(df_dropped.design_file.iloc[0])
+            print(df_dropped.design_file.iloc[1])
         for col in [args['--xaxis'], args['--yaxis']]:
             df = df[df[col].notna()]
         no_dropped = original_size - df.shape[0]
+        print(f'DF was originally {original_size} rows long')
         print(f'Dropped {no_dropped} rows due to missing values.')
         dfs.append(df)
 

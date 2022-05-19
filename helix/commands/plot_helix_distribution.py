@@ -3,7 +3,7 @@
 Adapted from LUCS, by Xingjie Pan.
 
 Usage:
-    plot_helix_distribution.py <workspace> [options]
+    python3 plot_helix_distribution.py <workspace> [options]
 
 Options:
     --target=STR  Only plot for the given target
@@ -267,7 +267,7 @@ def get_all_helix_coords_for_one_design(pdb_file, insertion_file, sheet_ca_posit
         h_start = d['stop']
         h_stop = d['start']
 
-        if h_start > h_stop: continue
+        # if h_start > h_stop: continue
 
         for i in range(d['start'], d['stop'] + 1):
             if dssp_str[i - 1] == 'H':
@@ -330,6 +330,8 @@ def get_all_helix_coords_for_data_set(data_path, sheet_ca_positions, sheet_res_f
             helix_coords[os.path.basename(pdb_files[i])] = these_coords
         except:
             continue
+        if i > 10:
+            break
 
     return helix_coords
 
@@ -430,10 +432,12 @@ def main():
         helix_coords = load_helix_coords(base_helix_coords_path)
         # match_coords = load_helix_coords(match_helix_coords_path)
     elif args['--load']:
-        coord_paths = glob.glob(os.path.join(workspace.root_dir, 'all_helices*json'))
+        print("Loading all helices")
+        coord_paths = glob.glob(os.path.join(workspace.root_dir, 'lucs_helix_info', 'all_helices*json'))
         helix_coords = {}
         for path in coord_paths:
             these_coords = load_helix_coords(path)
+            print(these_coords)
             helix_coords = {**helix_coords, **these_coords}
     else:
         print(f'Calculating coords; task {taskno}')
