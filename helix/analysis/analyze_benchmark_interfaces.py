@@ -83,7 +83,7 @@ def main():
 
     outrows = []
     for groupname in names:
-        group = benchmark_df[groups.groups[groupname]]
+        group = benchmark_df.loc[groups.groups[groupname]]
         benchrow = group.iloc[0]
         print(benchrow)
         if args['--task']:
