@@ -29,10 +29,17 @@ def make_bench_helix_pose(pose, row):
     pose_clone = pose.clone()
     print(row)
     target = utils.pose_get_chain(pose, row['target'])
-    rosetta.core.pose.remove_lower_terminus_type_from_pose_residue(target, 1)
+    print(target)
+    # print('Target residue before', flush=True)
+    # print(target.residue(1), flush=True)
+    # rosetta.core.pose.remove_lower_terminus_type_from_pose_residue(target, 1)
+    # print(target.residue(1), flush=True)
     chA = utils.pose_get_chain(pose, row['chain'])
-    rosetta.core.pose.remove_upper_terminus_type_from_pose_residue(chA, chA.size())
+    # print(chA.residue(chA.size()), flush=True)
+    # rosetta.core.pose.remove_upper_terminus_type_from_pose_residue(chA, chA.size())
+    # print(chA.residue(chA.size()), flush=True)
     print('TARGET POSE: ', target)
+    print('chA POSE: ', chA)
     rosetta.core.pose.append_pose_to_pose(chA, target, True)
     for resnum in range(chA.chain_begin(1), chA.size() + 1):
         chA.pdb_info().chain(resnum, 'B')
@@ -67,13 +74,17 @@ def main():
          '-indexed_structure_store:fragment_store {}'.format(dalphaball, ss_vall))
     output_folder = args['<output_folder>']
     benchmark_df = utils.safe_load(os.path.expanduser('~/software/helix_matcher/helix/benchmark/interface_finder/final_consolidated.pkl'))
-    interval =  1 + (benchmark_df.shape[0] // int(args['--ntasks']))
+    groups = benchmark_df.groupby(['name','target','chain'])
+    names = sorted(list(groups.groups.keys()))
+    interval =  1 + (len(names) // int(args['--ntasks']))
     start = task * interval
     stop = task * interval + interval
-    benchmark_df = benchmark_df.iloc[start:stop]
+    names = names[start:stop]
 
     outrows = []
-    for idx, benchrow in benchmark_df.iterrows():
+    for groupname in names:
+        group = benchmark_df[groups.groups[groupname]]
+        benchrow = group.iloc[0]
         print(benchrow)
         if args['--task']:
             initial_pose = pose_from_file('1jm7.pdb')
