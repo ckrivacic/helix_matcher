@@ -418,11 +418,14 @@ def main():
         model_names += [os.path.basename(x) for x in glob.glob(os.path.join(data_path, '*.pdb.gz'))]
     #     helix_coords = get_all_helix_coords_for_data_set(data_path, sheet_ca_positions, sheet_res_frames)
 
+    print('Checking for path')
     base_helix_coords_path = os.path.join(workspace.root_dir, 'lucs_helix_info', f'all_helices_{taskno}.json')
     if not os.path.exists(os.path.join(workspace.root_dir, 'lucs_helix_info')):
+        print('Path does not exist; creating')
         os.makedirs(os.path.join(workspace.root_dir, 'lucs_helix_info'), exist_ok=True)
     # match_helix_coords_path = os.path.join(workspace.root_dir, 'matched_helices.json')
     if os.path.exists(base_helix_coords_path) and not args['--overwrite']:
+        print('Loading helices')
         helix_coords = load_helix_coords(base_helix_coords_path)
         # match_coords = load_helix_coords(match_helix_coords_path)
     elif not args['--task']:
@@ -432,6 +435,7 @@ def main():
             these_coords = load_helix_coords(path)
             helix_coords = {**helix_coords, **these_coords}
     else:
+        print(f'Calculating coords; task {taskno}')
         helix_coords = get_all_helix_coords_for_data_set(lhl_folder, sheet_ca_positions, sheet_res_frames,
                                                                        model_names, task=taskno)
         dump_helix_coords(helix_coords, base_helix_coords_path)
