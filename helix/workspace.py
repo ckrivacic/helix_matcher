@@ -976,19 +976,19 @@ class MatchWorkspace(Workspace):
         # folder
         # Reread param makes you open individual datafiles regardless, combining any that are
         # not present in the final dataframe.
-        if os.path.exists(self.final_scorefile_path) or reread:
-            if reread:
-                old_df = safe_open_dataframe(self.final_scorefile_path)
-            else:
-                return safe_open_dataframe(self.final_scorefile_path)
+        if os.path.exists(self.final_scorefile_path) and not reread:
+            # if reread:
+            #     old_df = safe_open_dataframe(self.final_scorefile_path)
+            # else:
+            return safe_open_dataframe(self.final_scorefile_path)
 
         dataframes = []
         for f in self.all_scorefile_paths:
             df = safe_open_dataframe(f)
             dataframes.append(df)
         df = pd.concat(dataframes, ignore_index=True)
-        if reread:
-            df = pd.concat([df, old_df]).drop_duplicates('design_file').reset_index(drop=True)
+        # if reread:
+        #     df = pd.concat([df, old_df]).drop_duplicates('design_file').reset_index(drop=True)
         df.to_pickle(self.final_scorefile_path)
         return df
 
