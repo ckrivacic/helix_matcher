@@ -67,6 +67,7 @@ def main():
         ref = create_score_function('ref2015')
         outrow = apply_filters(workspace, minimized_pose)
         outrow['total_score'] = ref(minimized_pose)
+        outrow['chainA_size'] = minimized_pose.chain_end(1)
         outrow['name'] = f"{benchrow['name']}_{benchrow['target']}"
         outrow['sc_cst'] = False
         outrows.append(outrow)
