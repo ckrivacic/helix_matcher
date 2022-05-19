@@ -10,6 +10,7 @@ Options:
     --overwrite, -o  Recalculate
     --task=INT  Task number
     --noplot  Don't actually plot
+    --load  Load
 '''
 
 import os
@@ -428,7 +429,7 @@ def main():
         print('Loading helices')
         helix_coords = load_helix_coords(base_helix_coords_path)
         # match_coords = load_helix_coords(match_helix_coords_path)
-    elif not args['--task']:
+    elif args['--load']:
         coord_paths = glob.glob(os.path.join(workspace.root_dir, 'all_helices*json'))
         helix_coords = {}
         for path in coord_paths:
