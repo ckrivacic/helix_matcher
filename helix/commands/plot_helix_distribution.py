@@ -357,7 +357,8 @@ def load_helix_coords(file_name):
 
 # if __name__ == '__main__':
 def main():
-    mpl.use('tkagg')
+    if not args['--noplot']:
+        mpl.use('tkagg')
     pyrosetta.init()
 
     args = docopt.docopt(__doc__)
@@ -419,7 +420,7 @@ def main():
 
     base_helix_coords_path = os.path.join(workspace.root_dir, 'lucs_helix_info', f'all_helices_{taskno}.json')
     if not os.path.exists(os.path.join(workspace.root_dir, 'lucs_helix_info')):
-        os.makedirs(os.path.join(workspace.root_dir, 'lucs_helix_info'))
+        os.makedirs(os.path.join(workspace.root_dir, 'lucs_helix_info'), exist_ok=True)
     # match_helix_coords_path = os.path.join(workspace.root_dir, 'matched_helices.json')
     if os.path.exists(base_helix_coords_path) and not args['--overwrite']:
         helix_coords = load_helix_coords(base_helix_coords_path)
