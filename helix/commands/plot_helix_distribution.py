@@ -191,10 +191,18 @@ def plot_helices(pose, helix_coords, sheet_ca_positions, sheet_res_frames, match
     if match:
         width = 0.01
         color = palette['orange']
+        headwidth = 3
+        headlength=3
+        headaxislength=2
     else:
         color = palette['blue']
         width = 0.001
-    plt.quiver(X, Y, U, V, width=width, color=color)
+        headaxislength=4.5
+        headwidth = 20
+        headlength=12
+    plt.quiver(X, Y, U, V, width=width, color=color, headwidth=headwidth, headlength=headlength,
+               headaxislength=headaxislength)
+
     # plt.show()
 
 
@@ -329,9 +337,8 @@ def get_all_helix_coords_for_data_set(data_path, sheet_ca_positions, sheet_res_f
                                                                 sheet_res_frames)
             helix_coords[os.path.basename(pdb_files[i])] = these_coords
         except:
+            print(f'Could not get coords for {pdb_files[i]}')
             continue
-        if i > 10:
-            break
 
     return helix_coords
 
@@ -418,7 +425,7 @@ def main():
     for target in targets:
         match_workspace = ws.MatchWorkspace(workspace.root_dir, target)
         data_path = match_workspace.complex_dir
-        model_names += [os.path.basename(x) for x in glob.glob(os.path.join(data_path, '*.pdb.gz'))]
+        model_names += ['_'.join(os.path.basename(x).split('.')[0].split('_')[:-1]) for x in glob.glob(os.path.join(data_path, '*.pdb.gz'))]
     #     helix_coords = get_all_helix_coords_for_data_set(data_path, sheet_ca_positions, sheet_res_frames)
 
     print('Checking for path')
@@ -437,7 +444,6 @@ def main():
         helix_coords = {}
         for path in coord_paths:
             these_coords = load_helix_coords(path)
-            print(these_coords)
             helix_coords = {**helix_coords, **these_coords}
     else:
         print(f'Calculating coords; task {taskno}')
@@ -451,7 +457,7 @@ def main():
     unmatched = []
     matched = []
     for filename in helix_coords:
-        if filename in model_names:
+        if filename.split('.')[0] in model_names:
             matched.extend(helix_coords[filename])
         else:
             unmatched.extend(helix_coords[filename])
@@ -461,7 +467,8 @@ def main():
         plot_helices(pose, matched, sheet_ca_positions, sheet_res_frames, match=True)
 
         plt.axes().set_aspect('equal')
-        plt.show()
+        # plt.show()
+        plt.savefig(f"/Volumes/GoogleDrive-109095367122122187045/My Drive/Kortemme_Lab/helix/manuscript/supplemental/{os.path.basename(target)}.svg")
 
 if __name__=='__main__':
     main()
