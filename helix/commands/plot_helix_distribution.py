@@ -3,7 +3,7 @@
 Adapted from LUCS, by Xingjie Pan.
 
 Usage:
-    python3 plot_helix_distribution.py <workspace> [options]
+    plot_helix_distribution.py <workspace> [options]
 
 Options:
     --target=STR  Only plot for the given target
