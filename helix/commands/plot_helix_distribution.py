@@ -365,7 +365,7 @@ def main():
     else:
         taskno = None
     workspace = ws.workspace_from_dir(args['<workspace>'])
-    ref_pdb = '/Users/codykrivacic/intelligent_design/2lv8.pdb'
+    ref_pdb = os.path.expanduser('~/intelligent_design/2lv8.pdb')
     if args['--target']:
         targets = [workspace.target_match_path(args['--target'])]
     else:
