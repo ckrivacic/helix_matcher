@@ -63,7 +63,10 @@ def scatterplot(dfs, workspace, args, use_matplotlib=True):
         if idx > len(dfs)-1:
             continue
         df = dfs[idx]
-        target_name = df.iloc[0]['design_file'].split('/')[1]
+        if df.shape[0] > 0:
+            target_name = df.iloc[0]['design_file'].split('/')[1]
+        else:
+            target_name = 'N/A'
         if use_matplotlib:
             # Seaborn seems to reorder points, making the on_pick stuff useless. Back to MPL.
             x = df[args['--xaxis']]

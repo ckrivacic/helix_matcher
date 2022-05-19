@@ -1,7 +1,7 @@
 palette = {
     'orange': '#e7921e',
     'bluepurple': '#6d78b8',
-    'teal': '#99c945',
+    'teal': '#63c2ac',
     'green': '#99c945',
     'pink': '#d170b7',
     'darkgreen': '#39867a',

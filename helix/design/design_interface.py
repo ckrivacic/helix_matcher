@@ -1081,7 +1081,11 @@ def main():
     designer = InterfaceDesign(workspace, group, task_id, total_inputs=len(inputs), special_rot=args['--special-rot'],
                                test_run=args['--test-run'], suffix=args['--suffix'])
     if args['--rerun-worst-9mer']:
-        designer.rerun_9mer()
+        if args['--suffix'] == '_specialrot':
+            force_recalc = True
+        else:
+            force_recalc = False
+        designer.rerun_9mer(force=force_recalc)
     else:
         designer.apply()
 

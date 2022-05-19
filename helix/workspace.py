@@ -969,7 +969,9 @@ class MatchWorkspace(Workspace):
 
     @property
     def all_scorefile_paths(self):
-        return sorted(glob.glob(os.path.join(self.design_dir, '*.pkl')))
+        scorefiles = glob.glob(os.path.join(self.design_dir, '*.pkl'))
+        scorefiles.remove(self.final_scorefile_path)
+        return sorted(scorefiles)
 
     def get_scores(self, reread=False):
         # This will go faster if you run helix combine on the "scores"

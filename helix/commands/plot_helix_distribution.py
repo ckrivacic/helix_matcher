@@ -3,7 +3,7 @@
 Adapted from LUCS, by Xingjie Pan.
 
 Usage:
-    plot_helix_distribution.py <workspace> [options]
+    helix plot_helix_distribution <workspace> [options]
 
 Options:
     --target=STR  Only plot for the given target
@@ -11,6 +11,7 @@ Options:
     --task=INT  Task number
     --noplot  Don't actually plot
     --load  Load
+    --save  Save the plot
 '''
 
 import os
@@ -188,20 +189,41 @@ def plot_helices(pose, helix_coords, sheet_ca_positions, sheet_res_frames, match
         U.append(d_pj[0])
         V.append(d_pj[1])
 
+    color = palette['blue']
+    width = 0.002
+    headaxislength = 4.5
+    headwidth = 10
+    headlength = 6
+    scale = 30
+    alpha = 0.2
+    lw = 0.2
+    ec = palette['white']
     if match:
-        width = 0.01
-        color = palette['orange']
-        headwidth = 3
-        headlength=3
-        headaxislength=2
-    else:
-        color = palette['blue']
-        width = 0.001
-        headaxislength=4.5
-        headwidth = 20
-        headlength=12
+        # headwidth = 3
+        # headlength = 3
+        # headaxislength = 2
+        # scale = 30
+        width = 0.002
+        color = palette['teal']
+        alpha = 1
+        # lw=0.2
+        ec = palette['white']
+    # else:
+    #     color = palette['blue']
+    #     width = 0.001
+    #     headaxislength=4.5
+    #     headwidth = 20
+    #     headlength=12
+    #     scale = 30
+    #     alpha = 0.2
+    #     lw=0.1
+    #     ec=palette['blue']
+    f = plt.figure()
+    ax = plt.subplot(111)
     plt.quiver(X, Y, U, V, width=width, color=color, headwidth=headwidth, headlength=headlength,
-               headaxislength=headaxislength)
+               headaxislength=headaxislength, scale=scale, alpha=alpha, lw=lw, ec=ec)
+    ax.yaxis.tick_right()
+    ax.yaxis.set_label_position("right")
 
     # plt.show()
 
@@ -463,12 +485,18 @@ def main():
             unmatched.extend(helix_coords[filename])
 
     if not args['--noplot']:
+        unmatched.extend(matched)
         plot_helices(pose, unmatched, sheet_ca_positions, sheet_res_frames, match=False)
-        plot_helices(pose, matched, sheet_ca_positions, sheet_res_frames, match=True)
+        # plot_helices(pose, matched, sheet_ca_positions, sheet_res_frames, match=True)
 
         plt.axes().set_aspect('equal')
-        # plt.show()
-        plt.savefig(f"/Volumes/GoogleDrive-109095367122122187045/My Drive/Kortemme_Lab/helix/manuscript/supplemental/{os.path.basename(target)}.svg")
+        if args['--save']:
+            if not args['--target']:
+                target = 'all'
+            plt.savefig(f"/Volumes/GoogleDrive-109095367122122187045/My Drive/Kortemme_Lab/helix/manuscript/supplemental/{os.path.basename(target)}_unmat.png",
+                        transparent=True, dpi=600)
+        else:
+            plt.show()
 
 if __name__=='__main__':
     main()
