@@ -44,12 +44,19 @@ def main():
     else:
         task = 0
 
-    rosetta_dir = os.path.expanduser('~/rosetta/')
-    dalphaball = os.path.join(rosetta_dir,
+    # rosetta_dir = os.path.expanduser('~/rosetta/')
+    # dalphaball = os.path.join(rosetta_dir,
+    #                           'source', 'external', 'DAlpahBall',
+    #                           'DAlphaBall.gcc')
+    # init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro' \
+    #      ' -holes:dalphaball {} -ignore_unrecognized_res -detect_disulf false'.format(dalphaball))
+    dalphaball = os.path.join(self.workspace.rosetta_dir,
                               'source', 'external', 'DAlpahBall',
                               'DAlphaBall.gcc')
+    ss_vall = workspace.find_path('ss_grouped_vall_all.h5')
     init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro' \
-         ' -holes:dalphaball {} -ignore_unrecognized_res -detect_disulf false'.format(dalphaball))
+         ' -holes:dalphaball {} -ignore_unrecognized_res -detect_disulf false ' \
+         '-indexed_structure_store:fragment_store {}'.format(dalphaball, ss_vall))
     output_folder = args['<output_folder>']
     benchmark_df = utils.safe_load(os.path.expanduser('~/software/helix_matcher/helix/benchmark/interface_finder/final_consolidated.pkl'))
     interval =  1 + (benchmark_df.shape[0] // int(args['--ntasks']))
