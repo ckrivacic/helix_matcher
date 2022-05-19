@@ -4,6 +4,7 @@ Adapted from LUCS, by Xingjie Pan.
 
 Usage:
     helix plot_helix_distribution <workspace> [options]
+    python3 plot_helix_distribution <workspace> [options]
 
 Options:
     --target=STR  Only plot for the given target
