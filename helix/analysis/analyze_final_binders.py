@@ -100,7 +100,7 @@ def main():
         outrow = apply_filters(workspace, minimized_pose)
         outrow['total_score'] = ref(minimized_pose)
         outrow['chainA_size'] = minimized_pose.chain_end(1)
-        outrow['name'] = f"{benchrow['name']}_{benchrow['target']}"
+        outrow['name'] = os.path.basename(pdb_file)
         outrow['sc_cst'] = False
         outrow['minimized']=True
         outrows.append(outrow)
