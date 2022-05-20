@@ -289,6 +289,13 @@ def pose_get_chain(pose, chain):
     return pose
 
 
+def trim_benchmark_df(df, col='name'):
+    # final_names = ['1d9c', '1e7l', '1i36', '1kqp', '1mty', '1nh2', '1p6x', '1um0', '1wui', '1xg0', '1yg6', '1ykd', '2dh4', '2e52', '2f1k', '2f4m', '2ftx', '2hp3', '2hzl', '2j91', '2ov9', '2pa8', '2q73', '2qib', '2qtq', '2ycl', '2yf3', '2yxh', '2zal', '3bpj', '3dhi', '3g5o', '3ilx', '3kkb', '3kra', '3sho', '3tos', '4g92', '4i0x', '4ics', '4lfg']
+    final_names = ['1d9c', '1e7l', '1i36', '1kqp', '1mty', '1nh2', '1p6x', '1um0', '1yg6', '1ykd', '2dh4', '2e52', '2f4m', '2ftx', '2hp3', '2hzl', '2j91', '2ov9', '2pa8', '2q73', '2qib', '2qtq', '2ycl', '2yf3', '2yxh', '3bpj', '3dhi', '3g5o', '3ilx', '3kkb', '3kra', '4g92', '4i0x', '4lfg']
+    df = df[df[col].isin(final_names)]
+    return df
+
+
 if __name__=='__main__':
     init()
     test_correct_resnums()

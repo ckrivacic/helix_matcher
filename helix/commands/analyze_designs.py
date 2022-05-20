@@ -229,6 +229,8 @@ def plot_sequence_recovery(df, args):
     if args['--yaxis'] == 'n_hbonds':
         bw = 0.2
     elif args['--yaxis'] == 'helix_percent_identity':
+        print(df['protocol'])
+        print(df[args['--yaxis']])
         bw = 0.2
     elif args['--yaxis'] == 'buns_all' or args['--yaxis'] == 'buns_sc':
         bw = 0.2
@@ -287,7 +289,7 @@ def scatterplot(df, args):
         hue = args['--hue']
     else:
         hue = None
-    fig, ax = plt.subplots(figsize=(4,2), dpi=300)
+    fig, ax = plt.subplots(figsize=(4,3), dpi=300)
 
     if args['--perres']:
         cols = [args['--yaxis'], args['--xaxis']]
@@ -319,7 +321,7 @@ def scatterplot(df, args):
             ax = sns.scatterplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
                     hue=hue, picker=True)
     # click = plotting.ClickablePlot(ax, df, args, workspace)
-    plt.tight_layout()
+    # plt.tight_layout()
 
     plt.show()
 
@@ -359,7 +361,7 @@ def barplot(df, args):
             df[f"{col}_perres"] = df.apply(lambda x: \
                                                        x[col] / int(x['patch_len'].split('_')[1]),
                                                        axis=1)
-    fig, ax = plt.subplots(figsize=(4,3), dpi=300)
+    fig, ax = plt.subplots(figsize=(4,2), dpi=300)
     # sns.stripplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
             # order=order, color='.5', alpha=0.5, ax=ax)
     y_axis = args['--yaxis']
@@ -396,7 +398,7 @@ def barplot(df, args):
 
     for patch in sns_ax.patches:
         patch.set_edgecolor('black')
-    fig.tight_layout()
+    # fig.tight_layout()
     plt.xlabel(None)
     plt.show()
 
@@ -538,6 +540,9 @@ def main():
             'combined_benchmark_rev', 'final.pkl')
     # dfpath = os.path.join(workspace.root_dir, '..', 'benchmark_analysis', 'final.pkl')
     df_temp = utils.safe_load(dfpath)
+    df_temp = utils.trim_benchmark_df(df_temp, col='name_x')
+    print('POST TRIMMED:')
+    print(len(df_temp['name_x'].unique()))
     # df_temp = df_temp[df_temp['minimized']]
 
     if args['--filter'] and not args['--filter-plot']:
@@ -555,6 +560,7 @@ def main():
             workspace.rifdock_outdir, 'combined_benchmark_rev', 'bench_interfaces_analysis.pkl'
         )
         df_bench = utils.safe_load(df_bench)
+        df_bench = utils.trim_benchmark_df(df_bench)
         df_bench['benchmark'] = True
         df_temp['benchmark'] = False
         df_temp = pd.concat([df_temp, df_bench])

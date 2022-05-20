@@ -1,8 +1,9 @@
 """
 Script to analyze all structures from the Baker lab design method.
+Needs a workspace to get a few paths.
 
 Usage:
-    analyze_structures.py <folder> [options]
+    analyze_structures.py <workspace> <folder> [options]
 
 Options:
     --task=INT  Only run a certain task
@@ -15,11 +16,13 @@ from pyrosetta import rosetta
 # from pyrosetta.rosetta.core.pack.task import operation
 from pyrosetta.rosetta.core.select import residue_selector
 from pyrosetta.rosetta.core.scoring.dssp import Dssp
+from pyrosetta.rosetta.core.import_pose.pose_stream import SilentFilePoseInputStream
 # from pyrosetta.rosetta.core.kinematics import MoveMap
 # from pyrosetta.rosetta.core.scoring import ScoreType
 # from pyrosetta.rosetta.protocols import constraint_generator
 from pyrosetta import init
 from pyrosetta import pose_from_file
+from pyrosetta import Pose
 from pyrosetta import create_score_function
 import pyrosetta
 from helix.patchman.pythondesign import SpecialRotDesign
@@ -33,6 +36,7 @@ from helix import workspace as ws
 from helix.utils import utils
 from helix import big_jobs
 from helix.rifdock import interface
+from helix.design.design_interface import apply_filters
 # from helix.matching.scan_helices import contiguous_secstruct
 from pyrosetta.rosetta.protocols.rosetta_scripts import XmlObjects
 
@@ -46,38 +50,37 @@ def main():
         task_id = int(os.environ['task']) - 1
     else:
         task_id = 0
-    rosetta_dir = os.path.expanduser('~/rosetta/')
-    dalphaball = os.path.join(rosetta_dir,
+    workspace = ws.workspace_from_dir(args['<workspace>'])
+    dalphaball = os.path.join(workspace.rosetta_dir,
                               'source', 'external', 'DAlpahBall',
                               'DAlphaBall.gcc')
+    ss_vall = workspace.find_path('ss_grouped_vall_all.h5')
     init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro' \
-         ' -holes:dalphaball {} -ignore_unrecognized_res -detect_disulf false'.format(dalphaball))
+         ' -holes:dalphaball {} -ignore_unrecognized_res -detect_disulf false ' \
+         '-indexed_structure_store:fragment_store {}'.format(dalphaball, ss_vall))
 
-    inputs = sorted(glob.glob(args['<folder>'] + '/*.pdb.gz'))
-    nstruct = int(args['--designs-per-task'])
+    inputs = sorted(glob.glob(args['<folder>'] + '/*'))
     total_jobs = len(inputs)
     print('TOTAL JOBS: {}'.format(total_jobs), flush=True)
 
-    start = task_id * nstruct
-    stop = task_id * nstruct + nstruct
-    if stop > len(inputs) - 1:
-        stop = len(inputs) - 1
-    if stop < start:
-        sys.exit('Nothing to do here')
-    print(start, flush=True)
-    print(inputs[start], flush=True)
-
     rowlist = []
-    for input_idx in range(start, stop):
-        pdb = inputs[input_idx]
-        pose = pose_from_file(pdb)
+    pose = Pose()
+    pis = SilentFilePoseInputStream(inputs[task_id])
+    while pis.has_another_pose():
+        pis.fill_pose(pose)
+        # pdb = inputs[input_idx]
         if pose.num_chains() < 2:
             continue
-        row = analyze_pose(pose, chA='A', chB='B')
+        # row = analyze_pose(pose, chA='A', chB='B')
+        row = apply_filters(workspace, pose)
+        row['descriptor'] = pis.get_last_pose_descriptor_string()
+        row['target'] = row['descriptor'].split('/')[0].split('_')[-1]
+        row['silent_file'] = inputs[task_id]
         rowlist.append(row)
+        pis.next_struct()
 
     df = pd.DataFrame(rowlist)
-    pickle_outdir = args['<folder>']
+    pickle_outdir = 'analyzed_designs'
     print(df, flush=True)
     print('Saving in folder {}'.format(pickle_outdir), flush=True)
     if not os.path.exists(pickle_outdir):

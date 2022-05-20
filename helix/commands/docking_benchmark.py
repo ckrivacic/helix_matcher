@@ -178,6 +178,7 @@ def main():
     ))
     if not os.path.exists(outpath) or args['--trim'] or args['--overwrite']:
         benchmark = utils.safe_load(bench_path)
+        benchmark = utils.trim_benchmark_df(benchmark)
     if not os.path.exists(outpath) or args['--overwrite']:
         benchmark['start_stop'] = benchmark.apply(get_benchmark_resis, axis=1)
 
@@ -186,11 +187,13 @@ def main():
             # patchman_workspace.root_dir, 'rifdock_outputs', 'benchmark_results_reverse', 'final.pkl'
             patchman_workspace.root_dir, 'rifdock_outputs', 'benchmark_results_reverse', 'final_aligned.pkl'
         ))
+        patchman_df = utils.trim_benchmark_df(patchman_df)
         patchman_df['start_stop'] = patchman_df.apply(get_benchmark_resis, axis=1)
         print('Loading RIFDock DF')
         rifdock_df = utils.safe_load(os.path.join(
             rifdock_workspace.root_dir, 'rifdock_outputs', 'benchmark_results_reverse', 'final.pkl'
         ))
+        rifdock_df = utils.trim_benchmark_df(rifdock_df)
         rifdock_df['start_stop'] = rifdock_df.apply(get_benchmark_resis, axis=1)
         if args['--patch-id']:
             print('Calculating patch/match percent ID...')
