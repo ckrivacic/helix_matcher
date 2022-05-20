@@ -321,7 +321,7 @@ def scatterplot(df, args):
             ax = sns.scatterplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
                     hue=hue, picker=True)
     # click = plotting.ClickablePlot(ax, df, args, workspace)
-    # plt.tight_layout()
+    plt.tight_layout()
 
     plt.show()
 
@@ -672,6 +672,8 @@ def main():
         'buns_all_perres': 'Per-residue interface buried \nunsatisfied hydrogen bonds',
         'value': 'Per-residue #\nH-bonds or BUNS',
         'interface_dG_perres': 'Per-residue interface ΔG',
+        'delta_buried_npsa_perres': 'Per-residue\nΔ buried NPSA',
+        'interface_packstat_perres': 'Per-residue interface packstat'
     }
     if args['--xaxis'] == 'protocol':
         global order

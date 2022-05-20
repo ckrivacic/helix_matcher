@@ -191,8 +191,6 @@ def main():
         ))
         patchman_df = utils.trim_benchmark_df(patchman_df)
         patchman_df['start_stop'] = patchman_df.apply(get_benchmark_resis, axis=1)
-        patchman_df.to_pickle('PATCHMAN.pkl')
-        sys.exit()
         print('Loading RIFDock DF')
         rifdock_df = utils.safe_load(os.path.join(
             rifdock_workspace.root_dir, 'rifdock_outputs', 'benchmark_results_reverse', 'final.pkl'
@@ -202,6 +200,8 @@ def main():
         if args['--patch-id']:
             print('Calculating patch/match percent ID...')
             patchman_df['patch_percent_id'] = patchman_df.apply(calc_patch_percent_id, axis=1)
+            patchman_df.to_pickle('PATCHMAN.pkl')
+            sys.exit()
         if not args['--subangstrom']:
             print('Finding best RMSD for each benchmark helix')
             df, patch_missing, rif_missing = get_best_rmsds(patchman_df, rifdock_df, benchmark, args, patch_id=args['--patch-id'], calc_rifdock=True)

@@ -79,8 +79,9 @@ def main():
         row = apply_filters(workspace, pose)
         row['file'] = inputs[task_id]
         row['file_idx'] = i
+        row['target'] = args['<folder>']
         # row['descriptor'] = pis.get_last_pose_descriptor_string()
-        row['target'] = row['descriptor'].split('/')[0].split('_')[-1]
+        # row['target'] = row['descriptor'].split('/')[0].split('_')[-1]
         row['silent_file'] = inputs[task_id]
         rowlist.append(row)
         pis.next_struct()
