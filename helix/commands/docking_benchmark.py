@@ -131,6 +131,8 @@ def plot_subA(df, args):
     for name, group in df.groupby(['protocol', 'cutoff']):
         protocol = f'{name[0]}_{name[1]}'
         fraction_subA = group[group['rmsd'] < 1.0].shape[0] / group.shape[0]
+        print(f'FRACTION SUB-A FOR GROUP {name}:')
+        print(fraction_subA)
         subA_df.append({
             'protocol': protocol,
             'fraction_subA': fraction_subA
@@ -189,6 +191,8 @@ def main():
         ))
         patchman_df = utils.trim_benchmark_df(patchman_df)
         patchman_df['start_stop'] = patchman_df.apply(get_benchmark_resis, axis=1)
+        patchman_df.to_pickle('PATCHMAN.pkl')
+        sys.exit()
         print('Loading RIFDock DF')
         rifdock_df = utils.safe_load(os.path.join(
             rifdock_workspace.root_dir, 'rifdock_outputs', 'benchmark_results_reverse', 'final.pkl'

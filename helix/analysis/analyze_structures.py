@@ -69,6 +69,7 @@ def main():
     print(inputs[task_id])
     pis = SilentFilePoseInputStream(inputs[task_id])
     target = os.path.basename(args['<folder>'])
+    i = 0
     while pis.has_another_pose():
         pis.fill_pose(pose)
         # pdb = inputs[input_idx]
@@ -76,11 +77,14 @@ def main():
             continue
         # row = analyze_pose(pose, chA='A', chB='B')
         row = apply_filters(workspace, pose)
-        row['descriptor'] = pis.get_last_pose_descriptor_string()
+        row['file'] = inputs[task_id]
+        row['file_idx'] = i
+        # row['descriptor'] = pis.get_last_pose_descriptor_string()
         row['target'] = row['descriptor'].split('/')[0].split('_')[-1]
         row['silent_file'] = inputs[task_id]
         rowlist.append(row)
         pis.next_struct()
+        i += 1
 
     df = pd.DataFrame(rowlist)
     pickle_outdir = 'analyzed_designs'
