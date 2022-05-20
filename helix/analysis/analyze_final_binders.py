@@ -77,6 +77,8 @@ def main():
     output_folder = args['<output_folder>']
     inputs = sorted(glob.glob(
         os.path.join(output_folder, '*.pdb')))
+    print('INPUTS')
+    print(inputs)
     # benchmark_df = utils.safe_load(os.path.expanduser('~/software/helix_matcher/helix/benchmark/interface_finder/final_consolidated.pkl'))
     # groups = benchmark_df.groupby(['name','target','chain'])
     # names = sorted(list(groups.groups.keys()))
@@ -84,7 +86,9 @@ def main():
     # start = task * interval
     # stop = task * interval + interval
     # names = names[start:stop]
-    my_job = inputs[task]
+    my_job = [inputs[task]]
+    print('My job')
+    print(my_job)
 
     outrows = []
     for pdb_file in my_job:
