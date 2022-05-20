@@ -46,8 +46,8 @@ def main():
 
     if args['--task']:
         task_id = int(args['--task']) - 1
-    elif 'task' in os.environ:
-        task_id = int(os.environ['task']) - 1
+    elif 'SGE_TASK_ID' in os.environ:
+        task_id = int(os.environ['SGE_TASK_ID']) - 1
     else:
         task_id = 0
     workspace = ws.workspace_from_dir(args['<workspace>'])
