@@ -75,7 +75,8 @@ def main():
          ' -holes:dalphaball {} -ignore_unrecognized_res -detect_disulf false ' \
          '-indexed_structure_store:fragment_store {}'.format(dalphaball, ss_vall))
     output_folder = args['<output_folder>']
-    inputs = sorted(glob.glob(output_folder, '*.pdb'))
+    inputs = sorted(glob.glob(
+        os.path.join(output_folder, '*.pdb')))
     # benchmark_df = utils.safe_load(os.path.expanduser('~/software/helix_matcher/helix/benchmark/interface_finder/final_consolidated.pkl'))
     # groups = benchmark_df.groupby(['name','target','chain'])
     # names = sorted(list(groups.groups.keys()))
