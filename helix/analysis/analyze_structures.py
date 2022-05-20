@@ -66,6 +66,7 @@ def main():
     rowlist = []
     pose = Pose()
     pis = SilentFilePoseInputStream(inputs[task_id])
+    target = os.path.basename(args['<folder>'])
     while pis.has_another_pose():
         pis.fill_pose(pose)
         # pdb = inputs[input_idx]
@@ -85,7 +86,7 @@ def main():
     print('Saving in folder {}'.format(pickle_outdir), flush=True)
     if not os.path.exists(pickle_outdir):
         os.makedirs(pickle_outdir, exist_ok=True)
-    dataframe_out = os.path.join(pickle_outdir, f'task_{task_id}.pkl')
+    dataframe_out = os.path.join(pickle_outdir, f'{target}_{task_id}.pkl')
     df.to_pickle(dataframe_out)
 
 def analyze_pose(pose, chA='A', chB='B', pdb='', protocol=''):
