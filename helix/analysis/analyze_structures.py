@@ -65,6 +65,8 @@ def main():
 
     rowlist = []
     pose = Pose()
+    print('Loading input:')
+    print(inputs[task_id])
     pis = SilentFilePoseInputStream(inputs[task_id])
     target = os.path.basename(args['<folder>'])
     while pis.has_another_pose():
