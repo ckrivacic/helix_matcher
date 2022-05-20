@@ -289,7 +289,7 @@ def scatterplot(df, args):
         hue = args['--hue']
     else:
         hue = None
-    fig, ax = plt.subplots(figsize=(4,3), dpi=300)
+    fig, ax = plt.subplots(figsize=(4,3), dpi=600)
 
     if args['--perres']:
         cols = [args['--yaxis'], args['--xaxis']]
