@@ -209,7 +209,10 @@ def apply_filters(workspace, pose, input_pose=None):
         <And name="AB_interface" selectors="interface_chA,interface_chB" />
     </RESIDUE_SELECTORS>
     <FILTERS>
-        <BuriedUnsatHbonds name="buns_interface" use_reporter_behavior="true" report_all_heavy_atom_unsats="true" scorefxn="sfxn" residue_selector="AB_interface" ignore_surface_res="false" print_out_info_to_pdb="true" confidence="0" use_ddG_style="true" burial_cutoff="0.01" dalphaball_sasa="true" probe_radius="1.1" max_hbond_energy="1.5" burial_cutoff_apo="0.2" />
+        <BuriedUnsatHbonds name="buns_interface" use_reporter_behavior="true" report_all_heavy_atom_unsats="true" 
+        scorefxn="sfxn" residue_selector="AB_interface" ignore_surface_res="false" print_out_info_to_pdb="true" 
+        confidence="0" use_ddG_style="true" burial_cutoff="0.01" dalphaball_sasa="true" probe_radius="1.1" 
+        max_hbond_energy="1.5" burial_cutoff_apo="0.2" />
     </FILTERS>
     '''
     buns_sc = '''

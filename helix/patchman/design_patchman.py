@@ -607,6 +607,7 @@ def main():
         print("SETTING UP FILTERS", flush=True)
 
         # Define filters
+        # Note: Should BUNS have a lower cutoff, since we are looking at interfaces instead of cores?
         buns_all = '''
         <BuriedUnsatHbonds 
             name="Buried Unsat [[-]]"
