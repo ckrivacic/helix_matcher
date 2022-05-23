@@ -264,7 +264,7 @@ Installing default scripts."""
         wts = glob.glob(script_dir + '/*.wts')
         sho = glob.glob(script_dir + '/*.sho')
         pickle = glob.glob(script_dir + '/*.pkl')
-        extra = glob.glob(script_dir, '*.h5')
+        extra = glob.glob(script_dir + '/*.h5')
         for script in python + yaml + wts + pickle + extra:
             script_path = os.path.join(script_dir, script)
             workspace_path = os.path.join(workspace.standard_params_dir,
