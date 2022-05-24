@@ -15,44 +15,8 @@ import yaml
 from helix import workspace as ws
 import pandas as pd
 import os
-import copy
 
-
-def parse_filter(filter_dict, df):
-    '''Parse filters. Filters should have the following dictionary format:
-        
-        {
-        'threshold':
-            {'n_hbond': ['>', 2],}, # n_hbond should be greater than 2
-        'percentile':
-            {'interface_score_y': ['<', 0.5],} # Only keep data below
-            # the 50th percentile in interface_score_y
-        }
-    '''
-    orig_df = copy.deepcopy(df)
-    if 'threshold' in filter_dict:
-        for thresh in filter_dict['threshold']:
-            operator = filter_dict['threshold'][thresh][0]
-            if operator == '>':
-                df = df[df[thresh] > filter_dict['threshold'][thresh][1]]
-            elif operator == '<':
-                df = df[df[thresh] < filter_dict['threshold'][thresh][1]]
-            else:
-                print('Filter dictionary had unexpected format. Please only use \'>\' or \'<\' for thresholds')
-
-    if 'percentile' in filter_dict:
-        for percentile in filter_dict['percentile']:
-            operator = filter_dict['percentile'][percentile][0]
-            if operator == '<':
-                df = df[df[percentile] < orig_df[percentile].quantile(
-                    filter_dict['percentile'][percentile][1]
-                    )]
-            else:
-                df = df[df[percentile] > orig_df[percentile].quantile(
-                    filter_dict['percentile'][percentile][1]
-                    )]
-
-    return df
+from helix.utils.utils import parse_filter
 
 
 def get_patch_length(row):

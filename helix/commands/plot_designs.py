@@ -14,7 +14,6 @@ Options:
     --hue=COLUMN  Color by values from this column
     --size=COLUMN  Resize scatterplot points by values from this column
     --additional-df  Compare to another dataframe (for ex., benchmark data or data from another design method)
-    --all-targets, -a  Plot all target on one figure, but with a separate plot for each target
     --force-reread, -f  Even if final.pkl exists in the design directory, reread all individual score files.
     --filter=FILEPATH  Filter the dataframe
     --keep-original  Keep original dataframe when filtering, plot both
@@ -145,7 +144,7 @@ def violin_plot(dfs, workspace, args):
         design_df['target'] = design_df.apply(rename_target, axis=1)
         design_df[hue] = 'Miniproteins'
         if args['--filter']:
-            from helix.commands.filter import parse_filter
+            from helix.utils.utils import parse_filter
             import yaml
             with open(args['--filter'], 'r') as f:
                 filter = yaml.load(f.read())
@@ -253,7 +252,7 @@ def scatterplot(dfs, workspace, args, use_matplotlib=True):
             ))
             design_df = design_df[design_df['target'].isin(folder_dict[target_name])]
             if args['--filter']:
-                from helix.commands.filter import parse_filter
+                from helix.utils.utils import parse_filter
                 import yaml
                 with open(args['--filter'], 'r') as f:
                     filter = yaml.load(f.read())
@@ -403,7 +402,7 @@ def parse_dataframe(workspace, args):
     if args['--filter']:
         print(' # designs before filtering:')
         print(df.shape[0])
-        from helix.commands.filter import parse_filter
+        from helix.utils.utils import parse_filter
         import yaml
         with open(args['--filter'], 'r') as f:
             filter = yaml.load(f.read())

@@ -37,6 +37,7 @@ Options:
     --hold  Submit the jobs with a hold
     --taskrange=TASKS  Run a range of task #s (local only)
     --subprocess  Run the (local) jobs in a background process
+    --special-res  As in special_rot, but with a residue type constraint instead of rotamer.
 """
 import helix.workspace as ws
 from helix import big_jobs
@@ -55,7 +56,7 @@ def main():
     workspace = ws.workspace_from_dir(args['<workspace>'])
     script_path = os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
-            '..', 'patchman', 'design_patchman.py'
+            '..', 'patchman', '03_design_patchman.py'
             )
     if not os.path.exists(script_path):
         raise Exception("Error: {} does not exist.".format(script_path))
@@ -115,6 +116,9 @@ def main():
 
         if args['--upweight-interface']:
             cmd += '--upweight-interface', args['--upweight-interface']
+
+        if args['--special-res']:
+            cmd += '--special-res',
 
         if args['--task']:
             cmd += '--task', args['--task']

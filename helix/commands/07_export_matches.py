@@ -10,7 +10,8 @@ Options:
     --dry-run, -d  Do not actually export matches, just print how many matches will be exported for each target
 '''
 from pyrosetta.rosetta.core.pose import append_pose_to_pose
-from helix.commands import filter
+
+import helix.utils.utils
 from helix import workspace as ws
 import docopt
 import pandas as pd
@@ -203,7 +204,7 @@ def main():
                     # 'buns_all_sum': ['<', 2]
                     }
         }
-        filtered_results = filter.parse_filter(filters, results)
+        filtered_results = helix.utils.utils.parse_filter(filters, results)
         print(f'Target {target} will export {filtered_results.shape[0]} PDB files')
         exported_df = []
         if args['--dry-run']:

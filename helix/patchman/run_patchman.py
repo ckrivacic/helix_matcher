@@ -2,7 +2,7 @@
 Runs PatchMAN.
 
 Usage:
-    patchman.py <workspace> [options]
+    02_patchman.py <workspace> [options]
 
 Options:
     --target=PDB, -t  Only runs on a specific target

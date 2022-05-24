@@ -16,7 +16,7 @@ import yaml
 from helix.utils import utils
 from helix.utils.colors import palette
 import helix.workspace as ws
-from helix.commands.filter import parse_filter
+from helix.utils.utils import parse_filter
 import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt

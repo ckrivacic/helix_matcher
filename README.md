@@ -67,7 +67,7 @@ helix 05_score_matches <workspace_path>
 # Scores the matches. Use -l to run locally.
 helix export_matches <workspace_path>
 # Exports matches as match-target complexes if they pass a clash score and RMSD (versus the docked fragments) threshold. This threshold 
-# is currently hardcoded in commands/export_matches.py, where you can edit the values on lines 201-202 to get the desired number of 
+# is currently hardcoded in commands/07_export_matches.py, where you can edit the values on lines 201-202 to get the desired number of 
 # designable complexes.
 helix 06_design_scaffolds <workspace_path>
 # Designs the scaffolds. By default, transfers residues over from the docked fragments if they are within 1.5A and prevents repacking for 

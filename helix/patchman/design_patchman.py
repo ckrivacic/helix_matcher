@@ -2,7 +2,7 @@
 Script to run FastDesign + FlexPepDock on outputs of PatchMAN.
 
 Usage:
-    design_patchman.py <workspace> [options]
+    03_design_patchman.py <workspace> [options]
 
 Options:
     --task=INT  Only run a specific task
@@ -244,7 +244,7 @@ def main():
          ' -holes:dalphaball {} -ignore_unrecognized_res -detect_disulf false'.format(dalphaball))
 
     if not hasattr(workspace, 'docking_directory'):
-        raise Exception("Error: design_patchman.py requires RIFWorkspaces as input. You " \
+        raise Exception("Error: 03_design_patchman.py requires RIFWorkspaces as input. You " \
                         "may have provided the root directory to this script " \
                         "somehow.")
 

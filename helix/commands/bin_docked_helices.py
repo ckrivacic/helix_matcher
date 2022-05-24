@@ -1,32 +1,6 @@
 """
-Run the matching algorithm. Requires a database containing the relative
-orientations of helices in a variety of scaffold proteins (default
-database contains all proteins in the nonredundant PDB). The relative
-orientations in this database must be binned with the same intervals as
-are given here; if they are not, you will have to start from a
-vectorized helices dataframe and bin them according to the settings you
-want (use the "helix bin" command NOT IMPLEMENTED).
-
-Settings for matching can be set using the settings.yml file. Default
-settings are in standard_params/settings.yml. If you place a
-settings.yml file in project_params, those will be loaded instead.
-(Note: If you do this, make sure you include values for all settings
-present in the default file. The suggested method is to copy the default
-file over and edit it from there.)
-Additionally, you can supply options to this submission script, and
-those will overwrite any settings from the yaml file(s).
-
-Database defaults are prioritized as follows:
-    1. A database passed to this command via --database option
-    2. A database OTHER THAN the default database path passed via
-    settings.yml
-    3. A database placed in project_params/
-    4. The default database
-
-If the database does not have a bins_.*A_.*D regex pattern in its
-subfolders, this script will try to look one level down for
-'standard' and 'length' subfolders. If not found, then you should fix
-your database path.
+Calculates helical vectors and bins them according to the Angstrom and degree bins provided in the workspace's settings
+or via the options given to this command.
 
 Usage: 
     helix 04_match <workspace> [options]

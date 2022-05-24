@@ -50,8 +50,8 @@ Options:
     --filter-plot  Scatterplot showing unfiltered & filtered designs, as well as metrics for benchmark interfaces
 '''
 import docopt
-from helix.commands import filter
-import os
+
+import helix.utils.utils
 import pandas as pd
 from klab import scripting
 from helix.utils import utils
@@ -307,7 +307,7 @@ def scatterplot(df, args):
         df_designed = df[~df['benchmark']]
         df_bench = df[df['benchmark']]
         for name, group in df_designed.groupby(['patch_len', 'name_x', 'target']):
-            scorelist.append(filter.parse_filter(filters, group))
+            scorelist.append(helix.utils.utils.parse_filter(filters, group))
         df_filtered = pd.concat(scorelist)
         ax = multi_scatter([df_designed, df_filtered, df_bench], args, ax)
 
@@ -552,7 +552,7 @@ def main():
             filters = yaml.load(f.read())
         scorelist = []
         for name, group in df_temp.groupby(['patch_len', 'name_x', 'target']):
-            scorelist.append(filter.parse_filter(filters, group))
+            scorelist.append(helix.utils.utils.parse_filter(filters, group))
         df_temp = pd.concat(scorelist)
 
     if args['--filter-plot']:
