@@ -58,7 +58,8 @@ def main():
                         'n_hbonds': ['>', 1],
                         },
                     'percentile': {
-                        'interface_dG': ['<', -0.5]
+                        'interface_dG': ['<', 0.4]
+                        'contact_molecular_surface': ['>', 0.5]
                         }
                     }
         print('FILTERS:')
