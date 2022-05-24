@@ -55,7 +55,7 @@ def main():
             filters = {
                     'threshold': {
                         'percent_helical': ['>', 0.7],
-                        'n_hbonds': ['>', 1],
+                        'buns_all': ['<', 2],
                         },
                     'percentile': {
                         'interface_dG': ['<', 0.4]
