@@ -14,6 +14,7 @@ import os
 import numpy as np
 import yaml
 from helix.utils import utils
+from helix.utils.colors import palette
 import helix.workspace as ws
 from helix.commands.filter import parse_filter
 import pandas as pd
@@ -96,13 +97,13 @@ def parse_filter_name(filter):
 
 def plot_coverage(coverage, args):
     order = None
-    labels = None
-    colors = None
-    # sns.set_palette(colors)
+    labels = ['Unfiltered', 'Filtered']
+    colors = [palette['blue'], palette['red']]
+    sns.set_palette(colors)
 
     fig, ax = plt.subplots(figsize=(3,3), dpi=300)
     sns.barplot(x='filter', y='value', data=coverage, hue='value_type') #order=order)
-    # ax.set_xticklabels(labels)
+    ax.set_xticklabels(labels)
     plt.tight_layout()
     plt.xticks(rotation=70)
     plt.xlabel(None)
@@ -111,9 +112,13 @@ def plot_coverage(coverage, args):
 
 
 def plot_accuracy(accuracy, args):
+    print(accuracy)
     fig, ax = plt.subplots(figsize=(3,3), dpi=300)
+    labels = ['Unfiltered', 'Filtered']
+    colors = [palette['red'], palette['blue']]
+    sns.set_palette(colors)
     sns.barplot(x='filter', y='fraction_subA', data=accuracy)
-    # ax.set_xticklabels(labels)
+    ax.set_xticklabels(labels)
     plt.tight_layout()
     plt.xticks(rotation=70)
     plt.xlabel(None)
@@ -160,6 +165,7 @@ def main():
 
         print('Loading benchmark...')
         benchmark = utils.safe_load(bench_path)
+        benchmark = utils.trim_benchmark_df(benchmark)
         benchmark['start_stop'] = benchmark.apply(get_benchmark_resis, axis=1)
 
         if args['--trim']:

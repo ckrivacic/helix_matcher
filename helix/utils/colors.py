@@ -16,6 +16,7 @@ palette = {
     'black': '#000000',
 }
 
+
 def hex_to_rgb(hex):
     hex = hex.lstrip('#')
     rgb = tuple(int(hex[i:i+2], 16) for i in [0, 2, 4])
@@ -24,3 +25,12 @@ def hex_to_rgb(hex):
 def pymol_color(hex):
     out = '0x'
     return out + str(hex).lstrip('#')
+
+def pymol_colors():
+    export = {}
+    for c in palette:
+        export[c] = pymol_color(palette[c])
+
+    return export
+
+pymol_palette = pymol_colors()

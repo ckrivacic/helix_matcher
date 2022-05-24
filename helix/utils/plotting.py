@@ -84,7 +84,21 @@ class ClickablePlot(object):
                     selName=design_name + '_interface')
             pymol.cmd.show('sticks', design_name + '_interface')
         pymol.cmd.hide('sticks', 'hydro')
-        pymol.cmd.color('orange', 'chain B and name c*')
+        pymol.cmd.color('orange', 'chain A and name c*')
+        pymol.cmd.select('prot1', 'chain A')
+        pymol.cmd.select('prot2', 'chain B')
+        pymol.cmd.h_add('prot1')
+        pymol.cmd.h_add('prot2')
+        pymol.cmd.select('don', '(elem n,o and (neighbor hydro))')
+        pymol.cmd.select('acc', '(elem o or (elem n and not (neighbor hydro)))')
+        pymol.cmd.distance('HBA', '(prot1 and acc)', '(prot2 and don)', 3.2)
+        pymol.cmd.distance('HBD', '(prot1 and don)', '(prot2 and acc)', 3.2)
+        pymol.cmd.delete('don')
+        pymol.cmd.delete('acc')
+        pymol.cmd.hide('everything', 'hydro')
+        pymol.cmd.hide('labels', 'HBA')
+        pymol.cmd.hide('labels', 'HBD')
+
         pymol.cmd.deselect()
         self.selected = []
 

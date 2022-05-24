@@ -689,11 +689,11 @@ def main():
         labels = ['Base',
                   'BUNS penalty', #'BUNS pen. pruned',
                   #'NativeResidue',
-                  'Special res.', '+ BUNS',
-                  'Res. lock',  '+ BUNS', '+ ramp cst.',
-                  'Special rot.',
-                  '+ BUNS', '+ ramp cst.', #'Special rot. + BUNS\n(no cst)',
-                  'Special rot. (wt. 3)', '+ BUNS', '+ ramp cst.',] #'INTERFACE']
+                  'Special res.', '+ 3BOP',
+                  'Res. lock',  '+ 3BOP', '+ ramp cst.',
+                  'Special rot. (wt. -1.5)',
+                  '+ 3BOP', '+ ramp cst.', #'Special rot. + BUNS\n(no cst)',
+                  'Special rot. (wt. -3)', '+ 3BOP', '+ ramp cst.',] #'INTERFACE']
         color_dict = {
             'base': palette['darkgray'],
             'buns_penalty': palette['yellow'],
