@@ -59,6 +59,12 @@ helix design_patchman <workspace_path>
 helix filter <workspace>
 # Filters docked fragments. You may provide your own custom filters via a yaml-formated file (formatting described below) 
 # by passing --filter <path/to/filter.yml>
+```
+
+At this stage, you should check your filtered output (located in `<worspace_path>/rifdock_outputs/<target_name>/filtered/`, to make sure you have enough helices (and not so many that matching will be intractable). 1-4 helices per protein residue seems to work well.
+
+Continuing:
+```bash
 helix bin_docked_helices <workspace_path>
 # Calculates helix vectors and bins their relative orientations. Use -l to run locally.
 helix 04_match <workspace_path>
@@ -81,8 +87,6 @@ helix plot_designs <workspace> <plot_type> [options]
 # list the possible designs, and you can choose one by pressing the corresponding number (the plot needs to be the focus window) and then 
 # pressing <Enter>.
 ```
-
-At this stage, you should check your filtered output (located in `<worspace_path>/rifdock_outputs/<target_name>/filtered/`, to make sure you have enough helices (and not so many that matching will be intractable). 1-4 helices per protein residue seems to work well.
 
 To provide HELIX a custom filter file, use the following formatting. These filters can be provided to the `filter`, `analyze_designs`, and `plot_designs` commands.
 ```
