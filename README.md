@@ -55,11 +55,20 @@ helix 04_match <workspace_path>
 helix 05_score_matches <workspace_path>
 # Scores the matches. Use -l to run locally.
 helix export_matches <workspace_path>
-# Exports matches as match-target complexes if they pass a clash score and RMSD (versus the docked fragments) threshold. This threshold is currently hardcoded in commands/export_matches.py, where you can edit the values on lines 201-202 to get the desired number of designable complexes.
+# Exports matches as match-target complexes if they pass a clash score and RMSD (versus the docked fragments) threshold. This threshold 
+# is currently hardcoded in commands/export_matches.py, where you can edit the values on lines 201-202 to get the desired number of 
+# designable complexes.
 helix 06_design_scaffolds <workspace_path>
-# Designs the scaffolds. By default, transfers residues over from the docked fragments if they are within 1.5A and prevents repacking for any that it is able to pack well in an initial round of design. Pass --special-rot to instead allow designs for these positions, but with a score bonus for choosing the same rotamer as the docked fragment. Pass -l to run locally (not recommended generally, but especially not here). By default creates 10 sequences per input, but you can change this by passing -n.
+# Designs the scaffolds. By default, transfers residues over from the docked fragments if they are within 1.5A and prevents repacking for 
+# any that it is able to pack well in an initial round of design. Pass --special-rot to instead allow designs for these positions, but 
+# with a score bonus for choosing the same rotamer as the docked fragment. Pass -l to run locally (not recommended generally, but 
+# especially not here). By default creates 10 sequences per input, but you can change this by passing -n.
 helix plot_designs <workspace> <plot_type> [options]
-# Makes plots of your designs. Plot types implemented right now are "scatter" and "violin". If you make a scatterplot of just one target, you can click on points to open a PyMOL session of the design. You can also open multiple designs at once by pressing <Shift>+A, then clicking on a few points, then pressing <Shift>+C to open. If you click on a point where there are multiple designs, your terminal will list the possible designs, and you can choose one by pressing the corresponding number (the plot needs to be the focus window) and then pressing <Enter>.
+# Makes plots of your designs. Plot types implemented right now are "scatter" and "violin". If you make a scatterplot of just one target, 
+# you can click on points to open a PyMOL session of the design. You can also open multiple designs at once by pressing <Shift>+A, then 
+# clicking on a few points, then pressing <Shift>+C to open. If you click on a point where there are multiple designs, your terminal will 
+# list the possible designs, and you can choose one by pressing the corresponding number (the plot needs to be the focus window) and then 
+# pressing <Enter>.
 ```
 
 At this stage, you should check your filtered output (located in `<worspace_path>/rifdock_outputs/<target_name>/filtered/`, to make sure you have enough helices (and not so many that matching will be intractable). 1-4 helices per protein residue seems to work well.
