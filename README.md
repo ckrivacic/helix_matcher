@@ -47,7 +47,8 @@ helix patchman <workspace_path>
 helix design_patchman <workspace_path>
 # Designs the docked helices (ignoring anything <60% helical). Again, if running locally pass -l.
 helix filter <workspace>
-# Filters docked fragments. You may provide your own custom filters via a yaml-formated file (formatting described below) by passing --filter <path/to/filter.yml>
+# Filters docked fragments. You may provide your own custom filters via a yaml-formated file (formatting described below) 
+# by passing --filter <path/to/filter.yml>
 helix bin_docked_helices <workspace_path>
 # Calculates helix vectors and bins their relative orientations. Use -l to run locally.
 helix 04_match <workspace_path>
