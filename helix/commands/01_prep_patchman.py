@@ -2,7 +2,7 @@
 Preps a RIFWorkspace for PatchMAN.
 
 Usage:
-    helix prep_patchman <workspace> [options]
+    helix 01_prep_patchman <workspace> [options]
 
 Options:
     --chain=LETTERS, -c

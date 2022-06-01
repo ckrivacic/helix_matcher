@@ -1,6 +1,6 @@
 '''
 Usage:
-    helix 05_score_matches <workspace> [options]
+    helix 06_score_matches <workspace> [options]
 
 options:
     --local, -l  Run locally

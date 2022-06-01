@@ -2,7 +2,7 @@
 Run FastDesign + FlexPepDock on PatchMAN outputs.
 
 Usage:
-    helix design_patchman <workspace> [options]
+    helix 03_design_patchman <workspace> [options]
 
 Options:
     --local, -l  Run locally

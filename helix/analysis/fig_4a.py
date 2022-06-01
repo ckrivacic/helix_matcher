@@ -17,6 +17,22 @@ import docopt
 from pyrosetta import init
 from pyrosetta import pose_from_file
 from helix.utils.colors import pymol_palette as palette
+from scipy.spatial import KDTree
+
+
+def selstr_from_reslist(reslist, name, chain=None, chains=None):
+    selstr = f"{name} and ("
+    for idx, resnum in enumerate(reslist):
+        selstr += f"(resi {resnum}"
+        if chain:
+            selstr += f" and chain {chain}) or "
+        elif chains:
+            selstr += f" and chain {chains[idx]}) or "
+        else:
+            selstr += ") or "
+    selstr = selstr[:-4]
+    selstr += ")"
+    return selstr
 
 
 def show_interface_hbonds(model_name_1, model_name_2, chain_1, chain_2):
@@ -60,7 +76,7 @@ def load_patchman_ex(workspace, row):
     selstr += ")"
     pymol.cmd.color(palette['lightgray'], f"{parent_pdb}")
 
-    return selstr
+    return selstr, parent_pdb
 
 
 def make_session(workspace, model_path, input_path, patchman_rows):
@@ -94,9 +110,12 @@ def make_session(workspace, model_path, input_path, patchman_rows):
     pymol.cmd.center(f"{model_name} and chain A")
 
 
+    helices = []
     for idx, row in patchman_rows.iterrows():
+        pymol_space = {'patch_resnums': [], 'patch_xyz': [], 'pdb_resnums': [], 'pdb_xyz': [], 'pdb_chains': []}
         design_file = os.path.join(workspace.root_dir, row['design_file'])
         design_name = os.path.basename(row['design_file']).split('.')[0]
+        helices.append(design_name)
         pymol.cmd.load(design_file, design_name)
         pymol.cmd.align(f"{design_name} and chain A", f"{input_name} and chain B")
         pymol.cmd.hide('everything', f"{design_name} and chain A")
@@ -109,14 +128,41 @@ def make_session(workspace, model_path, input_path, patchman_rows):
         pymol.cmd.load(patch_file, patch_name)
         pymol.cmd.color(palette['pink'], patch_name)
 
-        selection = load_patchman_ex(workspace, row)
+        pymol.cmd.iterate(f"{patch_name} and name CA", "patch_resnums.append(resi)", space=pymol_space)
+        pymol.cmd.iterate_state(1, f"{patch_name} and name CA", "patch_xyz.append([x, y, z])", space=pymol_space)
+        pymol.cmd.select(f"{patch_number}_patch", selstr_from_reslist(pymol_space['patch_resnums'], 'target'))
+        pymol.cmd.color(palette['pink'], f"{patch_number}_patch and name c*")
+
+        selection, pdbid = load_patchman_ex(workspace, row)
         pymol.cmd.select(f"patch_{patch_number}_stretch", selection)
-        pymol.cmd.align(f"patch_{patch_number}_stretch", f"{design_name} and chain B")
+        pymol.cmd.super(f"patch_{patch_number}_stretch", f"{design_name} and chain B", cycles=0)
         pymol.cmd.color(palette['orange'], f"patch_{patch_number}_stretch and name c*")
+
+        pymol.cmd.iterate_state(1, f"{pdbid} and name CA", "pdb_resnums.append(resi)", space=pymol_space)
+        pymol.cmd.iterate_state(1, f"{pdbid} and name CA", "pdb_chains.append(chain)", space=pymol_space)
+        pymol.cmd.iterate_state(1, f"{pdbid} and name CA", "pdb_xyz.append([x, y, z])", space=pymol_space, atomic=0)
+        tree = KDTree(pymol_space['pdb_xyz'])
+
+        match_resnums = []
+        match_chains = []
+        for xyz in pymol_space['patch_xyz']:
+            nearest = tree.query(xyz)
+            index = nearest[1]
+            match_resnums.append(pymol_space['pdb_resnums'][index])
+            match_chains.append(pymol_space['pdb_chains'][index])
+        pymol.cmd.select(f"{patch_number}_match", selstr_from_reslist(match_resnums, pdbid, chains=match_chains))
+        pymol.cmd.color(palette['pink'], f"{patch_number}_match and name c*")
+
+        pymol.cmd.set('cartoon_transparency', 0.5, f'{pdbid} and not (*_stretch or *_match)')
 
     pymol.cmd.center(f"{model_name} and chain A")
     pymol.cmd.hide('everything', 'resn hoh or resn so4 or resn edo or resn cl or resn na or resn mn or resn zn or resn mg or resn ca')
     show_interface_hbonds(model_name, model_name, 'A', 'B')
+    pymol.cmd.set('transparency', 0.5)
+    pymol.cmd.disable('all')
+    pymol.cmd.enable('target')
+    for helix in helices:
+        pymol.cmd.enable(helix)
 
     interface_path = '/Users/codykrivacic/software/anaconda3/envs/proteindesign/lib/python3.7/site-packages/pmg_tk/startup/interfaceFinder.py'
     sys.path.insert(0, os.path.dirname(interface_path))

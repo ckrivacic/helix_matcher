@@ -2,7 +2,7 @@
 Run PatchMAN to generate potential interacting scaffolds.
 
 Usage:
-    helix patchman <workspace> [options]
+    helix 02_patchman <workspace> [options]
 
 Options:
     --local, -l  Run locally

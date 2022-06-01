@@ -2,7 +2,7 @@
 Filter by interface score.
 
 Usage:
-    helix filter <workspace> [options]
+    helix 04_filter <workspace> [options]
 
 Options:
     --filter=FILENAME, -f  A yaml file describing filters. If not provided, a

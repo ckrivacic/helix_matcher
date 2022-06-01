@@ -3,7 +3,7 @@ Make a PyMOL session for each result, one at a time, in ascending score
 order.
 
 Usage:
-    helix export_matches <workspace> [options]
+    helix 07_export_matches <workspace> [options]
 
 Options:
     --target=STR, -t  Only view matches for the given target
