@@ -391,6 +391,8 @@ def apply_filters(workspace, pose, input_pose=None):
     row['interface_dG'] = ia_mover.get_interface_dG()
     row['interfac_residues'] = int_set
 
+    row = run_monomer_filters(workspace, pose, row)
+
     if input_pose:
         ca_rmsd = CA_rmsd(pose, input_pose)
         aa_rmsd = all_atom_rmsd(pose, input_pose)
