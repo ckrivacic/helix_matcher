@@ -24,6 +24,7 @@ from helix.benchmark import score_pdb
 from pyrosetta import create_score_function
 import helix.workspace as ws
 from helix.design.design_interface import apply_filters
+from helix.design.design_interface import run_monomer_filters
 from pyrosetta.rosetta.core.chemical import VariantType
 
 
@@ -97,23 +98,23 @@ def main():
         interface = score_pdb.PDBInterface(initial_pose, minimize=True, cst=True, is_pose=True)
         minimized_pose = interface.pose
         ref = create_score_function('ref2015')
-        outrow = apply_filters(workspace, minimized_pose)
-        outrow['total_score'] = ref(minimized_pose)
+        outrow = run_monomer_filters(workspace, minimized_pose)
+        # outrow['total_score'] = ref(minimized_pose)
         outrow['chainA_size'] = minimized_pose.chain_end(1)
         outrow['name'] = os.path.basename(pdb_file)
         outrow['sc_cst'] = False
         outrow['minimized']=True
         outrows.append(outrow)
 
-        outrow_2 = apply_filters(workspace, clone)
-        outrow_2['total_score'] = ref(minimized_pose)
+        outrow_2 = run_monomer_filters(workspace, clone)
+        # outrow_2['total_score'] = ref(minimized_pose)
         outrow_2['chainA_size'] = minimized_pose.chain_end(1)
         outrow_2['name'] = os.path.basename(pdb_file)
         outrow_2['sc_cst'] = False
         outrow_2['minimized']=False
         outrows.append(outrow_2)
 
-    outfile = os.path.join(output_folder, f'benchmark_scored_{task}.pkl')
+    outfile = os.path.join(output_folder, f'benchmark_scored_{task}_monomer.pkl')
     print(f'Saving to file: {outfile}')
     pd.DataFrame(outrows).to_pickle(outfile)
 
