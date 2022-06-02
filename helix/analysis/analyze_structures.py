@@ -37,6 +37,7 @@ from helix.utils import utils
 from helix import big_jobs
 from helix.rifdock import interface
 from helix.design.design_interface import apply_filters
+from helix.design.design_interface import run_monomer_filters
 # from helix.matching.scan_helices import contiguous_secstruct
 from pyrosetta.rosetta.protocols.rosetta_scripts import XmlObjects
 
@@ -76,7 +77,9 @@ def main():
         if pose.num_chains() < 2:
             continue
         # row = analyze_pose(pose, chA='A', chB='B')
-        row = apply_filters(workspace, pose)
+        # row = apply_filters(workspace, pose)
+        row = {}
+        row = run_monomer_filters(workspace, pose, row)
         row['file'] = inputs[task_id]
         row['file_idx'] = i
         row['target'] = args['<folder>']
