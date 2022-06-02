@@ -98,7 +98,8 @@ def main():
         interface = score_pdb.PDBInterface(initial_pose, minimize=True, cst=True, is_pose=True)
         minimized_pose = interface.pose
         ref = create_score_function('ref2015')
-        outrow = run_monomer_filters(workspace, minimized_pose)
+        row = {}
+        outrow = run_monomer_filters(workspace, minimized_pose, row)
         # outrow['total_score'] = ref(minimized_pose)
         outrow['chainA_size'] = minimized_pose.chain_end(1)
         outrow['name'] = os.path.basename(pdb_file)
@@ -106,7 +107,8 @@ def main():
         outrow['minimized']=True
         outrows.append(outrow)
 
-        outrow_2 = run_monomer_filters(workspace, clone)
+        row = {}
+        outrow_2 = run_monomer_filters(workspace, clone, row)
         # outrow_2['total_score'] = ref(minimized_pose)
         outrow_2['chainA_size'] = minimized_pose.chain_end(1)
         outrow_2['name'] = os.path.basename(pdb_file)
