@@ -38,6 +38,7 @@ Options:
     --taskrange=TASKS  Run a range of task #s (local only)
     --subprocess  Run the (local) jobs in a background process
     --rerun-worst-9mer  Rerun worst 9mer (no design)
+    --run-monomer-filters  Rerun just monomer filters
 """
 import helix.workspace as ws
 from helix import big_jobs
@@ -115,6 +116,9 @@ def main():
 
         if args['--rerun-worst-9mer']:
             cmd += '--rerun-worst-9mer',
+
+        if args['--run-monomer-filters']:
+            cmd += '--run-monomer-filters',
 
         cmd += '--nstruct', args['--nstruct']
 

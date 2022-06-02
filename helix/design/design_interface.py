@@ -12,6 +12,7 @@ Options:
     --suffix=STR  Add a suffix to all output names
     --test-run  Make some changes to make this a test run
     --rerun-worst-9mer  No design; just rerun worst 9mer
+    --run-monomer-filters  No design; just run monomer filters
 '''
 import sys, os, json
 import pandas as pd
@@ -125,6 +126,72 @@ def rerun_9mer(workspace, pose, row):
 
     return row
 
+def run_monomer_filters(workspace, pose, row):
+    interface_holes = '''
+    <InterfaceHoles name="interface_holes" jump="1"/>
+    '''
+    interface_holes_obj = XmlObjects.static_get_filter(interface_holes)
+    row['interface_holes'] = interface_holes_obj.report_sm(pose)
+    chainpose = pose.split_by_chain(1)
+
+    holes = '''
+    <Holes name="holes" threshold="99999" exclude_bb_atoms="false"  />
+    '''
+    buns_all = '''
+    <BuriedUnsatHbonds 
+        name="Buried Unsat [[-]]"
+        report_all_heavy_atom_unsats="true" scorefxn="ref2015"
+        cutoff="4" residue_surface_cutoff="20.0"
+        ignore_surface_res="true" print_out_info_to_pdb="true"
+        dalphaball_sasa="1" probe_radius="1.1" confidence="0"
+        only_interface="false" />
+    '''
+    buns_sc = '''
+    <BuriedUnsatHbonds 
+        name="Buried Unsat Sidechains [[-]]"
+        report_sc_heavy_atom_unsats="true" scorefxn="ref2015" cutoff="4"
+        residue_surface_cutoff="20.0" ignore_surface_res="true"
+        print_out_info_to_pdb="true"  dalphaball_sasa="1"
+        probe_radius="1.1" confidence="0" only_interface="false" />
+    '''
+    packstat = '''
+      <PackStat
+        name="PackStat Score [[+]]"
+        threshold="0"
+      />
+    '''
+    npsa = '''
+    <BuriedSurfaceArea name="Buried Nonpolar Surface Area [[+]]"
+    select_only_FAMILYVW="true" filter_out_low="false"
+    atom_mode="all_atoms"
+    confidence="1.0"
+    />
+    '''
+    exposed_hydrophobics = \
+        '''
+    <ExposedHydrophobics
+    name="ExposedHydrophobics SASA [[-]]"
+    sasa_cutoff="20"
+    threshold="-1"
+    />
+    '''
+
+    holes_obj = XmlObjects.static_get_filter(holes)
+    buns_all_obj = XmlObjects.static_get_filter(buns_all)
+    buns_sc_obj = XmlObjects.static_get_filter(buns_sc)
+    packstat_obj = XmlObjects.static_get_filter(packstat)
+    npsa_obj = XmlObjects.static_get_filter(packstat)
+    exposed_obj = XmlObjects.static_get_filter(exposed_hydrophobics)
+
+    row['holes_monomer'] = holes_obj.report_sm(chainpose)
+    row['buns_all_monomer'] = buns_all_obj.report_sm(chainpose)
+    row['buns_sc_monomer'] = buns_sc_obj.report_sm(chainpose)
+    row['packstat_monomer'] = packstat_obj.report_sm(chainpose)
+    row['npsa_monomer'] = npsa_obj.report_sm(chainpose)
+    row['exposed_hydrophobics_monomer'] = exposed_obj.report_sm(chainpose)
+
+    return row
+
 
 def apply_filters(workspace, pose, input_pose=None):
     psipred_single = os.path.expanduser('~/software/fragments/psipred/runpsipred_single')
@@ -198,7 +265,6 @@ def apply_filters(workspace, pose, input_pose=None):
         ignore_surface_res="true" print_out_info_to_pdb="true"
         dalphaball_sasa="1" probe_radius="1.1" confidence="0"
         only_interface="true" />
-
     '''
     buns_interface = '''
     <RESIDUE_SELECTORS>
@@ -501,6 +567,18 @@ class InterfaceDesign(object):
             out.to_pickle(self.output_pickle)
         else:
             print('Nothing to do; exiting')
+
+    def run_monomer_filters(self, force=True):
+        # if force:
+        row = utils.safe_load(self.output_pickle)
+        output_pose = pose_from_file(self.output_file)
+        row = row.iloc[0]
+        # else:
+        #     row = self.row
+        #     output_pose = self.design_pose
+        row = run_monomer_filters(self.workspace, output_pose, row)
+        out = pd.DataFrame([row])
+        out.to_pickle(self.output_pickle)
 
     def get_json(self):
         model_no = os.path.basename(self.pdb_path).split('_')[1]
@@ -1089,6 +1167,8 @@ def main():
         else:
             force_recalc = False
         designer.rerun_9mer(force=force_recalc)
+    elif args['--run-monomer-filters']:
+        designer.run_monomer_filters()
     else:
         designer.apply()
 
