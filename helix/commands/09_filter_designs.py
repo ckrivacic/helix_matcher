@@ -2,7 +2,7 @@
 Filter by interface score.
 
 Usage:
-    helix 04_filter_designs <workspace> <output_dir> [options]
+    helix 09_filter_designs <workspace> <output_dir> [options]
 
 Options:
     --filter=FILENAME, -f  A yaml file describing filters. If not provided, a
@@ -10,6 +10,7 @@ Options:
     --target=STR, -t  Only run filters for a specific target
     --clear, -o  Delete existing filtered symlinks prior to running
     --copy  Copy files instead of symlinking them (NOT IMPLEMENTED)
+    --dry-run
 '''
 import docopt
 import yaml
@@ -55,7 +56,7 @@ def main():
                         'buns_all': ['<', 2],
                         },
                     'percentile': {
-                        'interface_dG': ['<', 0.4]
+                        'interface_dG': ['<', 0.4],
                         'contact_molecular_surface': ['>', 0.5]
                         }
                     }
@@ -64,17 +65,28 @@ def main():
         scorelist = []
         # for name, group in scores.groupby(['patch_len']):
         #     scorelist.append(parse_filter(filters, group))
+        print('Initial # designs:')
+        print(scores.shape[0])
+        if scores.empty:
+            continue
         scores = parse_filter(filters, scores)
+        print('Final # designs:')
+        print(scores.shape[0])
 
         # Symlink 
         # outdir = match_workspace.cluster_outputs
+        if args['--dry-run']:
+            continue
         outdir = args['<output_dir>']
         if not os.path.exists(outdir):
             os.makedirs(outdir, exist_ok=True)
         for idx, row in scores.iterrows():
+            outname = os.path.basename(row['design_file'])
+            target_name = match_workspace.basename(target)
+            outname = target_name + '_' + outname
             # patchman_length = os.path.dirname(row['design_file']).split('/')[-2]
             # symoutdir = os.path.join(outdir, patchman_len)
-            symlink_path = os.path.join(outdir, os.path.basename(row['design_file']))
+            symlink_path = os.path.join(outdir, outname)
             if os.path.islink(symlink_path):
                 os.remove(symlink_path)
             relpath = os.path.relpath(os.path.join(match_workspace.root_dir, row['design_file']), outdir)

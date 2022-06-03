@@ -83,6 +83,7 @@ setuptools.setup(
             define_command('06_score_matches'),
             define_command("07_export_matches"),
             define_command('08_design_scaffolds'),
+            define_command('09_filter_designs'),
             define_command('docking_benchmark'),
             define_command('plot_filter'),
             define_command('plot_designs'),

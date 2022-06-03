@@ -56,6 +56,7 @@ name_dict = {
     '4O3V': 'VirB8',
     '4OGA': 'InsulinR',
     '5U8R': 'IGF1R',
+    '3DI3': 'IL7',
     'N/A': '',
 }
 global folder_dict
@@ -456,6 +457,9 @@ def main():
             workspaces.append(ws.MatchWorkspace(workspace.root_dir, target))
     dfs = []
     for match_workspace in workspaces:
+        print(match_workspace.target_path)
+        if os.path.basename(os.path.dirname(match_workspace.target_path)) == '3KFD_both':
+            continue
         df = parse_dataframe(match_workspace, args)
 
         if args['--suffix']:

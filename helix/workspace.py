@@ -970,7 +970,8 @@ class MatchWorkspace(Workspace):
     @property
     def all_scorefile_paths(self):
         scorefiles = glob.glob(os.path.join(self.design_dir, '*.pkl'))
-        scorefiles.remove(self.final_scorefile_path)
+        if self.final_scorefile_path in scorefiles:
+            scorefiles.remove(self.final_scorefile_path)
         return sorted(scorefiles)
 
     def get_scores(self, reread=False):
@@ -988,7 +989,10 @@ class MatchWorkspace(Workspace):
         for f in self.all_scorefile_paths:
             df = safe_open_dataframe(f)
             dataframes.append(df)
-        df = pd.concat(dataframes, ignore_index=True)
+        if len(dataframes) > 0:
+            df = pd.concat(dataframes, ignore_index=True)
+        else:
+            return pd.DataFrame()
         # if reread:
         #     df = pd.concat([df, old_df]).drop_duplicates('design_file').reset_index(drop=True)
         df.to_pickle(self.final_scorefile_path)
