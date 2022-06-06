@@ -66,8 +66,6 @@ def main():
         while pis.has_another_pose():
             pis.fill_pose(pose)
             # pdb = inputs[input_idx]
-            if pose.num_chains() < 2:
-                continue
             # row = analyze_pose(pose, chA='A', chB='B')
             # row = apply_filters(workspace, pose)
             row = {}
