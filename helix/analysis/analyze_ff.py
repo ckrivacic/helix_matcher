@@ -18,6 +18,7 @@ import os, glob
 import pandas as pd
 from helix import workspace as ws
 from helix.design.design_interface import run_monomer_filters
+from helix.design.design_interface import apply_filters
 from roseasy import pipeline
 
 
@@ -61,8 +62,7 @@ def main():
             if pose.num_chains() < 2:
                 continue
             # row = analyze_pose(pose, chA='A', chB='B')
-            # row = apply_filters(workspace, pose)
-            row = {}
+            row = apply_filters(workspace, pose)
             row = run_monomer_filters(workspace, pose, row)
             row['file'] = inputs[task_id]
             row['file_idx'] = i
