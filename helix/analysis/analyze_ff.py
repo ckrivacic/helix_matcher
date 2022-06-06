@@ -89,7 +89,7 @@ def main():
     print('Saving in folder {}'.format(pickle_outdir), flush=True)
     if not os.path.exists(pickle_outdir):
         os.makedirs(pickle_outdir, exist_ok=True)
-    dataframe_out = os.path.join(pickle_outdir, f'{target}_{task_id}.pkl')
+    dataframe_out = os.path.join(pickle_outdir, f'{input_name}_{task_id}.pkl')
     df.to_pickle(dataframe_out)
 
 
@@ -105,7 +105,7 @@ def get_json(pdb_path, workspace):
     return insertions
 
 
-def run_more_filters(row, pose, input_pose, workspace, filename, taskid):
+def run_more_filters(row, pose, input_pose, workspace, filename):
     ca_rmsd = CA_rmsd(pose, input_pose)
     aa_rmsd = all_atom_rmsd(pose, input_pose)
     row['ca_rmsd'] = ca_rmsd
@@ -116,7 +116,7 @@ def run_more_filters(row, pose, input_pose, workspace, filename, taskid):
         i += 1
         try:
             row[f"frag_score_filter_{i}"] = calculate_fsf(workspace, pose, insertion,
-                                                          f"{str(taskid)}_{i}",
+                                                          f"{filename}_{str(taskid)}_{i}",
                                                           test_run=test_run)
             # test_run=True)
         except:
