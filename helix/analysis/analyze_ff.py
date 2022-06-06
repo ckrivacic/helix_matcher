@@ -105,7 +105,7 @@ def get_json(pdb_path, workspace):
     return insertions
 
 
-def run_more_filters(row, pose, input_pose, workspace, filename):
+def run_more_filters(row, pose, input_pose, workspace, filename, taskid):
     ca_rmsd = CA_rmsd(pose, input_pose)
     aa_rmsd = all_atom_rmsd(pose, input_pose)
     row['ca_rmsd'] = ca_rmsd
