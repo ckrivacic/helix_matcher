@@ -112,7 +112,7 @@ def run_more_filters(row, pose, input_pose, workspace, filename, taskid):
     row['all_atom_rmsd'] = aa_rmsd
     i = 0
     test_run = False
-    for insertion in get_json(filename):
+    for insertion in get_json(filename, workspace):
         i += 1
         try:
             row[f"frag_score_filter_{i}"] = calculate_fsf(workspace, pose, insertion,
