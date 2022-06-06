@@ -12,6 +12,7 @@ Options:
 
 import numpy as np
 from pyrosetta.rosetta.core.import_pose.pose_stream import SilentFilePoseInputStream
+from pyrosetta.rosetta.core.scoring import calpha_superimpose_pose
 from pyrosetta.rosetta.core.scoring import CA_rmsd
 from pyrosetta.rosetta.core.scoring import all_atom_rmsd
 from pyrosetta import init
@@ -106,8 +107,10 @@ def get_json(pdb_path, workspace):
 
 
 def run_more_filters(row, pose, input_pose, workspace, filename, taskid):
+    sup_rmsd = calpha_superimpose_pose(input_pose, pose)
     ca_rmsd = CA_rmsd(pose, input_pose)
     aa_rmsd = all_atom_rmsd(pose, input_pose)
+    row['sup_rmsd'] = sup_rmsd
     row['ca_rmsd'] = ca_rmsd
     row['all_atom_rmsd'] = aa_rmsd
     i = 0
