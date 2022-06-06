@@ -15,7 +15,8 @@ Options:
 import docopt
 import yaml
 from helix import workspace as ws
-import pandas as pd
+from pyrosetta import init
+from pyrosetta import pose_from_file
 import os
 
 from helix.utils.utils import parse_filter
@@ -26,6 +27,7 @@ def get_patch_length(row):
 
 
 def main():
+    init('-ignore_unrecognized_res')
     args = docopt.docopt(__doc__)
     workspace = ws.workspace_from_dir(args['<workspace>'])
 
@@ -84,10 +86,14 @@ def main():
             outname = os.path.basename(row['design_file'])
             target_name = match_workspace.basename(target)
             outname = target_name + '_' + outname
+
             # patchman_length = os.path.dirname(row['design_file']).split('/')[-2]
             # symoutdir = os.path.join(outdir, patchman_len)
             symlink_path = os.path.join(outdir, outname)
             if os.path.islink(symlink_path):
                 os.remove(symlink_path)
-            relpath = os.path.relpath(os.path.join(match_workspace.root_dir, row['design_file']), outdir)
-            os.symlink(relpath, symlink_path)
+            pose = pose_from_file(os.path.join(match_workspace.root_dir, row['design_file']))
+            chA = pose.split_by_chain(1)
+            chA.dump_pdb(symlink_path)
+            # relpath = os.path.relpath(os.path.join(match_workspace.root_dir, row['design_file']), outdir)
+            # os.symlink(relpath, symlink_path)
