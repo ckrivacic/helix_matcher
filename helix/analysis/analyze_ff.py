@@ -72,11 +72,13 @@ def main():
             row = run_monomer_filters(workspace, pose, row)
             row['file'] = inputs[task_id]
             row['file_idx'] = i
-            row['target'] = args['<folder>']
+            row['target'] = target
+            row['design'] = input_file
+            row['design_name'] = '_'.join(input_name.split('_')[1:])
             # row['descriptor'] = pis.get_last_pose_descriptor_string()
             # row['target'] = row['descriptor'].split('/')[0].split('_')[-1]
             row['silent_file'] = inputs[task_id]
-            row = run_more_filters(row, pose, input_pose, workspace, input_name)
+            row = run_more_filters(row, pose, input_pose, workspace, input_name, task_id)
             rowlist.append(row)
             pis.next_struct()
             i += 1
@@ -93,7 +95,7 @@ def main():
 
 def get_json(pdb_path, workspace):
     import json
-    model_no = os.path.basename(pdb_path).split('_')[1]
+    model_no = os.path.basename(pdb_path).split('_')[2]
     lhl_folder = os.path.join(workspace.root_dir, '..', 'regenerated_data_sets_2020_03',
                               'sequence_design_for_LHL_reshaping_2lv8_two_LHL',
                               'selected_designs_for_state_count')
