@@ -127,15 +127,24 @@ def rerun_9mer(workspace, pose, row):
     return row
 
 def run_monomer_filters(workspace, pose, row):
-    interface_holes = '''
-    <InterfaceHoles name="interface_holes" jump="1"/>
-    '''
-    interface_holes_obj = XmlObjects.static_get_filter(interface_holes)
-    row['interface_holes'] = interface_holes_obj.report_sm(pose)
-    chainpose = pose.split_by_chain(1)
+    if pose.num_chains() > 1:
+        interface_holes = '''
+        <InterfaceHoles name="interface_holes" jump="1"/>
+        '''
+        interface_holes_obj = XmlObjects.static_get_filter(interface_holes)
+        row['interface_holes'] = interface_holes_obj.report_sm(pose)
+        chainpose = pose.split_by_chain(1)
+    else:
+        chainpose = pose
 
     holes = '''
     <Holes name="holes" threshold="99999" exclude_bb_atoms="false"  />
+    '''
+    vbuns = '''
+    <BuriedUnsatHbonds name="vbuns_all_heavy_interface" 
+    report_all_heavy_atom_unsats="true" ignore_surface_res="false" print_out_info_to_pdb="true" 
+    atomic_depth_selection="5.5" burial_cutoff="1000" dalphaball_sasa="true" 
+    probe_radius="1.1" confidence="0" />
     '''
     buns_all = '''
     <BuriedUnsatHbonds 
@@ -179,11 +188,13 @@ def run_monomer_filters(workspace, pose, row):
     holes_obj = XmlObjects.static_get_filter(holes)
     buns_all_obj = XmlObjects.static_get_filter(buns_all)
     buns_sc_obj = XmlObjects.static_get_filter(buns_sc)
+    vbuns_obj = XmlObjects.static_get_filter(vbuns)
     packstat_obj = XmlObjects.static_get_filter(packstat)
-    npsa_obj = XmlObjects.static_get_filter(packstat)
+    npsa_obj = XmlObjects.static_get_filter(npsa)
     exposed_obj = XmlObjects.static_get_filter(exposed_hydrophobics)
 
     row['holes_monomer'] = holes_obj.report_sm(chainpose)
+    row['vbuns_monomer'] = vbuns_obj.report_sm(chainpose)
     row['buns_all_monomer'] = buns_all_obj.report_sm(chainpose)
     row['buns_sc_monomer'] = buns_sc_obj.report_sm(chainpose)
     row['packstat_monomer'] = packstat_obj.report_sm(chainpose)

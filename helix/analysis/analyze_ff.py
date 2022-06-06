@@ -10,15 +10,19 @@ Options:
     --designs-per-task=INT  How many designs to analyze per task  [default: 5]
 """
 
+import numpy as np
 from pyrosetta.rosetta.core.import_pose.pose_stream import SilentFilePoseInputStream
+from pyrosetta.rosetta.core.scoring import CA_rmsd
+from pyrosetta.rosetta.core.scoring import all_atom_rmsd
 from pyrosetta import init
 from pyrosetta import Pose
+from pyrosetta import pose_from_file
 import docopt
 import os, glob
 import pandas as pd
 from helix import workspace as ws
 from helix.design.design_interface import run_monomer_filters
-from helix.design.design_interface import apply_filters
+from helix.design.design_interface import calculate_fsf
 from roseasy import pipeline
 
 
@@ -55,6 +59,9 @@ def main():
         print(input)
         pis = SilentFilePoseInputStream(input)
         target = os.path.basename(os.path.dirname(input)).split('_')[0]
+        input_name = os.path.basename(os.path.dirname(input))
+        input_file = os.path.join(roseasy_workspace.input_dir, input_name + '.pdb.gz')
+        input_pose = pose_from_file(input_file)
         i = 0
         while pis.has_another_pose():
             pis.fill_pose(pose)
@@ -62,7 +69,8 @@ def main():
             if pose.num_chains() < 2:
                 continue
             # row = analyze_pose(pose, chA='A', chB='B')
-            row = apply_filters(workspace, pose)
+            # row = apply_filters(workspace, pose)
+            row = {}
             row = run_monomer_filters(workspace, pose, row)
             row['file'] = inputs[task_id]
             row['file_idx'] = i
@@ -70,6 +78,7 @@ def main():
             # row['descriptor'] = pis.get_last_pose_descriptor_string()
             # row['target'] = row['descriptor'].split('/')[0].split('_')[-1]
             row['silent_file'] = inputs[task_id]
+            row = run_more_filters(row, pose, input_pose, workspace, input_name)
             rowlist.append(row)
             pis.next_struct()
             i += 1
@@ -82,6 +91,37 @@ def main():
         os.makedirs(pickle_outdir, exist_ok=True)
     dataframe_out = os.path.join(pickle_outdir, f'{target}_{task_id}.pkl')
     df.to_pickle(dataframe_out)
+
+
+def get_json(pdb_path, workspace):
+    import json
+    model_no = os.path.basename(pdb_path).split('_')[1]
+    lhl_folder = os.path.join(workspace.root_dir, '..', 'regenerated_data_sets_2020_03',
+                              'sequence_design_for_LHL_reshaping_2lv8_two_LHL',
+                              'selected_designs_for_state_count')
+    insertion_file = os.path.join(lhl_folder, f'insertion_points_{model_no}.json')
+    with open(insertion_file, 'r') as f:
+        insertions = json.load(f)
+    return insertions
+
+
+def run_more_filters(row, pose, input_pose, workspace, filename, taskid):
+    ca_rmsd = CA_rmsd(pose, input_pose)
+    aa_rmsd = all_atom_rmsd(pose, input_pose)
+    row['ca_rmsd'] = ca_rmsd
+    row['all_atom_rmsd'] = aa_rmsd
+    i = 0
+    test_run = False
+    for insertion in get_json(filename):
+        i += 1
+        try:
+            row[f"frag_score_filter_{i}"] = calculate_fsf(workspace, pose, insertion,
+                                                          f"{str(taskid)}_{i}",
+                                                          test_run=test_run)
+            # test_run=True)
+        except:
+            row[f"frag_score_filter_{i}"] = np.nan
+    return row
 
 
 if __name__=='__main__':
