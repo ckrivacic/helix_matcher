@@ -62,6 +62,10 @@ def main():
         target = os.path.basename(os.path.dirname(input)).split('_')[0]
         input_name = os.path.basename(os.path.dirname(input))
         input_file = os.path.join(roseasy_workspace.input_dir, input_name + '.pdb.gz')
+        init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro' \
+             ' -holes:dalphaball {} -ignore_unrecognized_res -detect_disulf false ' \
+             '-indexed_structure_store:fragment_store {} \'
+             '-s {}'.format(dalphaball, ss_vall, input_file))
         input_pose = pose_from_file(input_file)
         i = 0
         while pis.has_another_pose():
