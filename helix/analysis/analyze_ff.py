@@ -8,6 +8,7 @@ Usage:
 Options:
     --task=INT  Only run a certain task
     --designs-per-task=INT  How many designs to analyze per task  [default: 5]
+    --fsf  Run the fragmetn score filter
 """
 
 import numpy as np
@@ -110,7 +111,7 @@ def get_json(pdb_path, workspace):
     return insertions
 
 
-def run_more_filters(row, pose, input_pose, workspace, filename, taskid):
+def run_more_filters(row, pose, input_pose, workspace, filename, taskid, fsf=False):
     sup_rmsd = calpha_superimpose_pose(input_pose, pose)
     ca_rmsd = CA_rmsd(pose, input_pose)
     aa_rmsd = all_atom_rmsd(pose, input_pose)
@@ -119,15 +120,16 @@ def run_more_filters(row, pose, input_pose, workspace, filename, taskid):
     row['all_atom_rmsd'] = aa_rmsd
     i = 0
     test_run = False
-    for insertion in get_json(filename, workspace):
-        i += 1
-        try:
-            row[f"frag_score_filter_{i}"] = calculate_fsf(workspace, pose, insertion,
-                                                          f"{filename}_{str(taskid)}_{i}",
-                                                          test_run=test_run)
-            # test_run=True)
-        except:
-            row[f"frag_score_filter_{i}"] = np.nan
+    if fsf:
+        for insertion in get_json(filename, workspace):
+            i += 1
+            try:
+                row[f"frag_score_filter_{i}"] = calculate_fsf(workspace, pose, insertion,
+                                                              f"{filename}_{str(taskid)}_{i}",
+                                                              test_run=test_run)
+                # test_run=True)
+            except:
+                row[f"frag_score_filter_{i}"] = np.nan
     return row
 
 
