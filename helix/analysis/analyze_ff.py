@@ -84,7 +84,7 @@ def main():
             # row['descriptor'] = pis.get_last_pose_descriptor_string()
             # row['target'] = row['descriptor'].split('/')[0].split('_')[-1]
             row['silent_file'] = inputs[task_id]
-            row = run_more_filters(row, pose, input_pose, roseasy_workspace, input_name, task_id)
+            row = run_more_filters(row, pose, input_pose, roseasy_workspace, input_name, task_id, args['--fsf'])
             rowlist.append(row)
             pis.next_struct()
             i += 1
