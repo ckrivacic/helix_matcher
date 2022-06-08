@@ -5,6 +5,8 @@ Usage:
     fig_4a.py <match_workspace> <model> [options]
 
 Options:
+    --outdir=STR  Specify an output dir  [default: fig4a_sessions]
+    --open  Open the pymol session
 '''
 
 import helix.workspace as ws
@@ -79,7 +81,7 @@ def load_patchman_ex(workspace, row):
     return selstr, parent_pdb
 
 
-def make_session(workspace, model_path, input_path, patchman_rows):
+def make_session(workspace, model_path, input_path, patchman_rows, args):
     insertions = get_json(workspace, input_path)
 
     model_name = os.path.basename(model_path).split('.')[0]
@@ -173,9 +175,10 @@ def make_session(workspace, model_path, input_path, patchman_rows):
     pymol.cmd.show('surface', 'model_surface')
     pymol.cmd.show('surface', 'target_surface')
     target_name = workspace.basename(workspace._initial_target_path)
-    save_name = f'fig4_sessions/{target_name}_{model_name}.pse'
+    save_name = f"{args['--outdir']}/{target_name}_{model_name}.pse"
     pymol.cmd.save(save_name)
-    os.system(f'pymol {save_name}')
+    if args['--open']:
+        os.system(f'pymol {save_name}')
 
 
 def main():
@@ -205,7 +208,7 @@ def main():
     ))
 
     rows = exported_pdbs[exported_pdbs['superimposed_file'] == input_relpath]
-    make_session(workspace, model_path, input_path, rows)
+    make_session(workspace, model_path, input_path, rows, args)
 
 
 if __name__ == '__main__':

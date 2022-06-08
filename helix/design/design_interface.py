@@ -13,6 +13,7 @@ Options:
     --test-run  Make some changes to make this a test run
     --rerun-worst-9mer  No design; just rerun worst 9mer
     --run-monomer-filters  No design; just run monomer filters
+    --ramp-cst  Ramp constraints  [default: True]
 '''
 import sys, os, json
 import pandas as pd
@@ -1173,7 +1174,7 @@ def main():
     group = input_df[input_df['superimposed_file'] == group_name]
 
     designer = InterfaceDesign(workspace, group, task_id, total_inputs=len(inputs), special_rot=args['--special-rot'],
-                               test_run=args['--test-run'], suffix=args['--suffix'])
+                               test_run=args['--test-run'], suffix=args['--suffix'], ramp_cst=args['--ramp-cst'])
     if args['--rerun-worst-9mer']:
         if args['--suffix'] == '_specialrot':
             force_recalc = True
