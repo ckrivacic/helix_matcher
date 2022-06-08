@@ -6,7 +6,7 @@ Usage:
 
 Options:
     --plot-type=STR  Which type of plot to produce, options: scatter,  [default: scatter]
-    --xaxis=COLUMN, -x  Plot this column on the x-axis  [default: CA_rmsd]
+    --xaxis=COLUMN, -x  Plot this column on the x-axis  [default: ca_rmsd]
     --yaxis=COLUMN, -y  Plot this column on the y-axis  [default: holes_monomer]
     --hue=COLUMN  Color by values from this column
     --size=COLUMN  Resize scatterplot points by values from this column

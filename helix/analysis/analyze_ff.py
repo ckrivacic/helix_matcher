@@ -76,6 +76,8 @@ def main():
             # row = analyze_pose(pose, chA='A', chB='B')
             # row = apply_filters(workspace, pose)
             row = {}
+            sfxn = create_score_function('ref2015')
+            row['total_score'] = sfxn(pose)
             row = run_monomer_filters(workspace, pose, row)
             row['file'] = inputs[task_id]
             row['file_idx'] = i
@@ -132,8 +134,6 @@ def run_more_filters(row, pose, input_pose, workspace, filename, taskid, fsf=Fal
             except:
                 row[f"frag_score_filter_{i}"] = np.nan
 
-    sfxn = create_score_function('ref2015')
-    row['total_score'] = sfxn(pose)
     return row
 
 
