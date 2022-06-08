@@ -14,6 +14,7 @@ Options:
     --rerun-worst-9mer  No design; just rerun worst 9mer
     --run-monomer-filters  No design; just run monomer filters
     --no-cst-ramping  Don't ramp constraints
+    --helix-cst  Apply backbone constraints based on docked helix position rather than input position
 '''
 import sys, os, json
 import pandas as pd
@@ -54,7 +55,7 @@ from pyrosetta.rosetta.core.scoring import ScoreType
 def get_layer_design():
     # Not used
 
-   '''
+   layer_str = '''
     <RESIDUE_SELECTORS>
         # These are the default paramters to the old TaskOperation LayerDesign
         <Layer name="surface" select_core="false" select_boundary="false" select_surface="true" use_sidechain_neighbors="true"/>
@@ -98,8 +99,9 @@ def get_layer_design():
         </DesignRestrictions>
     </TASKOPERATIONS>
    '''
-   layer_design = XmlObjects.static_get_task_operation('layer_design_F_boundary_M')
-   return layer_design
+   layer_design = XmlObjects.create_from_string(layer_str)
+   layer_obj = layer_design.get_task_operation('layer_design_F_boundary_M')
+   return layer_obj
 
 
 def rerun_9mer(workspace, pose, row):
@@ -348,6 +350,7 @@ def apply_filters(workspace, pose, input_pose=None):
         binder_selector="chB" />
     </FILTERS>
     '''
+
     ia_mover = XmlObjects.static_get_mover(ia)
     ia_mover.set_compute_interface_sc(False)
     # ia_mover.set_compute_separated_sasa(False)
@@ -406,8 +409,22 @@ def apply_filters(workspace, pose, input_pose=None):
     row = run_monomer_filters(workspace, pose, row)
 
     if input_pose:
-        ca_rmsd = CA_rmsd(pose, input_pose)
-        aa_rmsd = all_atom_rmsd(pose, input_pose)
+        # Align on chain B and calculate ca_rmsd
+        sup_str = f'''
+        <Superimpose name="super" ref_start="{pose.chain_begin(2)}" ref_end="{pose.size()}" 
+        target_start="{pose.chain_begin(2)}" target_end="{pose.size()}" 
+        CA_only="1"/> 
+        '''
+        sup_mvr = XmlObjects.static_get_mover(sup_str)
+        sup_mvr.apply(pose)
+
+        ca_rmsd_str = f'''
+        <Rmsd name="ca_rmsd" chains="A" superimpose="0" threshold="9999" />
+        '''
+        ca_rmsd_obj = XmlObjects.static_get_filter(ca_rmsd_str)
+        ca_rmsd = ca_rmsd_obj.report_sm(pose)
+        # ca_rmsd = CA_rmsd(pose, input_pose, 1, pose.chain_end(1))
+        aa_rmsd = all_atom_rmsd(pose, input_pose, 1, pose.chain_end(1))
         row['ca_rmsd'] = ca_rmsd
         row['all_atom_rmsd'] = aa_rmsd
 
@@ -507,8 +524,9 @@ class InterfaceDesign(object):
     '''
     def __init__(self, workspace, df_group, task_id, special_rot=False, special_rot_weight=-3.0, buns_penalty=True,
                  ramp_cst=True, test_run=False, interface_upweight=True, total_inputs=0,
-                 suffix=False):
+                 suffix=False, args={}):
         self.workspace = workspace
+        self.args = args
 
         self.df = df_group
         self.task_id = task_id
@@ -614,6 +632,8 @@ class InterfaceDesign(object):
         row['total_score'] = ref(self.design_pose)
         # self.design_pose.dump_pdb(self.output_file)
         # self.row.to_pickle(self.output_pickle)
+        row['nopack_residues'] = self.nopack
+        row['num_nopack_residues'] = len(self.nopack)
 
         i = 0
         for insertion in self.get_json():
@@ -701,6 +721,8 @@ class InterfaceDesign(object):
             '''<DisallowIfNonnative name="no_pro" resnum="0" disallow_aas="P" />'''
         )
 
+        layer_des = get_layer_design()
+
         tf = TaskFactory()
         tf.push_back(operation.InitializeFromCommandline())
         tf.push_back(include_current)
@@ -708,6 +730,7 @@ class InterfaceDesign(object):
         tf.push_back(exchi)
         tf.push_back(no_gly)
         tf.push_back(no_pro)
+        tf.push_back(layer_des)
 
         no_packing = operation.PreventRepackingRLT()
         no_design = operation.RestrictToRepackingRLT()
@@ -721,7 +744,7 @@ class InterfaceDesign(object):
             print(nopack)
         if not self.special_rot and not initial_design:
             # If not using special rot score term, freeze the "good rotamers" in place
-            if len(self.nopack) > 0:
+            if len(nopack) > 0:
                 nopack_selector = utils.list_to_res_selector(nopack)
                 good_rots = operation.OperateOnResidueSubset(no_packing,
                                                              nopack_selector)
@@ -729,7 +752,12 @@ class InterfaceDesign(object):
             else:
                 nopack_selector = residue_selector.FalseResidueSelector()
         elif initial_design:
-            nopack_selector = utils.list_to_res_selector(nopack)
+            print('GOOD RESIDUES: ')
+            print(nopack)
+            if len(nopack) > 0:
+                nopack_selector = utils.list_to_res_selector(nopack)
+            else:
+                nopack_selector = residue_selector.FalseResidueSelector()
             good_rots = operation.OperateOnResidueSubset(no_design, nopack_selector)
             tf.push_back(good_rots)
         else:
@@ -998,6 +1026,7 @@ class InterfaceDesign(object):
         interface_residues = utils.res_selector_to_size_list(interface_residues, pylist=True)
         final_repack_resis = []
         self.sc_constraints = {}
+        self.bb_constraints = {}
         for idx, row in self.df.iterrows():
             # Helix residue positions are for just that chain
             docked_pose = pose_from_file(
@@ -1013,23 +1042,37 @@ class InterfaceDesign(object):
             # print(row.interfac_residues)
             # Interface residues, on the other hand, are numbered by rosetta number of the whole docked pose, so we need
             # to adjust those #s
-            for resi in row.interfac_residues:
-                if docked_pose.chain(resi) == 2:
-                    helix_index = resi - docked_pose.chain_begin(2) + 1
-                    if (helix_index > row.stop or helix_index < row.start):
-                        continue
-                    res_distances = resmap[resmap.res1 == helix_index]
-                    # print(res_distances)
-                    closest_row = res_distances.sort_values(by='dist').iloc[0]
-                    if not closest_row.res2 in interface_residues:
-                        continue
-                    # print(closest_row.res2)
-                    # print(closest_row.dist)
-                    if closest_row.dist < 1.5:
+            for resi in range(1, helix_pose.size()):
+                # if docked_pose.chain(resi) == 2:
+                    # helix_index = resi - docked_pose.chain_begin(2) + 1
+                if (resi > row.stop or resi < row.start):
+                    continue
+                print(f'Evaluationg resi {resi}')
+                res_distances = resmap[resmap.res1 == resi]
+                # print(res_distances)
+                closest_row = res_distances.sort_values(by='dist').iloc[0]
+                if closest_row.dist < 1.5:
+                    print(f'Found close residue: {closest_row.res2}')
+                    if closest_row.res2 in interface_residues:
+                        print('Residue in interface.')
+                        # print(closest_row.res2)
+                        # print(closest_row.dist)
                         # Relatively relaxed threshold because it might minimize into position
-                        self.transfer_residue(helix_pose, closest_row.res2, helix_index)
+                        self.transfer_residue(helix_pose, closest_row.res2, resi)
                         final_repack_resis.append(int(closest_row.res2))
-
+                    # Save CA coords for constraints
+                    if self.args.get('--helix-cst', False):
+                        self.bb_constraints[int(closest_row.res2)] = []
+                        helix_residue = helix_pose.residue(resi)
+                        ca_xyz = helix_residue.atom(helix_residue.atom_index('CA')).xyz()
+                        design_residue = self.design_pose.residue(int(closest_row.res2))
+                        design_atom_idx = design_residue.atom_index('CA')
+                        id = AtomID(design_atom_idx, int(closest_row.res2))
+                        reference = AtomID(1, 1)
+                        func = HarmonicFunc(0, 1)
+                        cst = CoordinateConstraint(id, reference, ca_xyz, func)
+                        self.bb_constraints[int(closest_row.res2)].append(cst)
+                        self.design_pose.add_constraint(cst)
 
         # Now that all residues have been transferred, repack and minimize
         # For task factory, repack all the interface residues and a clash-based repack shell. Use constraints.
@@ -1064,13 +1107,14 @@ class InterfaceDesign(object):
         # mover.apply(self.design_pose)
 
         # Add backbone constraints for minimization
-        coord_cst = constraint_generator.CoordinateConstraintGenerator()
-        coord_cst.set_sidechain(False)
-        # if not self.sc_cst:
-        #     coord_cst.set_sidechain(False)
-        self.bb_constraints = coord_cst.apply(self.design_pose)
-        for cst in self.bb_constraints:
-            self.design_pose.add_constraint(cst)
+        if not self.args.get('--helix-cst', False):
+            coord_cst = constraint_generator.CoordinateConstraintGenerator()
+            coord_cst.set_sidechain(False)
+            # if not self.sc_cst:
+            #     coord_cst.set_sidechain(False)
+            self.bb_constraints = coord_cst.apply(self.design_pose)
+            for cst in self.bb_constraints:
+                self.design_pose.add_constraint(cst)
 
         print('Performing constrained repack')
         packertask = tf.create_task_and_apply_taskoperations(self.design_pose)
@@ -1174,7 +1218,8 @@ def main():
     group = input_df[input_df['superimposed_file'] == group_name]
 
     designer = InterfaceDesign(workspace, group, task_id, total_inputs=len(inputs), special_rot=args['--special-rot'],
-                               test_run=args['--test-run'], suffix=args['--suffix'], ramp_cst=not args['--no-cst-ramping'])
+                               test_run=args['--test-run'], suffix=args['--suffix'], ramp_cst=not args['--no-cst-ramping'],
+                               args=args)
     if args['--rerun-worst-9mer']:
         if args['--suffix'] == '_specialrot':
             force_recalc = True

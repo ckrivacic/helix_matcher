@@ -27,9 +27,12 @@ from helix.utils.utils import parse_filter
 from helix.commands.plot_designs import get_sizes
 from helix.utils.utils import safe_load
 import pandas as pd
+import numpy as np
+import seaborn as sns
 import glob, os
 import yaml
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 from roseasy import pipeline
 
 
@@ -58,6 +61,76 @@ def get_scores(folder, reread=False):
     #     df = pd.concat([df, old_df]).drop_duplicates('design_file').reset_index(drop=True)
     df.to_pickle(final_scorefile_path)
     return df
+
+
+def scatterplot(df, workspace, args, use_matplotlib=True):
+    groups = df.groupby('design_name')
+    groupkeys = list(groups.groups.keys())
+    # for idx, ax in enumerate(axs.reshape(-1)):
+    for name, df in groups:
+        # df = groups.groups[groupkeys[idx]]
+        # if idx > len(groups)-1:
+        #     continue
+        print('DF COLS')
+        print(df.columns)
+        # if df.shape[0] > 0:
+        #     target_name = df.iloc[0]['design_file'].split('/')[1]
+        # else:
+        #     target_name = 'N/A'
+        if args['--perres-x']:
+            # df[args['--xaxis']] = df.apply(lambda x: x[args['--xaxis']] / x['chainA_size'], axis=1)
+            df[args['--xaxis']] = df.apply(lambda x: x[args['--xaxis']] / len(x['interfac_residues']) if len(x['interfac_residues']) > 0 else 0, axis=1)
+        if args['--perres-y']:
+            # df[args['--yaxis']] = df.apply(lambda x: x[args['--yaxis']] / x['chainA_size'], axis=1)
+            df[args['--yaxis']] = df.apply(lambda x: x[args['--yaxis']] / len(x['interfac_residues']) if len(x['interfac_residues']) > 0 else 0, axis=1)
+
+        # if use_matplotlib:
+        #     # Seaborn seems to reorder points, making the on_pick stuff useless. Back to MPL.
+        #     x = df[args['--xaxis']]
+        #     y = df[args['--yaxis']]
+        #     mpl_args = [x, y]
+        #     kwargs = {}
+        #     if args['--size']:
+        #         sizes = df[args['--size']]
+        #         sizes = normalize(sizes)
+        #         kwargs['s'] = sizes
+        #     else:
+        #         kwargs['s'] = 1
+        #     if hue:
+        #         kwargs['c'] = df[hue]
+        #     else:
+        #         kwargs['c'] = colors.palette['teal']
+        #     kwargs['alpha'] = 0.5
+        #     kwargs['edgecolor'] = 'white'
+        #     kwargs['linewidth'] = 0.05
+        #     points = ax.scatter(*mpl_args, picker=True, **kwargs)
+        #     if args['--hue']:
+        #         plt.colorbar(points, ax=ax)
+        #     click = plotting.ClickablePlot(points, df, args, workspace)
+        # else:
+        ax = sns.scatterplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
+                             alpha=1.0)
+
+        ax.title.set_text("{}_{}".format(df.iloc[0]['target'], df.iloc[0]['design_name']))
+        # ax.set_title(name_dict[target_name], y=1.0, pad=-100, fontsize=8, loc='right')
+        # ax.text(0.97, 0.97, name_dict[target_name], horizontalalignment='right', verticalalignment='top', transform=ax.transAxes,
+        #         fontsize=9)
+        # ax.tick_params(axis='x', labelsize=6, length=2)
+        # ax.tick_params(axis='y', labelsize=6, length=2)
+        # ax.tick_params(axis='both', which='major', pad=2)
+    # fig.text(0.5, 0.04, parse_metric(args['--xaxis']), fontsize=8, ha='center', va='top')
+    # fig.text(0.06, 0.5, parse_metric(args['--yaxis']), fontsize=8, ha='left', va='center', rotation='vertical')
+    # plt.subplots_adjust(
+    #     left=0.125,
+    #     right=0.9,
+    #     bottom=0.1,
+    #     top=0.9,
+    #     wspace=0.2,
+    #     hspace=0.2
+    # )
+
+    # plt.tight_layout()
+        plt.show()
 
 
 def parse_dataframe(df, workspace, args):
@@ -114,6 +187,8 @@ def main():
         focus_ws = pipeline.workspace_from_dir(dir)
         score_dir = os.path.join(dir, 'analysis')
         df = get_scores(score_dir)
+        if df.empty:
+            continue
         df = parse_dataframe(df, focus_ws, args)
 
         original_size = df.shape[0]
@@ -124,6 +199,8 @@ def main():
         print(f'Dropped {no_dropped} rows due to missing values.')
 
         dfs.append(df)
+        break
 
     if args['--plot-type'] == 'scatter':
-        scatterplot(dfs, workspace, args)
+        for df in dfs:
+            scatterplot(df, workspace, args)

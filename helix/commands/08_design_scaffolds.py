@@ -40,6 +40,7 @@ Options:
     --rerun-worst-9mer  Rerun worst 9mer (no design)
     --run-monomer-filters  Rerun just monomer filters
     --no-cst-ramping  Don't ramp constraints
+    --helix-cst  Use backbone constraints from the docked helices rather than the scaffold
 """
 import helix.workspace as ws
 from helix import big_jobs
@@ -114,6 +115,9 @@ def main():
 
         if args['--no-cst-ramping']:
             cmd += '--no-cst-ramping',
+
+        if args['--helix-cst']:
+            cmd += '--helix-cst',
 
         if args['--rerun-worst-9mer']:
             cmd += '--rerun-worst-9mer',
