@@ -57,6 +57,7 @@ def main():
     df = pd.DataFrame()
     for input in my_inputs:
         rowlist = []
+        output_folder = os.path.dirname(input)
         pose = Pose()
         print('Loading input:')
         print(input)
@@ -83,7 +84,11 @@ def main():
             row['file_idx'] = i
             row['target'] = target
             row['design'] = input_file
+            row['design_relpath'] = os.path.relpath(row['design'], start=roseasy_workspace.root_dir)
             row['design_name'] = '_'.join(input_name.split('_')[1:])
+            model_no_idx = row['design_name'].split('_').index('model') + 1
+            row['model_number'] = row['design_name'].split('_')[model_no_idx]
+            row['chainA_size'] = pose.size()
             # row['descriptor'] = pis.get_last_pose_descriptor_string()
             # row['target'] = row['descriptor'].split('/')[0].split('_')[-1]
             row['silent_file'] = inputs[task_id]
@@ -93,7 +98,7 @@ def main():
             i += 1
 
         df = pd.concat([df, pd.DataFrame(rowlist)], ignore_index=True)
-    pickle_outdir = os.path.join(roseasy_workspace.focus_dir, 'analysis')
+    pickle_outdir = os.path.join(output_folder, f'model_{design_name}.pkl')
     print(df, flush=True)
     print('Saving in folder {}'.format(pickle_outdir), flush=True)
     if not os.path.exists(pickle_outdir):

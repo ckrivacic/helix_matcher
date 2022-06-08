@@ -7,7 +7,7 @@ Usage:
 Options:
     --plot-type=STR  Which type of plot to produce, options: scatter,  [default: scatter]
     --xaxis=COLUMN, -x  Plot this column on the x-axis  [default: ca_rmsd]
-    --yaxis=COLUMN, -y  Plot this column on the y-axis  [default: holes_monomer]
+    --yaxis=COLUMN, -y  Plot this column on the y-axis  [default: npsa_monomer]
     --hue=COLUMN  Color by values from this column
     --size=COLUMN  Resize scatterplot points by values from this column
     --additional-df  Compare to another dataframe (for ex., benchmark data or data from another design method)
@@ -71,6 +71,7 @@ def parse_dataframe(df, workspace, args):
         relpath = os.path.join(workspace.root_dir, *pathlist[root_idx:])
         return relpath
 
+    print(df)
     df['design_realpath'] = df.apply(relative_path, axis=1)
 
     if not 'model_number' in df.columns:
@@ -109,6 +110,7 @@ def main():
     focus_dirs = glob.glob(os.path.join(workspace.root_dir, '*_validated_designs'))
     dfs = []
     for dir in focus_dirs:
+        print(f"Loading from dir {dir}")
         focus_ws = pipeline.workspace_from_dir(dir)
         score_dir = os.path.join(dir, 'analysis')
         df = get_scores(score_dir)
