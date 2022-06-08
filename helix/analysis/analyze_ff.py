@@ -19,6 +19,7 @@ from pyrosetta.rosetta.core.scoring import all_atom_rmsd
 from pyrosetta import init
 from pyrosetta import Pose
 from pyrosetta import pose_from_file
+from pyrosetta import create_score_function
 import docopt
 import os, glob
 import pandas as pd
@@ -130,6 +131,9 @@ def run_more_filters(row, pose, input_pose, workspace, filename, taskid, fsf=Fal
                 # test_run=True)
             except:
                 row[f"frag_score_filter_{i}"] = np.nan
+
+    sfxn = create_score_function('ref2015')
+    row['total_score'] = sfxn(pose)
     return row
 
 

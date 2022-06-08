@@ -89,6 +89,7 @@ setuptools.setup(
             define_command('plot_designs'),
             define_command('make_filter_session'),
             define_command('plot_helix_distribution'),
+            define_command('plot_ff_roseasy'),
             define_command('prep_rifdock'),
             define_command('rifdock'),
             define_command('cluster_rifdock_outputs'),

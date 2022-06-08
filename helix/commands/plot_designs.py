@@ -425,16 +425,16 @@ def parse_dataframe(workspace, args):
     return df
 
 
-def get_sizes(df):
+def get_sizes(df, name_col='superimposed_file'):
     import prody
     sizes = {}
     size_col = []
     for idx, row in df.iterrows():
-        model_num = os.path.basename(row['superimposed_file']).split('.')[0].split('_')[1]
+        model_num = os.path.basename(row[name_col]).split('.')[0].split('_')[1]
         if model_num in sizes:
             size_col.append(sizes[model_num])
             continue
-        atoms = prody.parsePDB(row['superimposed_file'], chain='A')
+        atoms = prody.parsePDB(row[name_col], chain='A')
         sizes[model_num] = len(atoms.select('name CA').getIndices())
         size_col.append(sizes[model_num])
     df['chainA_size'] = pd.Series(size_col)
