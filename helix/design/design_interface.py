@@ -634,6 +634,7 @@ class InterfaceDesign(object):
         # self.row.to_pickle(self.output_pickle)
         row['nopack_residues'] = self.nopack
         row['num_nopack_residues'] = len(self.nopack)
+        row = run_monomer_filters(self.workspace, self.design_pose, row)
 
         i = 0
         for insertion in self.get_json():
