@@ -149,7 +149,7 @@ def main():
             if args['--rerun-worst-9mer']:
                 script_name = f"rerun_9mer_{args['--suffix']}"
             else:
-                script_name=f"design_scaffold_{args['--suffix']}"
+                script_name=f"{args['--suffix']}"
             print('Submitting jobs for {}'.format(target))
             # submit.submit(rif_workspace, cmd, distributor='sge',
                     # make_dirs=args['--make-dirs'],
