@@ -867,10 +867,11 @@ class InterfaceDesign(object):
                     self.design_pose.add_constraint(cst)
         for cst in self.bb_constraints:
             if self.args.get('--helix-cst', False):
-                constraint = self.bb_constraints[cst]
+                for cst in self.bb_constraints[cst]:
+                    self.design_pose.add_constraint(cst)
             else:
                 constraint = cst
-            self.design_pose.add_constraint(constraint)
+                self.design_pose.add_constraint(constraint)
 
 
         if not self.special_rot:
