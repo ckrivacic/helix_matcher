@@ -424,9 +424,9 @@ def apply_filters(workspace, pose, input_pose=None):
         ca_rmsd_obj = XmlObjects.static_get_filter(ca_rmsd_str)
         ca_rmsd = ca_rmsd_obj.report_sm(pose)
         # ca_rmsd = CA_rmsd(pose, input_pose, 1, pose.chain_end(1))
-        aa_rmsd = all_atom_rmsd(pose, input_pose, 1, pose.chain_end(1))
+        # aa_rmsd = all_atom_rmsd(pose, input_pose, 1, pose.chain_end(1))
         row['ca_rmsd'] = ca_rmsd
-        row['all_atom_rmsd'] = aa_rmsd
+        # row['all_atom_rmsd'] = aa_rmsd
 
     return row
 
