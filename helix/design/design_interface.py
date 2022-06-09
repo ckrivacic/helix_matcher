@@ -540,7 +540,7 @@ class InterfaceDesign(object):
         init('-total_threads 1 -ex1 -ex2 -use_input_sc -ex1aro' \
              ' -holes:dalphaball {} -ignore_unrecognized_res -detect_disulf false ' \
              '-indexed_structure_store:fragment_store {} ' \
-             '-in:file:s {}'.format(dalphaball, ss_vall, self.pdb_path))
+             '-in:file:s {} -in:file:native {}'.format(dalphaball, ss_vall, self.pdb_path, self.pdb_path))
 
         self.design_pose = pose_from_file(
             self.pdb_path
