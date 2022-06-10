@@ -189,6 +189,7 @@ def main():
 
     args = docopt.docopt(__doc__)
     workspace = ws.workspace_from_dir(args['<match_workspace>'])
+    print(workspace)
     model = args['<model>']
     if len(model.split('/')) > 1:
         model_path = model

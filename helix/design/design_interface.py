@@ -15,6 +15,7 @@ Options:
     --run-monomer-filters  No design; just run monomer filters
     --no-cst-ramping  Don't ramp constraints
     --helix-cst  Apply backbone constraints based on docked helix position rather than input position
+    --freeze-jump  Whether to move the jump or not
 '''
 import sys, os, json
 import pandas as pd
@@ -1153,6 +1154,7 @@ class InterfaceDesign(object):
         return movemap
 
     def setup_design_movemap(self):
+        jump = not self.args.get('--freeze-jump', False)
         movemap = MoveMap()
         movemap.set_bb(False)
         movemap.set_chi(False)
@@ -1163,7 +1165,7 @@ class InterfaceDesign(object):
         movemap.set_chi(chA_selection)
         movemap.set_bb(chA_selection)
         movemap.set_chi(chB_selection)
-        movemap.set_jump(True)
+        movemap.set_jump(jump)
         return movemap
 
     def apply(self):

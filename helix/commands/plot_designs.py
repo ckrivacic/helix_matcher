@@ -224,7 +224,10 @@ def scatterplot(dfs, workspace, args, use_matplotlib=True):
     else:
         nrows = 3
         ncols = 3
+    # if not args['--target']:
     fig, axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=(5, 3.5), dpi=300)
+    # else:
+    #     fig, axs = plt.subplots()
     axs = np.array(axs)
     # if args['--size']:
     #     size = args['--size']
@@ -305,8 +308,9 @@ def scatterplot(dfs, workspace, args, use_matplotlib=True):
                 plt.colorbar(points, ax=ax)
             click = plotting.ClickablePlot(points, df, args, workspace)
         else:
+            # df['suffix' ] = df.apply(lambda x: x['suffix'][1:], axis=1)
             ax = sns.scatterplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
-                                 hue=hue, picker=True, alpha=1.0)
+                                 hue=hue, picker=False,  legend='auto')
 
         if args['--compare-bench']:
             bench_df = utils.safe_load(os.path.expanduser(
@@ -390,6 +394,7 @@ def scatterplot(dfs, workspace, args, use_matplotlib=True):
     )
 
     # plt.tight_layout()
+    print('Bout to show it')
     plt.show()
 
 
@@ -479,6 +484,8 @@ def main():
         no_dropped = original_size - df.shape[0]
         print(f'DF was originally {original_size} rows long')
         print(f'Dropped {no_dropped} rows due to missing values.')
+        # df = df[df['suffix'] == '_helixcst']
+        df = df.reset_index()
 
         dfs.append(df)
 
