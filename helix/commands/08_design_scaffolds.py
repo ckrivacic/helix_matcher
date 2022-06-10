@@ -41,6 +41,7 @@ Options:
     --run-monomer-filters  Rerun just monomer filters
     --no-cst-ramping  Don't ramp constraints
     --helix-cst  Use backbone constraints from the docked helices rather than the scaffold
+    --freeze-jump  Whether to move the jump or not
 """
 import helix.workspace as ws
 from helix import big_jobs
@@ -118,6 +119,9 @@ def main():
 
         if args['--helix-cst']:
             cmd += '--helix-cst',
+
+        if args['--freeze-jump']:
+            cmd += '--freeze-jump',
 
         if args['--rerun-worst-9mer']:
             cmd += '--rerun-worst-9mer',
