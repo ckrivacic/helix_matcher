@@ -98,7 +98,7 @@ def main():
             i += 1
 
         df = pd.concat([df, pd.DataFrame(rowlist)], ignore_index=True)
-    pickle_outdir = os.path.join(output_folder, f'model_{design_name}.pkl')
+    pickle_outdir = os.path.join(output_folder, f'{input_name}.pkl')
     print(df, flush=True)
     print('Saving in folder {}'.format(pickle_outdir), flush=True)
     if not os.path.exists(pickle_outdir):

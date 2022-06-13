@@ -237,6 +237,9 @@ def scatterplot(dfs, workspace, args, use_matplotlib=True):
         if idx > len(dfs)-1:
             continue
         df = dfs[idx]
+        if args['--hue'] == 'suffix':
+            use_matplotlib = False
+            df = df[df['suffix'].isin(['_helixcst', '_fjump'])]
         print('DF COLS')
         print(df.columns)
         if df.shape[0] > 0:
@@ -308,7 +311,7 @@ def scatterplot(dfs, workspace, args, use_matplotlib=True):
                 plt.colorbar(points, ax=ax)
             click = plotting.ClickablePlot(points, df, args, workspace)
         else:
-            # df['suffix' ] = df.apply(lambda x: x['suffix'][1:], axis=1)
+            df['suffix' ] = df.apply(lambda x: x['suffix'][1:], axis=1)
             ax = sns.scatterplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
                                  hue=hue, picker=False,  legend='auto')
 

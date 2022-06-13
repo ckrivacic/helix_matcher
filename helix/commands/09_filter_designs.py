@@ -5,12 +5,14 @@ Usage:
     helix 09_filter_designs <workspace> <output_dir> [options]
 
 Options:
-    --filter=FILENAME, -f  A yaml file describing filters. If not provided, a
+    --filter=FILENAME,  A yaml file describing filters. If not provided, a
     default set of filters will be used.
     --target=STR, -t  Only run filters for a specific target
     --clear, -o  Delete existing filtered symlinks prior to running
     --copy  Copy files instead of symlinking them (NOT IMPLEMENTED)
     --dry-run
+    --suffix=STR  Only filter designs with this suffix
+    --force-reread, -f  Force to reread the score files
 '''
 import docopt
 import yaml
@@ -45,7 +47,9 @@ def main():
             match_workspace.clear_cluster_outputs()
 
         # Import all "score" files
-        scores = match_workspace.get_scores()
+        scores = match_workspace.get_scores(reread=args['--force-reread'])
+        if args['--suffix']:
+            scores = scores[scores['suffix'] == args['--suffix']]
 
         # Filter the final dataframe
         if args['--filter']:
