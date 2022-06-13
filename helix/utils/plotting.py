@@ -214,3 +214,58 @@ class ClickablePlot(object):
             print(cmd)
             subprocess.call(cmd)
         return fpath
+
+
+class ClickableSilent(ClickablePlot):
+
+    def __init__(self, ax, df, args, workspace, pvp=False):
+        self.ax = ax
+        self.df = df
+        self.args = args
+        self.workspace = workspace
+        self.ax.figure.canvas.mpl_connect("pick_event", self._onpick)
+        self.ax.figure.canvas.mpl_connect("key_press_event",
+                                          self._on_key_press)
+        self.select = False
+        self.selected = []
+        self.listening = False
+        self.current_ind = None
+        self.selected_idx = None
+        self.pvp = pvp
+    def _on_key_press(self, event):
+        if event.key == 'A':
+            self.select = True
+            print('Selection mode active')
+        if event.key == 'C':
+            self.select = False
+            print('Selection mode disabled')
+            if len(self.selected) > 0:
+                self.open_selected()
+            self.selected = []
+
+        if self.listening:
+            if event.key == 'enter':
+                self.listening = False
+                if self.pvp:
+                    design_file_x = \
+                        self.df.iloc[self.current_ind[int(self.selected_idx)]]['design_file_{}'.format(self.args['--xaxis'])]
+                    design_file_y = \
+                        self.df.iloc[self.current_ind[int(self.selected_idx)]]['design_file_{}'.format(self.args['--yaxis'])]
+                    fpath_x = self.fetch_file(design_file_x)
+                    fpath_y = self.fetch_file(design_file_y)
+                    self.selected.extend([fpath_x, fpath_y])
+                else:
+                    design_file = self.df.iloc[self.current_ind[int(self.selected_idx)]]['design_file']
+                    fpath = self.fetch_file(design_file)
+                    print('\nSelected file at {}'.format(fpath))
+                    if not self.select:
+                        self.selected = [fpath]
+                        self.open_selected()
+                    else:
+                        self.selected.append(fpath)
+            elif event.key == 'backspace':
+                self.selected_idx = self.selected_idx[:-1]
+                print('\b', end='', flush=True)
+            else:
+                print(event.key, end='', flush=True)
+                self.selected_idx += event.key

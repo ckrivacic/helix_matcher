@@ -28,6 +28,7 @@ from helix.commands.plot_designs import get_sizes
 from helix.utils.utils import safe_load
 import pandas as pd
 import numpy as np
+from pyrosetta import *
 import seaborn as sns
 import glob, os
 import yaml
@@ -41,7 +42,7 @@ def get_scores(folder, reread=False):
     # folder
     # Reread param makes you open individual datafiles regardless, combining any that are
     # not present in the final dataframe.
-    final_scorefile_path = os.path.join(folder, 'final.pkl')
+    final_scorefile_path = os.path.join(folder, 'metrics.pkl')
     if os.path.exists(final_scorefile_path) and not reread:
         # if reread:
         #     old_df = safe_open_dataframe(self.final_scorefile_path)
@@ -67,7 +68,20 @@ def scatterplot(df, workspace, args, use_matplotlib=True):
     groups = df.groupby('design_name')
     groupkeys = list(groups.groups.keys())
     # for idx, ax in enumerate(axs.reshape(-1)):
+    sfxn = create_score_function('ref2015')
     for name, df in groups:
+        original_pose = df.iloc[0]['design_relpath']
+        original_pose = os.path.join(workspace.root_dir, original_pose)
+        original_pose = pose_from_file(original_pose)
+        score = sfxn(original_pose)
+        new_row = {
+            'total_score': score,
+            'ca_rmsd': 0,
+            'target': 'input',
+        }
+        orig_df = pd.DataFrame([new_row])
+        df = pd.concat([df, orig_df], ignore_index=True)
+        print(df)
         # df = groups.groups[groupkeys[idx]]
         # if idx > len(groups)-1:
         #     continue
@@ -109,7 +123,11 @@ def scatterplot(df, workspace, args, use_matplotlib=True):
         #     click = plotting.ClickablePlot(points, df, args, workspace)
         # else:
         ax = sns.scatterplot(data=df, x=args['--xaxis'], y=args['--yaxis'],
-                             alpha=1.0)
+                             alpha=1.0, hue='target')
+        if args['--yaxis'] == 'total_score':
+            max_y_df = df[df['total_score'] < 0]
+            max_y = max(max_y_df['total_score'])
+            ax.set_ylim(min(df[args['--yaxis']]), max_y)
 
         ax.title.set_text("{}_{}".format(df.iloc[0]['target'], df.iloc[0]['design_name']))
         # ax.set_title(name_dict[target_name], y=1.0, pad=-100, fontsize=8, loc='right')
@@ -182,24 +200,31 @@ def main():
 
     focus_dirs = glob.glob(os.path.join(workspace.root_dir, '*_validated_designs'))
     dfs = []
+    init()
     for dir in focus_dirs:
         print(f"Loading from dir {dir}")
         focus_ws = pipeline.workspace_from_dir(dir)
-        score_dir = os.path.join(dir, 'analysis')
-        df = get_scores(score_dir)
-        if df.empty:
-            continue
-        df = parse_dataframe(df, focus_ws, args)
+        score_dirs = glob.glob(os.path.join(focus_ws.output_dir, '*/*/'))
+        # score_dirs = glob.glob(os.path.join(focus_ws.focus_dir, 'analysis/'))
+        for score_dir in score_dirs:
+            df = get_scores(score_dir)
+            if df.empty:
+                continue
+            df = parse_dataframe(df, focus_ws, args)
 
-        original_size = df.shape[0]
-        for col in [args['--xaxis'], args['--yaxis']]:
-            df = df[df[col].notna()]
-        no_dropped = original_size - df.shape[0]
-        print(f'DF was originally {original_size} rows long')
-        print(f'Dropped {no_dropped} rows due to missing values.')
+            original_size = df.shape[0]
+            for col in [args['--xaxis'], args['--yaxis']]:
+                df = df[df[col].notna()]
+            no_dropped = original_size - df.shape[0]
+            print(f'DF was originally {original_size} rows long')
+            print(f'Dropped {no_dropped} rows due to missing values.')
 
-        dfs.append(df)
-        break
+            print('Dropping positive scores')
+
+            # df = df[df['total_score'] < 0]
+
+            dfs.append(df)
+            scatterplot(df, workspace, args)
 
     if args['--plot-type'] == 'scatter':
         for df in dfs:
