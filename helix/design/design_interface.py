@@ -16,7 +16,7 @@ Options:
     --no-cst-ramping  Don't ramp constraints
     --helix-cst  Apply backbone constraints based on docked helix position rather than input position
     --freeze-jump  Whether to move the jump or not
-    --all-special  Keep all transferred residues even if they don't pass score filter
+    --strict-nopack  Keep all transferred residues even if they don't pass score filter
 '''
 import sys, os, json
 import pandas as pd
@@ -955,7 +955,7 @@ class InterfaceDesign(object):
         print('ORIGINAL NOPACK RESIDUES: ', self.nopack)
         print('SPECIAL RESIDUES: ', self.special_residues)
         self.nopack = [x for x in self.nopack if x in self.special_residues]
-        if self.args['--all-special']:
+        if self.args['--strict-nopack']:
             # self.nopack = self.special_residues
             if len(self.nopack) < 5:
                 sys.exit('Fewer than 5 transferred residues; exiting')

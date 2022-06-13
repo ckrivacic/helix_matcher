@@ -42,7 +42,7 @@ Options:
     --no-cst-ramping  Don't ramp constraints
     --helix-cst  Use backbone constraints from the docked helices rather than the scaffold
     --freeze-jump  Whether to move the jump or not
-    --all-special  Keep all transferred residues even if they don't pass score filter
+    --strict-nopack  Keep all transferred residues even if they don't pass score filter
 """
 import helix.workspace as ws
 from helix import big_jobs
@@ -124,8 +124,8 @@ def main():
         if args['--freeze-jump']:
             cmd += '--freeze-jump',
 
-        if args['--all-special']:
-            cmd += '--all-special',
+        if args['--strict-nopack']:
+            cmd += '--strict-nopack',
 
         if args['--rerun-worst-9mer']:
             cmd += '--rerun-worst-9mer',
