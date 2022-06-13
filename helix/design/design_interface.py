@@ -950,15 +950,16 @@ class InterfaceDesign(object):
     def get_good_residues(self):
         '''Find good rotamers as compared to natural protein interfaces'''
         # No need to save the pose because we already have a minimized pose
-        if self.args['--all_special']:
-            self.nopack = self.special_residues
-        else:
-            self.nopack, pose = select_good_residues(self.design_pose, self.summarized_residue_scores, is_pose=True,
-                                                              cst_sc=True, minimize=False, chain='A')
-            print('ORIGINAL NOPACK RESIDUES: ', self.nopack)
-            print('SPECIAL RESIDUES: ', self.special_residues)
-            self.nopack = [x for x in self.nopack if x in self.special_residues]
-            print("NOPACK RESIDUES: ", self.nopack)
+        self.nopack, pose = select_good_residues(self.design_pose, self.summarized_residue_scores, is_pose=True,
+                                                          cst_sc=True, minimize=False, chain='A')
+        print('ORIGINAL NOPACK RESIDUES: ', self.nopack)
+        print('SPECIAL RESIDUES: ', self.special_residues)
+        self.nopack = [x for x in self.nopack if x in self.special_residues]
+        if self.args['--all-special']:
+            # self.nopack = self.special_residues
+            if len(self.nopack) < 5:
+                sys.exit('Fewer than 5 transferred residues; exiting')
+        print("NOPACK RESIDUES: ", self.nopack)
 
     def transfer_residue(self, pose2, pose1_resnum, pose2_resnum):
         '''Transfers a rotamer from pose2 to pose1'''
