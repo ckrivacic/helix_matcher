@@ -23,6 +23,7 @@ Options:
     --perres-x  Calculate per residue metrics
     --perres-y  Calculate per residue metrics
     --model=NUMBER  Only plot this model #
+    --nopack
 '''
 from helix.utils import utils
 import helix.workspace as ws
@@ -240,6 +241,7 @@ def scatterplot(dfs, workspace, args, use_matplotlib=True):
         if args['--hue'] == 'suffix':
             use_matplotlib = False
             df = df[df['suffix'].isin(['_helixcst', '_fjump'])]
+
         print('DF COLS')
         print(df.columns)
         if df.shape[0] > 0:
@@ -291,6 +293,9 @@ def scatterplot(dfs, workspace, args, use_matplotlib=True):
             # Seaborn seems to reorder points, making the on_pick stuff useless. Back to MPL.
             x = df[args['--xaxis']]
             y = df[args['--yaxis']]
+            if args['--nopack']:
+                df['nopack_len'] = df.apply(lambda x: len(x['nopack_residues']), axis=1)
+                y = df['nopack_len']
             mpl_args = [x, y]
             kwargs = {}
             if args['--size']:

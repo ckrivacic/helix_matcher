@@ -16,6 +16,7 @@ Options:
     --no-cst-ramping  Don't ramp constraints
     --helix-cst  Apply backbone constraints based on docked helix position rather than input position
     --freeze-jump  Whether to move the jump or not
+    --all-special  Keep all transferred residues even if they don't pass score filter
 '''
 import sys, os, json
 import pandas as pd
@@ -848,7 +849,7 @@ class InterfaceDesign(object):
         # fastdes_initial = rosetta.protocols.denovo_design.movers.FastDesign(self.sfxn_cst,
         #                                                                     interface_script_path)
         fastdes_initial = rosetta.protocols.denovo_design.movers.FastDesign(self.sfxn_cst,
-                                                                    1)
+                                                                    3)
         fastdes_initial.set_task_factory(tf_initial)
         fastdes_initial.set_movemap(movemap)
         fastdes_initial.ramp_down_constraints(False)
@@ -949,12 +950,15 @@ class InterfaceDesign(object):
     def get_good_residues(self):
         '''Find good rotamers as compared to natural protein interfaces'''
         # No need to save the pose because we already have a minimized pose
-        self.nopack, pose = select_good_residues(self.design_pose, self.summarized_residue_scores, is_pose=True,
-                                                          cst_sc=True, minimize=False, chain='A')
-        print('ORIGINAL NOPACK RESIDUES: ', self.nopack)
-        print('SPECIAL RESIDUES: ', self.special_residues)
-        self.nopack = [x for x in self.nopack if x in self.special_residues]
-        print("NOPACK RESIDUES: ", self.nopack)
+        if self.args['--all_special']:
+            self.nopack = self.special_residues
+        else:
+            self.nopack, pose = select_good_residues(self.design_pose, self.summarized_residue_scores, is_pose=True,
+                                                              cst_sc=True, minimize=False, chain='A')
+            print('ORIGINAL NOPACK RESIDUES: ', self.nopack)
+            print('SPECIAL RESIDUES: ', self.special_residues)
+            self.nopack = [x for x in self.nopack if x in self.special_residues]
+            print("NOPACK RESIDUES: ", self.nopack)
 
     def transfer_residue(self, pose2, pose1_resnum, pose2_resnum):
         '''Transfers a rotamer from pose2 to pose1'''
