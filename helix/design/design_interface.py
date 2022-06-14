@@ -579,15 +579,15 @@ class InterfaceDesign(object):
         self.ramp_cst = ramp_cst
         self.interface_upweight=interface_upweight
         self.test_run=test_run
-        basename = os.path.basename(self.pdb_path).split('.')[0] + f'_{self.task_id//total_inputs}'
+        self.basename = os.path.basename(self.pdb_path).split('.')[0] + f'_{self.task_id//total_inputs}'
         if suffix:
-            basename += suffix
+            self.basename += suffix
             self.suffix = suffix
         else:
             self.suffix = ''
         if not os.path.exists(self.workspace.design_dir):
             os.makedirs(self.workspace.design_dir, exist_ok=True)
-        self.output_pickle = os.path.join(self.workspace.design_dir, basename + '.pkl')
+        self.output_pickle = os.path.join(self.workspace.design_dir, self.basename + '.pkl')
         self.basename += '.pdb.gz'
         self.output_file = os.path.join(self.workspace.design_dir, self.basename)
 
