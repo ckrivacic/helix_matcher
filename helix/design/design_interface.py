@@ -588,8 +588,8 @@ class InterfaceDesign(object):
         if not os.path.exists(self.workspace.design_dir):
             os.makedirs(self.workspace.design_dir, exist_ok=True)
         self.output_pickle = os.path.join(self.workspace.design_dir, basename + '.pkl')
-        basename += '.pdb.gz'
-        self.output_file = os.path.join(self.workspace.design_dir, basename)
+        self.basename += '.pdb.gz'
+        self.output_file = os.path.join(self.workspace.design_dir, self.basename)
 
     def rerun_9mer(self, force=True):
         row = utils.safe_load(self.output_pickle)
@@ -910,6 +910,8 @@ class InterfaceDesign(object):
 
         # Relax w/o constraints
         self.design_pose.remove_constraints()
+        self.sfxn_cst(self.design_pose)
+        self.design_pose.dump_pdb(os.path.join(self.workspace.focus_dir, 'test_results', self.basename))
         self.design_pose.clear_sequence_constraints()
 
         if self.test_run:
