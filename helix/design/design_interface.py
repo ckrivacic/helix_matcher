@@ -911,7 +911,7 @@ class InterfaceDesign(object):
         # Relax w/o constraints
         self.design_pose.remove_constraints()
         self.sfxn_cst(self.design_pose)
-        self.design_pose.dump_pdb(os.path.join(self.workspace.focus_dir, 'test_results', self.basename))
+        # self.design_pose.dump_pdb(os.path.join(self.workspace.focus_dir, 'test_results', self.basename))
         self.design_pose.clear_sequence_constraints()
 
         if self.test_run:
