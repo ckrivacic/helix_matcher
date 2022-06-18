@@ -851,7 +851,7 @@ class InterfaceDesign(object):
         # fastdes_initial = rosetta.protocols.denovo_design.movers.FastDesign(self.sfxn_cst,
         #                                                                     interface_script_path)
         fastdes_initial = rosetta.protocols.denovo_design.movers.FastDesign(self.sfxn_cst,
-                                                                    3)
+                                                                    5)
         fastdes_initial.set_task_factory(tf_initial)
         fastdes_initial.set_movemap(movemap)
         fastdes_initial.ramp_down_constraints(False)
