@@ -17,6 +17,7 @@ Options:
     --helix-cst  Apply backbone constraints based on docked helix position rather than input position
     --freeze-jump  Whether to move the jump or not
     --strict-nopack  Keep all transferred residues even if they don't pass score filter
+    --offset=NUM  Offset design # by this amount, for running multiple runs with same suffix  [default: 0]
 '''
 import sys, os, json
 import pandas as pd
@@ -579,7 +580,8 @@ class InterfaceDesign(object):
         self.ramp_cst = ramp_cst
         self.interface_upweight=interface_upweight
         self.test_run=test_run
-        self.basename = os.path.basename(self.pdb_path).split('.')[0] + f'_{self.task_id//total_inputs}'
+        des_num = self.task_id // total_inputs + int(args.get('--offset', 0))
+        self.basename = os.path.basename(self.pdb_path).split('.')[0] + f'_{des_num}'
         if suffix:
             self.basename += suffix
             self.suffix = suffix

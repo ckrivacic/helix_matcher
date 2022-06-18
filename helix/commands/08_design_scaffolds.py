@@ -43,6 +43,7 @@ Options:
     --helix-cst  Use backbone constraints from the docked helices rather than the scaffold
     --freeze-jump  Whether to move the jump or not
     --strict-nopack  Keep all transferred residues even if they don't pass score filter
+    --offset=NUM  Offset design number in case multiple runs with same suffix
 """
 import helix.workspace as ws
 from helix import big_jobs
@@ -95,6 +96,9 @@ def main():
 
         if args['--nocst']:
             cmd += '--nocst',
+
+        if args['--offset']:
+            cmd += '--offset', args['--offset']
 
         if args['--prune-buns']:
             cmd += '--prune-buns',
