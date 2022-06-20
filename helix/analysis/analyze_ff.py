@@ -98,13 +98,13 @@ def main():
             i += 1
 
         df = pd.concat([df, pd.DataFrame(rowlist)], ignore_index=True)
-    pickle_outdir = os.path.join(output_folder, f'{input_name}.pkl')
+    pickle_outpath = os.path.join(output_folder, f'{input_name}.pkl')
     print(df, flush=True)
-    print('Saving in folder {}'.format(pickle_outdir), flush=True)
-    if not os.path.exists(pickle_outdir):
-        os.makedirs(pickle_outdir, exist_ok=True)
-    dataframe_out = os.path.join(pickle_outdir, f'{input_name}_{task_id}.pkl')
-    df.to_pickle(dataframe_out)
+    print('Saving as {}'.format(pickle_outpath), flush=True)
+    # if not os.path.exists(pickle_outdir):
+    #     os.makedirs(pickle_outdir, exist_ok=True)
+    # dataframe_out = os.path.join(pickle_outdir, f'{input_name}_{task_id}.pkl')
+    df.to_pickle(pickle_outpath)
 
 
 def get_json(pdb_path, workspace):
