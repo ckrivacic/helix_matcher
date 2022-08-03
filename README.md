@@ -23,6 +23,12 @@ conda env create -f helix.yml
 conda activate helix
 ```
 
+Alternatively, install prerequisites yourself.
+```
+conda install -c anaconda networkx
+conda install -c conda-forge prody
+```
+
 Run setup.py:
 ```bash
 python setup.py install
